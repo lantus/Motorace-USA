@@ -1,0 +1,38 @@
+// Structure to hold sprite data
+#define FILE_ID_LEN (8)
+
+#define SPRITEPTR_ZERO_AND_ONE 0
+#define SPRITEPTR_TWO_AND_THREE 2
+#define SPRITEPTR_FOUR_AND_FIVE 4
+#define SPRITEPTR_SIX_AND_SEVEN 4
+
+typedef struct SpriteSheetHeader 
+{
+    UBYTE id[FILE_ID_LEN];
+    UBYTE version, flags;
+    UBYTE reserved1, palette_size;
+    UWORD num_sprites;
+    ULONG imgdata_size;
+    UWORD checksum;
+} SpriteSheetHeader;
+
+#define MAX_SPRITE_PALETTE_SIZE (16)
+#define MAX_SPRITES_PER_SHEET (16)
+
+typedef struct SpriteSheet 
+{
+    struct SpriteSheetHeader header;
+    UWORD palette[MAX_SPRITE_PALETTE_SIZE];
+    UWORD sprite_offsets[MAX_SPRITES_PER_SHEET];
+    UBYTE *imgdata;
+    
+} Sprite;
+
+BOOL LoadSpriteSheet(char *filename,Sprite *sheet);
+BOOL ApplySpritePalette(Sprite *sheet);
+void ExtractSprites(UBYTE sprite_sheet_index) ;
+void InitializeSprites();
+void SetSpritePointers(ULONG *sprite, UBYTE n, UBYTE sprite_index);
+void SetSpritePosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop);
+void FreeSpriteSheet();
+void BuildCompositeSprite(ULONG *sprite, int n, Sprite *sheet);

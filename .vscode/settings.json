@@ -1,0 +1,20 @@
+{
+    "[m68k]": {
+        "editor.rulers": []
+    },
+    "m68k.includePaths": [
+        "c:\\Users\\jimak\\.vscode\\extensions\\job.amiga-debug-job-1.7.7\\bin\\win32\\opt\\m68k-amiga-elf\\sys-include"
+    ],
+    "m68k.vasm.provideDiagnostics": false,
+    "files.associations": {
+        "custom.h": "c",
+        "exec.h": "c",
+        "dos.h": "c",
+        "bitmap.h": "c",
+        "copper.h": "c",
+        "hardware.h": "c",
+        "sprites.h": "c",
+        "gfxbase.h": "c",
+        "intbits.h": "c"
+    }
+}
