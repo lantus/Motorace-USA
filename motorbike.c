@@ -14,6 +14,7 @@
 
 static Sprite spr_rsrc_bike_moving1;
 static Sprite spr_rsrc_bike_moving2;
+static Sprite spr_rsrc_bike_moving3;
 static Sprite spr_rsrc_bike_turn_left1;
 static Sprite spr_rsrc_bike_turn_left2;
 static Sprite spr_rsrc_bike_turn_right1;
@@ -21,6 +22,7 @@ static Sprite spr_rsrc_bike_turn_right2;
 
 ULONG *spr_bike_moving1;
 ULONG *spr_bike_moving2;
+ULONG *spr_bike_moving3;
 ULONG *spr_bike_turn_left1;
 ULONG *spr_bike_turn_left2;
 ULONG *spr_bike_turn_right1;
@@ -41,6 +43,7 @@ void LoadMotorbikeSprites()
 {
     LoadSpriteSheet(BIKE_MOVING1,&spr_rsrc_bike_moving1);
     LoadSpriteSheet(BIKE_MOVING2,&spr_rsrc_bike_moving2);
+    LoadSpriteSheet(BIKE_MOVING3,&spr_rsrc_bike_moving3);
     LoadSpriteSheet(BIKE_LEFT1,&spr_rsrc_bike_turn_left1);
     LoadSpriteSheet(BIKE_LEFT2,&spr_rsrc_bike_turn_left2);
     LoadSpriteSheet(BIKE_RIGHT1,&spr_rsrc_bike_turn_right1);
@@ -48,6 +51,7 @@ void LoadMotorbikeSprites()
 
     spr_bike_moving1 = AllocMem(4,MEMF_CHIP);
     spr_bike_moving2 = AllocMem(4,MEMF_CHIP);
+    spr_bike_moving3 = AllocMem(4,MEMF_CHIP);
     spr_bike_turn_left1 = AllocMem(4,MEMF_CHIP);
     spr_bike_turn_left2 = AllocMem(4,MEMF_CHIP);
     spr_bike_turn_right1 = AllocMem(4,MEMF_CHIP);
@@ -55,6 +59,7 @@ void LoadMotorbikeSprites()
 
     BuildCompositeSprite(spr_bike_moving1,2,&spr_rsrc_bike_moving1);
     BuildCompositeSprite(spr_bike_moving2,2,&spr_rsrc_bike_moving2);
+    BuildCompositeSprite(spr_bike_moving3,2,&spr_rsrc_bike_moving3);
     BuildCompositeSprite(spr_bike_turn_left1,2,&spr_rsrc_bike_turn_left1);
     BuildCompositeSprite(spr_bike_turn_left2,2,&spr_rsrc_bike_turn_left2);
     BuildCompositeSprite(spr_bike_turn_right1,2,&spr_rsrc_bike_turn_right1);
@@ -79,7 +84,7 @@ void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state)
     {
         bike_anim_lr_frames = 0;
 
-        if (bike_anim_frames % 50 == 0)
+        if (bike_anim_frames % 10 == 0)
         {
             bike_frame ^= 1;
 
@@ -89,7 +94,7 @@ void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state)
             }
             else
             {
-                current_bike_sprite = spr_bike_moving1;
+                current_bike_sprite = spr_bike_moving3;
             }
         }
     }

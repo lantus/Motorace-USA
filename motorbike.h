@@ -1,5 +1,6 @@
 #define BIKE_MOVING1    "sprites/bike/bike1.spr"
 #define BIKE_MOVING2    "sprites/bike/bike2.spr"
+#define BIKE_MOVING3    "sprites/bike/bike3.spr"
 #define BIKE_LEFT1      "sprites/bike/bikeleft1.spr"
 #define BIKE_LEFT2      "sprites/bike/bikeleft2.spr"
 #define BIKE_RIGHT1     "sprites/bike/bikeright1.spr"
