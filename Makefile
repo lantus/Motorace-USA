@@ -49,6 +49,7 @@ ifdef WINDOWS
 	@XCOPY "maps\*" "out\maps\" /K /D /H /Y /S /E 
 	@XCOPY "images\*" "out\images\" /K /D /H /Y /S /E
 	@XCOPY "sprites\*" "out\sprites\" /K /D /H /Y /S /E
+	@XCOPY "tiles\*" "out\tiles\" /K /D /H /Y /S /E
 endif
 
 $(OUT).exe: $(OUT).elf

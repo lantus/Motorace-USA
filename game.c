@@ -21,22 +21,7 @@
 UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDEDCC;
-
-/*
-
-	bike1_sprite1 = AllocMem(4,MEMF_CHIP);
  
-
-	InitializeSprites();
-	BuildCompositeSprite(bike1_sprite1,2,&bike1);
- 	SetSpritePointers(bike1_sprite1,2,0);
-
-
-    
-		SetSpritePosition((UWORD *)bike1_sprite1[0],320,160,160+32);
-		SetSpritePosition((UWORD *)bike1_sprite1[1],320,160,160+32);
-
-*/
 
 // One time startup for everything
 

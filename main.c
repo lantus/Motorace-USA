@@ -69,9 +69,9 @@ struct View *ActiView;
 #define BITMAPHEIGHT ((SCREENHEIGHT + EXTRAHEIGHT) * 2)
 #define HALFBITMAPHEIGHT (BITMAPHEIGHT / 2)
 
-#define BLOCKSWIDTH 64
-#define BLOCKSHEIGHT 104
-#define BLOCKSDEPTH 5
+#define BLOCKSWIDTH 320
+#define BLOCKSHEIGHT 256
+#define BLOCKSDEPTH 4
 #define BLOCKSCOLORS (1L << BLOCKSDEPTH)
 #define BLOCKWIDTH 8
 #define BLOCKHEIGHT 8
@@ -91,7 +91,7 @@ struct View *ActiView;
 #define BLOCKPLANELINES  (BLOCKHEIGHT * BLOCKSDEPTH)
  
 #define PALSIZE (BLOCKSCOLORS * 2)
-#define BLOCKSFILESIZE (BLOCKSWIDTH * BLOCKSHEIGHT * BLOCKSPLANES / 8 + PALSIZE)
+#define BLOCKSFILESIZE (BLOCKSWIDTH * BLOCKSHEIGHT * BLOCKSPLANES / 8 )
 
 #define TWOBLOCKS (BITMAPBLOCKSPERROW - NUMSTEPS)
 #define TWOBLOCKSTEP (NUMSTEPS - TWOBLOCKS)
@@ -299,9 +299,9 @@ void WaitVbl()
 
 static void OpenMap(void)
 {
-	/* 
+ 
 	
-	if (!(MapHandle = Open(MAPNAME,MODE_OLDFILE)))
+	if (!(MapHandle = Open("maps/level1.map",MODE_OLDFILE)))
 	{
 		Cleanup("Find Not Found");
 	}
@@ -324,12 +324,12 @@ static void OpenMap(void)
 	
 	mapdata = Map->data;
 	mapwidth = Map->mapwidth;
-	mapheight = Map->mapheight; */
+	mapheight = Map->mapheight;  
 }
  
 static void OpenBlocks(void)
 {
-	/* 
+	 
 	LONG l = 0;
 
 	BlocksBitmap = BitMapEx_Create(BLOCKSDEPTH, BLOCKSWIDTH, BLOCKSHEIGHT);
@@ -339,7 +339,7 @@ static void OpenBlocks(void)
 		Cleanup("Can't alloc blocks bitmap!");
 	}
 	
-	if (!(MapHandle = Open(BLOCKSNAME,MODE_OLDFILE)))
+	if (!(MapHandle = Open("tiles/lv1_tiles.BPL",MODE_OLDFILE)))
 	{
 		Cleanup(s);
 	}
@@ -355,7 +355,7 @@ static void OpenBlocks(void)
 	Close(MapHandle);MapHandle = 0;
 
 
-	if (!(MapHandle = Open(PALETTENAME,MODE_OLDFILE)))
+	if (!(MapHandle = Open("tiles/lv1_tiles.PAL",MODE_OLDFILE)))
 	{
 		Cleanup(s);
 	}
@@ -369,8 +369,8 @@ static void OpenBlocks(void)
 	
 	blocksbuffer = BlocksBitmap->planes[0];
 
-	debug_register_bitmap(blocksbuffer, "blocksbuffer", 64, 104, 4, debug_resource_bitmap_interleaved);
-	debug_register_palette(colors,"palette",16,0); */
+	debug_register_bitmap(blocksbuffer, "blocksbuffer", 320, 256, 4, debug_resource_bitmap_interleaved);
+	debug_register_palette(colors,"palette",16,0); 
 
 }
 
@@ -453,13 +453,14 @@ static __attribute__((interrupt)) void InterruptHandler()
 // Add these constants at the top with your other defines
 #define GAMEAREA_WIDTH 64          // 24 blocks × 8 pixels
 #define GAMEAREA_BLOCKS 28          // blocks across the game area
-#define SCREEN_OFFSET_X ((SCREENWIDTH - GAMEAREA_WIDTH) / 2)  // Center the game area
+ 
 
 __attribute__((always_inline)) inline static void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy)
 {
     UBYTE block;
     ULONG srcptr, dstptr;
- 
+  
+
     block = mapdata[mapy * mapwidth + mapx];
 
     WORD block_x = (block % BLOCKSPERROW);  // Block column in tileset (0-7)
@@ -578,10 +579,10 @@ static void ScrollDown(void)
 
 static void FillScreen(void)
 {
-	/* WORD a, b, x, y;
+	  WORD a, b, x, y;
     
    
-    for (b = 0; b < HALFBITMAPBLOCKSPERCOL; b++)
+    for (b = 0; b < 36; b++)
     {
         for (a = 0; a < GAMEAREA_BLOCKS; a++)  
         {
@@ -590,7 +591,7 @@ static void FillScreen(void)
             DrawBlock(x, y, a, b);
             DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, b);
         }
-    }*/
+    } 
 }
  
  
@@ -657,8 +658,8 @@ int main(void)
 	
 	InitializeGame();
 
-	//OpenMap();
-	//OpenBlocks();
+	OpenMap();
+	OpenBlocks();
 	OpenDisplay();
 
 	//TakeSystem();
@@ -709,8 +710,8 @@ int main(void)
 		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
  
 	
-		//CheckJoyScroll();
-		//UpdateCopperlist();
+		CheckJoyScroll();
+		UpdateCopperlist();
 	}
 
     ActivateSystem();

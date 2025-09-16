@@ -11,9 +11,6 @@
 #include <proto/dos.h>
 #include "sprites.h"
 #include "copper.h"
-
-// Hardware registers
-extern struct Custom custom;
  
 /* Sprite sheet dimensions */
 #define SHEET_WIDTH 16
@@ -67,7 +64,6 @@ BOOL LoadSpriteSheet(char *filename,Sprite *sheet)
 
 BOOL ApplySpritePalette(Sprite *sheet)
 {
- 
     for(int i=0; i < 16; i++)
 	{
 		Copper_SetSpritePalette(i, ((USHORT*)sheet->palette)[i]);

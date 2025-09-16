@@ -15,6 +15,7 @@
         "hardware.h": "c",
         "sprites.h": "c",
         "gfxbase.h": "c",
-        "intbits.h": "c"
+        "intbits.h": "c",
+        "gfx.h": "c"
     }
 }
