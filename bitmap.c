@@ -28,6 +28,7 @@ BitMapEx* BitMapEx_Create(UBYTE depth, UWORD width, UWORD height)
     bitmap->depth = depth;
     bitmap->width = width;
     bitmap->height = height;
+    bitmap->bytes_per_row = width/8;
     
     // Calculate plane size
     bytes_per_row = width >> 3;
@@ -75,4 +76,9 @@ void BitMapEx_Destroy(BitMapEx *bitmap)
     }
     
     FreeMem(bitmap, sizeof(BitMapEx));
+}
+
+UWORD BitmapEx_GetByteWidth(BitMapEx *bitmap)
+{
+    return ((ULONG)bitmap->planes[1] - (ULONG)bitmap->planes[0]);
 }

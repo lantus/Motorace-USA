@@ -13,11 +13,13 @@
 // Alternative version using a more flexible approach with dynamic plane array
 typedef struct BitMapEx 
 {
-    UWORD depth;        // Number of bitplanes
-    UWORD width;        // Width in pixels  
-    UWORD height;       // Height in pixels
-    UBYTE **planes;     // Array of pointers to bitplanes
+    UWORD depth;            // Number of bitplanes
+    UWORD width;            // Width in pixels  
+    UWORD height;           // Height in pixels
+    UWORD bytes_per_row;
+    UBYTE **planes;         // Array of pointers to bitplanes
 } BitMapEx;
 
-BitMapEx* BitMapEx_Create(UBYTE depth, UWORD width, UWORD height);
-void BitMapEx_Destroy(BitMapEx *bitmap);
+void        BitMapEx_Destroy(BitMapEx *bitmap);
+BitMapEx*   BitMapEx_Create(UBYTE depth, UWORD width, UWORD height);
+UWORD       BitmapEx_GetByteWidth(BitMapEx *bitmap);
