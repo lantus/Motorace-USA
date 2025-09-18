@@ -73,8 +73,8 @@ struct View *ActiView;
 #define BLOCKSHEIGHT 256
 #define BLOCKSDEPTH 4
 #define BLOCKSCOLORS (1L << BLOCKSDEPTH)
-#define BLOCKWIDTH 8
-#define BLOCKHEIGHT 8
+#define BLOCKWIDTH 16
+#define BLOCKHEIGHT 16
 #define BLOCKSBYTESPERROW (BLOCKSWIDTH / 8)
 #define BLOCKSPERROW (BLOCKSWIDTH / BLOCKWIDTH)
 
@@ -106,7 +106,7 @@ WORD	mapposy,videoposy;
 WORD	bitmapheight;
 
 LONG	mapwidth,mapheight;
-UBYTE 	*mapdata;
+UWORD 	*mapdata;
 LONG MapSize = 0;
 UWORD	colors[BLOCKSCOLORS];
 BOOL	option_ntsc,option_how,option_speed;
@@ -301,7 +301,7 @@ static void OpenMap(void)
 {
  
 	
-	if (!(MapHandle = Open("maps/level1.map",MODE_OLDFILE)))
+	if (!(MapHandle = Open("maps/test.map",MODE_OLDFILE)))
 	{
 		Cleanup("Find Not Found");
 	}
@@ -457,48 +457,28 @@ static __attribute__((interrupt)) void InterruptHandler()
 
 __attribute__((always_inline)) inline static void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy)
 {
-    UBYTE block;
-    ULONG srcptr, dstptr;
-  
+	 
+	x = (x / 8) & 0xFFFE;
+	y = y * BITMAPBYTESPERROW;
+	
+	UWORD block = mapdata[mapy * mapwidth + mapx];
 
-    block = mapdata[mapy * mapwidth + mapx];
-
-    WORD block_x = (block % BLOCKSPERROW);  // Block column in tileset (0-7)
-    WORD block_y = (block / BLOCKSPERROW);  // Block row in tileset
-
-    // INTERLEAVED format: each line has (width/8) * depth bytes
-    // For 64x104, 4 bitplanes: each line = 8 * 4 = 32 bytes
-    // Each 8x8 block = 1 byte per bitplane = 4 consecutive bytes
-    
-    LONG src_line_bytes = (BLOCKSWIDTH / 8) * BLOCKSDEPTH;  // 32 bytes per line
-    LONG src_x_offset = block_x * BLOCKSDEPTH;  // 4 bytes per block horizontally
-    LONG src_y_offset = block_y * BLOCKHEIGHT * src_line_bytes;  // Block row * 8 lines * 32 bytes
-    
-    // Destination: 320 width, 4 bitplanes interleaved
-    LONG dst_line_bytes = (BITMAPWIDTH / 8) * BLOCKSDEPTH;  // 160 bytes per line
-    LONG dst_x_offset = (x / 8) * BLOCKSDEPTH;  // 4 bytes per 8-pixel position
-    LONG dst_y_offset = (y / BLOCKSDEPTH) * dst_line_bytes;  // Line number * 160 bytes
-
-    srcptr = (ULONG)(blocksbuffer + src_y_offset + src_x_offset);
-    dstptr = (ULONG)(frontbuffer + dst_y_offset + dst_x_offset);
-
-    HardWaitBlit();
-    
-    custom->bltcon0 = 0x09F0;  // Simple copy: D = A
-    custom->bltcon1 = 0;
-    custom->bltafwm = 0xFFFF;
-    custom->bltalwm = 0xFFFF;
-    
-    // Modulo calculations
-    custom->bltamod = src_line_bytes - BLOCKSDEPTH;  // 32 - 4 = 28
-    custom->bltdmod = dst_line_bytes - BLOCKSDEPTH;  // 160 - 4 = 156
-    
-    custom->bltapt = (APTR)srcptr;
-    custom->bltdpt = (APTR)dstptr;
-    
-    // Blit size: 8 lines, 4 bytes per line = 2 words per line
-    custom->bltsize = (BLOCKHEIGHT << 6) | 2;
+	mapx = (block % BLOCKSPERROW) * (BLOCKWIDTH / 8);
+	mapy = (block / BLOCKSPERROW) * (BLOCKPLANELINES * BLOCKSBYTESPERROW);
  
+	
+	HardWaitBlit();
+	
+	custom->bltcon0 = 0x9F0;	// use A and D. Op: D = A
+	custom->bltcon1 = 0;
+	custom->bltafwm = 0xFFFF;
+	custom->bltalwm = 0xFFFF;
+	custom->bltamod = BLOCKSBYTESPERROW - (BLOCKWIDTH / 8);
+	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
+	custom->bltapt  = blocksbuffer + mapy + mapx;
+	custom->bltdpt	= frontbuffer + y + x;
+	
+	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH / 16);
 }
  
 static void ScrollUp(void)
@@ -579,19 +559,20 @@ static void ScrollDown(void)
 
 static void FillScreen(void)
 {
-	  WORD a, b, x, y;
-    
-   
-    for (b = 0; b < 36; b++)
-    {
-        for (a = 0; a < GAMEAREA_BLOCKS; a++)  
-        {
-            x = a * BLOCKWIDTH;  // This will go from 0 to 184 pixels
-            y = b * BLOCKPLANELINES;
-            DrawBlock(x, y, a, b);
-            DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, b);
-        }
-    } 
+ 
+	WORD a,b,x,y;
+	
+	for (b = 0;b < HALFBITMAPBLOCKSPERCOL;b++)
+	{
+		for (a = 0; a < 12; a++)  // Only 12 tiles instead of 20
+{
+    x = a * BLOCKWIDTH;  // positions 0,16,32,48...176 pixels (12 × 16 = 192 pixels)
+    y = b * BLOCKPLANELINES;
+    DrawBlock(x, y, a, b);
+    DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, b);
+}
+	} 
+ 
 }
  
  

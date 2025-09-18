@@ -149,3 +149,4 @@ extern WORD CopPLANE8L[];
 void Copper_SetBitplanePointer(int plane, const UBYTE **planes, LONG offset);
 void Copper_SetPalette(int index,USHORT color);
 void Copper_SetSpritePalette(int index, USHORT color);
+void Copper_SetHUDBitplanes(const UBYTE *hud_buffer) ;
