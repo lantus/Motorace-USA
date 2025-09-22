@@ -16,6 +16,7 @@
         "sprites.h": "c",
         "gfxbase.h": "c",
         "intbits.h": "c",
-        "gfx.h": "c"
+        "gfx.h": "c",
+        "dmabits.h": "c"
     }
 }
