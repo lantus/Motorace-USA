@@ -30,14 +30,18 @@ ULONG *spr_bike_turn_right2;
 ULONG *current_bike_sprite;
 
 UBYTE bike_state = BIKE_STATE_MOVING;
-UWORD bike_speed;
 UWORD bike_position_x;
 UWORD bike_position_y;
 
 ULONG bike_anim_frames = 0;
 static ULONG bike_anim_lr_frames = 0;
-
 static UBYTE bike_frame = 0;
+
+// Add these to your global variables
+WORD bike_speed = 42;        // Current speed in mph (starts at idle)
+WORD bike_acceleration = 0;  // Current acceleration
+WORD scroll_accumulator = 0;  // Fractional scroll position (fixed point)
+
 
 void LoadMotorbikeSprites()
 {
@@ -75,12 +79,6 @@ void LoadMotorbikeSprites()
 void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state)
 {
     if (state == BIKE_STATE_MOVING)
-    {
-         bike_anim_lr_frames = 0;
-         current_bike_sprite = spr_bike_moving1;
-    }
-
-    if (state == BIKE_STATE_ACCELERATING)
     {
         bike_anim_lr_frames = 0;
 
@@ -135,15 +133,26 @@ void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state)
     bike_anim_frames++;
 }
 
-void AccelerateMotorBike(UWORD speed)
+void AccelerateMotorBike()
 {
-    speed++;
-
-    //if (speed > )
+    bike_state = BIKE_STATE_ACCELERATING;
+    bike_speed += ACCEL_RATE;
+    if (bike_speed > MAX_SPEED)
+    {
+        bike_speed = MAX_SPEED;
+    }
 }
 
 void BrakeMotorBike()
 {
+    if (bike_speed > MIN_SPEED)
+    {
+        bike_speed -= DECEL_RATE;
+    }
 
+    if (bike_speed < MIN_SPEED)
+    {
+        bike_speed = MIN_SPEED;
+    }
 }
  

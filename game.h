@@ -36,6 +36,10 @@
 #define TWOBLOCKS (BITMAPBLOCKSPERROW - NUMSTEPS)
 #define TWOBLOCKSTEP (NUMSTEPS - TWOBLOCKS)
 
+#define ROUND2BLOCKWIDTH(x)  ((x) & ~(BLOCKWIDTH - 1))
+#define ROUND2BLOCKHEIGHT(x) ((x) & ~(BLOCKHEIGHT - 1))
+ 
+
 enum GameState
 {
 	TITLE_SCREEN = 0,
@@ -69,7 +73,12 @@ extern UBYTE game_difficulty;
 extern WORD mapposy,videoposy;
 extern LONG	mapwidth,mapheight;
 
+extern UBYTE *frontbuffer,*blocksbuffer;
+extern UWORD *mapdata;
+
 void InitializeGame();
 void NewGame(UBYTE difficulty);
 void GameLoop();
 void SetBackGroundColor(UWORD color);
+void FillScreen();
+void CheckJoyScroll();

@@ -59,19 +59,13 @@ struct View *ActiView;
 
 #define BPLCON3_BRDNBLNK (1<<5)
  
-
-
-
 const UBYTE* planes[BLOCKSDEPTH];
 
 struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 struct RawMap *Map;
-UBYTE	 *frontbuffer,*blocksbuffer;
-
 
 WORD	bitmapheight;
 
-UWORD 	*mapdata;
 LONG MapSize = 0;
 UWORD	colors[BLOCKSCOLORS];
 BOOL	option_ntsc,option_how,option_speed;
@@ -92,24 +86,6 @@ struct FetchInfo
 	{0x38,0xC8,0}, 	/* BPAGEM         */
 	{0x38,0xB8,0}	/* BPL32 + BPAGEM */
 };
-
-/********************* MACROS ***********************/
-
-#define ROUND2BLOCKWIDTH(x)  ((x) & ~(BLOCKWIDTH - 1))
-#define ROUND2BLOCKHEIGHT(x) ((x) & ~(BLOCKHEIGHT - 1))
-
-#define ADJUSTDESTCOORDS(x,y) 		\
-	if (x >= BITMAPWIDTH)				\
-	{											\
-		x -= BITMAPWIDTH;					\
-		y++;									\
-		if (y >= BITMAPPLANELINES)		\
-		{										\
-			y -= BITMAPPLANELINES;		\
-		}										\
-	}
-
-
 
 // Global variables
  
@@ -293,9 +269,7 @@ void InitHUD(void)
  
 static void OpenMap(void)
 {
- 
-	
-	if (!(MapHandle = Open("maps/level1.dat",MODE_OLDFILE)))
+	if (!(MapHandle = Open("maps/level1.map",MODE_OLDFILE)))
 	{
 		Cleanup("Find Not Found");
 	}
@@ -449,170 +423,7 @@ static __attribute__((interrupt)) void InterruptHandler()
 #define GAMEAREA_BLOCKS 28          // blocks across the game area
  
 
-__attribute__((always_inline)) inline static void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy)
-{
-	 
-	x = (x / 8) & 0xFFFE;
-	y = y * BITMAPBYTESPERROW;
-	
-	UWORD block = mapdata[mapy * mapwidth + mapx];
 
-	mapx = (block % BLOCKSPERROW) * (BLOCKWIDTH / 8);
-	mapy = (block / BLOCKSPERROW) * (BLOCKPLANELINES * BLOCKSBYTESPERROW);
- 
-	
-	HardWaitBlit();
-	
-	custom->bltcon0 = 0x9F0;	// use A and D. Op: D = A
-	custom->bltcon1 = 0;
-	custom->bltafwm = 0xFFFF;
-	custom->bltalwm = 0xFFFF;
-	custom->bltamod = BLOCKSBYTESPERROW - (BLOCKWIDTH / 8);
-	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
-	custom->bltapt  = blocksbuffer + mapy + mapx;
-	custom->bltdpt	= frontbuffer + y + x;
-	
-	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH / 16);
-}
- 
-static void ScrollUp(void)
-{
-	 WORD mapx, mapy, x, y;
-
-    if (mapposy < 1) return;  // Stop at top of map
-
-    mapposy--;
-    videoposy = mapposy % HALFBITMAPHEIGHT;
-
-	mapx = mapposy & (NUMSTEPS - 1);
-	mapy = mapposy / BLOCKHEIGHT;
-	
-	y = ROUND2BLOCKHEIGHT(videoposy) * BLOCKSDEPTH;
-
-   
-   	// blit only one block per half bitmap
-   	
-   	x = mapx * BLOCKWIDTH;
-   	
-   	DrawBlock(x,y,mapx,mapy);
-   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy);
-   	
-   
-}
-
-static void ScrollDown(void)
-{
-	WORD mapx,mapy,x,y;
-
-	if (mapposy >= (mapheight * BLOCKHEIGHT - SCREENHEIGHT - BLOCKHEIGHT)) return;
-	
-	mapx = mapposy & (NUMSTEPS - 1);
-	mapy = HALFBITMAPBLOCKSPERCOL + mapposy / BLOCKHEIGHT;
-	
-	y = ROUND2BLOCKHEIGHT(videoposy) * BLOCKSDEPTH;
-
-   if (mapx < TWOBLOCKSTEP)
-   {
-   	// blit only one block per half bitmap
-   	
-   	x = mapx * BLOCKWIDTH;
-   	
-   	DrawBlock(x,y,mapx,mapy);
-   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy);
-   	
-   } else {
-   	// blit two blocks per half bitmap
-   	
-   	mapx = TWOBLOCKSTEP + (mapx - TWOBLOCKSTEP) * 2;
-   	x = mapx * BLOCKWIDTH;
-   	
-   	DrawBlock(x,y,mapx,mapy);
-   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy);
-
-   	DrawBlock(x + BLOCKWIDTH,y,mapx + 1,mapy);
-   	DrawBlock(x + BLOCKWIDTH,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx + 1,mapy);
-   }
-
-	mapposy++;
-	videoposy = mapposy % HALFBITMAPHEIGHT;
-	
-}
-
-static void FillScreen(void)
-{
-	WORD a, b, x, y;
-	WORD start_tile_y = mapposy / BLOCKHEIGHT;
-
-	for (b = 0; b < HALFBITMAPBLOCKSPERCOL; b++)
-	{
-		for (a = 0; a < 12; a++)  // 12 tiles for 192 pixel width
-		{
-			x = a * BLOCKWIDTH;
-			y = b * BLOCKPLANELINES;
-			DrawBlock(x, y, a, start_tile_y + b);
-			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b);
-		}
-	} 
- 
-}
- 
-
-// Add these to your global variables
-WORD bike_sspeed = 42;        // Current speed in mph (starts at idle)
-WORD bike_acceleration = 0;  // Current acceleration
-#define MIN_SPEED 42
-#define MAX_SPEED 150
-#define ACCEL_RATE 2         // Speed increase per frame when accelerating
-#define DECEL_RATE 1         // Speed decrease per frame when coasting
-
-WORD scroll_accumulator = 0;  // Fractional scroll position (fixed point)
-
-
-
-// Convert speed to scroll calls
-WORD GetScrollAmount(WORD speed)
-{
-    // Map 42-150 mph to 2-6 scroll calls
-    // Linear interpolation: scrolls = 2 + ((speed - 42) / (150 - 42)) * 4
-    if (speed <= MIN_SPEED) return 2;
-    if (speed >= MAX_SPEED) return 6;
-    
-    // Calculate proportional scroll amount
-    WORD range = speed - MIN_SPEED;
-    WORD max_range = MAX_SPEED - MIN_SPEED;
-    return 2 + ((range * 4) / max_range);
-}
-
-static void SmoothScroll(void)
-{
-    // Calculate scroll speed in fixed-point (8.8 format: 8 bits integer, 8 bits fraction)
-    // 2 scrolls = 512 (2 << 8), 6 scrolls = 1536 (6 << 8)
-    WORD scroll_speed = GetScrollAmount(bike_speed) << 8;
-    
-    // Add to accumulator
-    scroll_accumulator += scroll_speed;
-    
-    // Extract whole pixels and scroll
-    while (scroll_accumulator >= 256) {
-        ScrollUp();
-        scroll_accumulator -= 256;
-    }
-}
-
-static void CheckJoyScroll(void)
-{
-    if (JoyFire()) {
-        bike_state = BIKE_STATE_ACCELERATING;
-        bike_speed += ACCEL_RATE;
-        if (bike_speed > MAX_SPEED) bike_speed = MAX_SPEED;
-    } else {
-		 if (bike_speed > MIN_SPEED)
-        	bike_speed -= DECEL_RATE;
-        if (bike_speed < MIN_SPEED) bike_speed = MIN_SPEED;
-    }
-    
-    SmoothScroll();  // Use smooth scrolling instead of loop
-}
 
 __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 {
@@ -657,21 +468,16 @@ int main(void)
 	OpenMap();
 	OpenBlocks();
 	OpenDisplay();
-
-	//TakeSystem();
  
 	KillSystem();	
 
-		InitHUD();
+	InitHUD();
 	InitCopperlist();
 
 	Copper_SetPalette(0, 0x003);
 
 	NewGame(0);
 	FillScreen();
- 
- 
-
 
 	HardWaitBlit();
 	WaitVBL();
@@ -679,22 +485,13 @@ int main(void)
  
 	custom->copjmp2 = 0;
  
-	NewGame(0);
 	while(!MouseLeft()) 
     {		 
 		WaitBlit();
 		
 		WaitLine(200);
-
- 		//WaitLine(1);
-// 
-
+ 
 		bike_state = BIKE_STATE_MOVING;
-
-		if (JoyFire())
-		{
-			bike_state = BIKE_STATE_ACCELERATING;
-		}
 
 		if (JoyLeft())
 		{

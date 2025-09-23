@@ -1,1 +1,1 @@
-kingcon zippylevel1.iff ..\tiles\lv1_tiles -format=4 -interleaved -rawpalette
+kingcon level1.iff ..\tiles\lv1_tiles -format=4 -interleaved -rawpalette

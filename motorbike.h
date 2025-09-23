@@ -1,3 +1,9 @@
+#define ACCEL_RATE 2         // Speed increase per frame when accelerating
+#define DECEL_RATE 1         // Speed decrease per frame when coasting
+
+#define MIN_SPEED 42
+#define MAX_SPEED 150
+
 #define BIKE_MOVING1    "sprites/bike/bike1.spr"
 #define BIKE_MOVING2    "sprites/bike/bike2.spr"
 #define BIKE_MOVING3    "sprites/bike/bike3.spr"
@@ -5,8 +11,7 @@
 #define BIKE_LEFT2      "sprites/bike/bikeleft2.spr"
 #define BIKE_RIGHT1     "sprites/bike/bikeright1.spr"
 #define BIKE_RIGHT2     "sprites/bike/bikeright2.spr"
-
-extern UWORD bike_speed;
+ 
 extern UWORD bike_position_x;
 extern UWORD bike_position_y;
 
@@ -26,10 +31,15 @@ enum BikeState
 
 extern UBYTE bike_state;
 extern ULONG bike_anim_frames;
+extern WORD bike_speed;        // Current speed in mph (starts at idle)
+extern WORD bike_acceleration;  // Current acceleration
+extern WORD scroll_accumulator;  // Fractional scroll position (fixed poin
 
 void LoadMotorbikeSprites();
 void CleanupMotorbikeSprites();
 void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state);
 void ResetMotorBikeAnimFrames();
+void AccelerateMotorBike();
+void BrakeMotorBike();
 
  
