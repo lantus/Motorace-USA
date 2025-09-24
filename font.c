@@ -23,8 +23,8 @@ BOOL LoadFontSheet(const char *filename)
         return FALSE;
     }
     
-    // Assuming font sheet is 128x64 pixels (16x16 characters)
-    LONG font_size = 128 * 64 / 8;  // 1 bitplane, packed
+    // Assuming font sheet is 128x80 pixels (16x16 characters)
+    LONG font_size = 128 * 80 / 8;  // 1 bitplane, packed
     
     game_font.font_data = (UBYTE*)Mem_AllocChip(font_size);
     if (!game_font.font_data) {
@@ -51,6 +51,7 @@ void GetFontChar(char c, UBYTE *char_data)
 {
     // Calculate character position in font sheet
     UBYTE char_index = (UBYTE)c;
+    
     WORD char_x = (char_index % game_font.chars_per_row) * 8;
     WORD char_y = (char_index / game_font.chars_per_row) * 8;
     

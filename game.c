@@ -24,6 +24,7 @@ extern volatile struct Custom *custom;
 UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDEDCC;
+ULONG game_score = 0;
  
 WORD mapposy,videoposy;
 LONG mapwidth,mapheight;
@@ -44,7 +45,7 @@ void InitializeGame()
     
     // HUD
     InitHUDSprites();
-    SetHUDSpritePointers();
+    SetHUDSpritePositions();
     
     SetBackGroundColor(0x125);
 }
@@ -54,6 +55,7 @@ void NewGame(UBYTE difficulty)
     game_stage = STAGE_LASANGELES;
     game_state = GAME_START;
     game_difficulty = difficulty;
+    game_score = 0;
     bike_speed = 0;
 
     // Position bike near bottom of screen

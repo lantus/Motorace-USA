@@ -62,61 +62,40 @@ void SetHUDSpritePointers(void)
 {
     // Set sprites 4-7 to point to HUD data
 
-    for (int i = 0; i < 4; i++) 
-    {
-        ULONG sprite_addr = (ULONG)hud_sprites.sprite_data[i];
-        
-        switch(i) 
-        {
-            case 0: // Sprite 4
-                CopSPR4PTH[VALUE] = sprite_addr >> 16;
-                CopSPR4PTL[VALUE] = sprite_addr & 0xFFFF;
-                break;
-            case 1: // Sprite 5
-                CopSPR5PTH[VALUE] = sprite_addr >> 16;
-                CopSPR5PTL[VALUE] = sprite_addr & 0xFFFF;
-                break;
-            case 2: // Sprite 6
-                CopSPR6PTH[VALUE] = sprite_addr >> 16;
-                CopSPR6PTL[VALUE] = sprite_addr & 0xFFFF;
-                break;
-            case 3: // Sprite 7
-                CopSPR7PTH[VALUE] = sprite_addr >> 16;
-                CopSPR7PTL[VALUE] = sprite_addr & 0xFFFF;
-                break;
-        }
-    }
+    ULONG sprite_addr = (ULONG)hud_sprites.sprite_data[0];
+    SetSpritePointers(&sprite_addr,1, SPRITEPTR_FOUR);
+    sprite_addr = (ULONG)hud_sprites.sprite_data[1];
+    SetSpritePointers(&sprite_addr,1, SPRITEPTR_FIVE); 
+    sprite_addr = (ULONG)hud_sprites.sprite_data[2];
+    SetSpritePointers(&sprite_addr,1, SPRITEPTR_SIX);
+    sprite_addr = (ULONG)hud_sprites.sprite_data[3];   
+    SetSpritePointers(&sprite_addr,1, SPRITEPTR_SEVEN);   
 }
 
-void SetHUDSpriteColors(void)
+void SetHUDWhite(void)
 {
-    // Sprites 4&5 colors (24-27)
-    Copper_SetSpritePalette(8, 0x000);   // Color 24 - Black
-    Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White  
-    Copper_SetSpritePalette(10, 0xF80);  // Color 26 - Orange
-    Copper_SetSpritePalette(11, 0x0F0);  // Color 27 - Green
-    
-    // Sprites 6&7 colors (28-31)  
-    Copper_SetSpritePalette(12, 0x00F);  // Color 28 - Blue
-    Copper_SetSpritePalette(13, 0xFF0);  // Color 29 - Yellow
-    Copper_SetSpritePalette(14, 0xF0F);  // Color 30 - Magenta
-    Copper_SetSpritePalette(15, 0x888);  // Color 31 - Gray
+    Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
+    Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
 }
  
 void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
 {
-   UBYTE char_data[8];
+    UBYTE char_data[8];
+
     GetFontChar(c, char_data);
     
-    for (int row = 0; row < 8; row++) {
+    for (int row = 0; row < 8; row++) 
+    {
         int sprite_line = y + row;
         if (sprite_line >= HUD_HEIGHT) break;
         
         UBYTE font_row = char_data[row];
         UWORD plane_a = 0, plane_b = 0;
         
-        for (int bit = 0; bit < 8; bit++) {
-            if (font_row & (0x80 >> bit)) {
+        for (int bit = 0; bit < 8; bit++) 
+        {
+            if (font_row & (0x80 >> bit)) 
+            {
                 // Use same bitplane pattern for all sprites to get consistent color
                 plane_a |= (0x8000 >> (x + bit));  // Set plane A
                 plane_b |= 0;                       // Clear plane B
@@ -131,11 +110,7 @@ void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
 
 BOOL IsValidChar(char c)
 {
-    return (c == ' ' ||        // Space (32)
-            c == '-' ||        // Hyphen (45)
-            (c >= '0' && c <= '9') ||  // Digits (48-57)
-            (c >= 'A' && c <= 'Z') ||  // Uppercase (65-90)
-            (c >= 'a' && c <= 'z'));   // Lowercase (97-122)
+    return TRUE;
 }
 
 void DrawHUDText(char *text, int sprite_col, int y_offset)
@@ -155,14 +130,28 @@ void DrawHUDText(char *text, int sprite_col, int y_offset)
     }
 }
 
-void DrawHUD()
+void UpdateScore(ULONG score)
 {
-   
+
 }
 
 void PreDrawHUD()
 {
-    DrawHUDString("SCORE", 0, 10);  
+    SetHUDWhite();
+    DrawHUDString("HI-SCORE", 0, 0);
+    DrawHUDString("00", 2, 8);
+    DrawHUDString("1UP", 0, 16);
+    DrawHUDString("00", 2, 24);
+
+    DrawHUDString(NEW_YORK , 3 , 48);
+    DrawHUDString(CHICAGO , 3 , 64);
+    DrawHUDString(ST_LOUIS , 3 , 84);
+    DrawHUDString(HOUSTON , 3 , 104);
+    DrawHUDString(LASVEGAS , 3 , 124);
+    DrawHUDString(LASANGELES , 3 , 144);
+
+    DrawHUDString("RANK", 1, 160);
+    DrawHUDString("SPEED", 1, 184);
 }
 
 void DrawHUDString(char *text, int start_sprite, int y_offset)
@@ -171,13 +160,16 @@ void DrawHUDString(char *text, int start_sprite, int y_offset)
     int sprite_index = start_sprite;
     int char_pos = 0;
  
-    while (char_pos < text_len && sprite_index < 4) {
+    while (char_pos < text_len && sprite_index < 4) 
+    {
         char sprite_text[3] = {0}; // 2 chars per sprite + null terminator
         int chars_in_sprite = 0;
         
         // Fill current sprite with up to 2 characters
-        while (chars_in_sprite < 2 && char_pos < text_len) {
-            if (IsValidChar(text[char_pos])) {
+        while (chars_in_sprite < 2 && char_pos < text_len) 
+        {
+            if (IsValidChar(text[char_pos])) 
+            {
                 sprite_text[chars_in_sprite] = text[char_pos];
                 chars_in_sprite++;
             }
@@ -185,10 +177,24 @@ void DrawHUDString(char *text, int start_sprite, int y_offset)
         }
         
         // Draw to current sprite if we have characters
-        if (chars_in_sprite > 0) {
+        if (chars_in_sprite > 0) 
+        {
             DrawHUDText(sprite_text, sprite_index, y_offset);
         }
         
         sprite_index++;
     }
+}
+
+void SetHUDSpritePositions(void)
+{
+    for (int i = 0; i < 4; i++) 
+    {
+        UWORD logical_x = 192 + (i * 16);  // Where you want it on screen
+        UWORD sprite_x = logical_x + 128;  // Actual sprite coordinate
+        
+        SetSpritePosition(hud_sprites.sprite_data[i], sprite_x, 44, 44 + HUD_HEIGHT - 1);
+    }
+    
+    SetHUDSpritePointers();
 }

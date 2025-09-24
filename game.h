@@ -76,6 +76,8 @@ extern LONG	mapwidth,mapheight;
 extern UBYTE *frontbuffer,*blocksbuffer;
 extern UWORD *mapdata;
 
+extern ULONG game_score;
+
 void InitializeGame();
 void NewGame(UBYTE difficulty);
 void GameLoop();
