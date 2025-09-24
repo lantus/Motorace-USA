@@ -9,6 +9,7 @@
 #include <proto/exec.h>
 #include <proto/graphics.h>
 #include <proto/dos.h>
+#include "game.h"
 #include "copper.h"
 #include "memory.h"
 #include "sprites.h"
@@ -130,14 +131,90 @@ void DrawHUDText(char *text, int sprite_col, int y_offset)
     }
 }
 
+int counter = 0;
+
+void ULongToString(ULONG value, char *buffer, int width, char pad_char)
+{
+    char temp[12];  // Temporary buffer for digits
+    int digit_count = 0;
+    int i;
+    
+    // Handle zero case
+    if (value == 0) {
+        temp[0] = '0';
+        digit_count = 1;
+    } else {
+        // Extract digits in reverse order
+        ULONG num = value;
+        while (num > 0) {
+            temp[digit_count] = '0' + (num % 10);
+            num /= 10;
+            digit_count++;
+        }
+    }
+    
+    // Fill buffer with padding characters
+    for (i = 0; i < width - digit_count; i++) {
+        buffer[i] = pad_char;
+    }
+    
+    // Copy digits in correct order
+    for (i = 0; i < digit_count; i++) {
+        buffer[width - digit_count + i] = temp[digit_count - 1 - i];
+    }
+    
+    buffer[width] = '\0';  // Null terminate
+}
+
+void ClearHUDSpriteArea(int start_sprite, int y_offset, int height)
+{
+    // Clear specific area of sprites
+    for (int sprite = start_sprite; sprite < 4 && sprite < start_sprite + 4; sprite++) {
+        UWORD *sprite_data = hud_sprites.sprite_data[sprite];
+        
+        for (int line = y_offset; line < y_offset + height && line < HUD_HEIGHT; line++) {
+            sprite_data[2 + line * 2] = 0;      // Plane A = 0  
+            sprite_data[2 + line * 2 + 1] = 0;  // Plane B = 0
+        }
+    }
+}
+
+void DrawHUDScore(ULONG score, int start_sprite, int y_offset)
+{
+    char score_string[7];  // 6 digits + null terminator
+    
+    // Clamp score to 6 digits maximum (999999)
+    if (score > 999999) score = 999999;
+    
+    // Format as 6-digit right-justified string with leading spaces
+    ULongToString(score, score_string, 6, ' ');
+    
+    // Clear the sprite area first
+    ClearHUDSpriteArea(start_sprite, y_offset, 8);
+    
+    // Draw the formatted score
+    DrawHUDString(score_string, start_sprite, y_offset);
+}
+
 void UpdateScore(ULONG score)
 {
 
+    if (counter % 120 == 0)
+    {
+        game_score += 500;
+        DrawHUDScore(game_score, 0, 24);
+    }
+
+   
+
+    counter++;
 }
 
 void PreDrawHUD()
 {
+ 
     SetHUDWhite();
+    
     DrawHUDString("HI-SCORE", 0, 0);
     DrawHUDString("00", 2, 8);
     DrawHUDString("1UP", 0, 16);
@@ -150,8 +227,8 @@ void PreDrawHUD()
     DrawHUDString(LASVEGAS , 3 , 124);
     DrawHUDString(LASANGELES , 3 , 144);
 
-    DrawHUDString("RANK", 1, 160);
-    DrawHUDString("SPEED", 1, 184);
+    DrawHUDString("RANK", 1, 168);
+    DrawHUDString("SPEED", 1, 190);
 }
 
 void DrawHUDString(char *text, int start_sprite, int y_offset)

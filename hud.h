@@ -26,3 +26,4 @@ void PreDrawHUD();
 void DrawHUDText(char *text, int sprite_col, int y_offset);
 void DrawHUDString(char *text, int start_sprite, int y_offset);
 void SetHUDSpritePositions(void);
+void UpdateScore(ULONG score);

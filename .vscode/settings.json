@@ -18,6 +18,7 @@
         "intbits.h": "c",
         "gfx.h": "c",
         "dmabits.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "gcc8_c_support.h": "c"
     }
 }

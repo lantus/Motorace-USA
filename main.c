@@ -150,11 +150,7 @@ l = (BITMAPBYTESPERROW * BLOCKSDEPTH) - (26  );
 	custom->intena = 0x7FFF;
 	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE;
 	custom->cop2lc = (ULONG)CopperList;	
-
-
-	// In your InitCopperlist(), what are these values?
-KPrintF("DIWSTART: %04lx\n", DIWSTARTVAL);
-KPrintF("DDFSTART: %04lx\n", fetchinfo[0].start);
+ 
 };
 
  
@@ -517,7 +513,7 @@ int main(void)
 	
 		CheckJoyScroll();
 		UpdateCopperlist();
- 
+		UpdateScore(0);
  
 	}
 
