@@ -165,15 +165,16 @@ static void ScrollUp(void)
 	
 	y = ROUND2BLOCKHEIGHT(videoposy) * BLOCKSDEPTH;
 
-   
-   	// blit only one block per half bitmap
+   // Only draw if within the 12-tile display width
+    if (mapx < 12) 
+    {  
+        // Limit to 192 pixels (12 tiles)
+        x = mapx * BLOCKWIDTH;
+        
+        DrawBlock(x, y, mapx, mapy);
+        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy);
+    }
    	
-   	x = mapx * BLOCKWIDTH;
-   	
-   	DrawBlock(x,y,mapx,mapy);
-   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy);
-   	
-   
 }
  
 void FillScreen(void)

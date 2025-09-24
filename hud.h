@@ -9,6 +9,12 @@
 #define LASVEGAS    "\x82\x83"
 #define LASANGELES  "\x80\x81"
 
+#define PROGRESS_PIECE1 "\x3B"
+#define PROGRESS_PIECE2 "\x1E"
+#define PROGRESS_PIECE3 "\x1F"
+#define PROGRESS_PIECE4 "\x2E"
+#define PROGRESS_PIECE5 "\x2F"
+
 typedef struct 
 {
     UWORD *sprite_data[4];  // Pointers to sprite data for sprites 4-7
@@ -27,3 +33,4 @@ void DrawHUDText(char *text, int sprite_col, int y_offset);
 void DrawHUDString(char *text, int start_sprite, int y_offset);
 void SetHUDSpritePositions(void);
 void UpdateScore(ULONG score);
+void UpdateSpeed();

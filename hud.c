@@ -75,8 +75,14 @@ void SetHUDSpritePointers(void)
 
 void SetHUDWhite(void)
 {
-    Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
-    Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
+   Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
+   Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
+}
+
+void SetHUDBrown(void)
+{
+   // Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
+   // Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
 }
  
 void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
@@ -98,7 +104,7 @@ void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
             if (font_row & (0x80 >> bit)) 
             {
                 // Use same bitplane pattern for all sprites to get consistent color
-                plane_a |= (0x8000 >> (x + bit));  // Set plane A
+                plane_a |= (0x8000 >> (x + bit));   // Set plane A
                 plane_b |= 0;                       // Clear plane B
                 // This gives color index "01" which maps to colors 25, 27, 29, 31
             }
@@ -213,8 +219,10 @@ void UpdateScore(ULONG score)
 void PreDrawHUD()
 {
  
+    const UBYTE status_y = 40;
+
     SetHUDWhite();
-    
+
     DrawHUDString("HI-SCORE", 0, 0);
     DrawHUDString("00", 2, 8);
     DrawHUDString("1UP", 0, 16);
@@ -229,6 +237,31 @@ void PreDrawHUD()
 
     DrawHUDString("RANK", 1, 168);
     DrawHUDString("SPEED", 1, 190);
+
+
+    // Draw the Status 
+    
+    // NY -> STL
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+8);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+16);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+24);
+    // Chicago -> STL
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+32);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+40);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+48);
+    // STL -> Houston
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+56);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+64);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+72);
+    // Houston -> LV
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+80);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+88);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+96);
+    // LV -> LA
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+104);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+112);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+120);
 }
 
 void DrawHUDString(char *text, int start_sprite, int y_offset)
@@ -270,7 +303,7 @@ void SetHUDSpritePositions(void)
         UWORD logical_x = 192 + (i * 16);  // Where you want it on screen
         UWORD sprite_x = logical_x + 128;  // Actual sprite coordinate
         
-        SetSpritePosition(hud_sprites.sprite_data[i], sprite_x, 44, 44 + HUD_HEIGHT - 1);
+        SetSpritePosition(hud_sprites.sprite_data[i], sprite_x, 40, 40 + HUD_HEIGHT - 1);
     }
     
     SetHUDSpritePointers();
