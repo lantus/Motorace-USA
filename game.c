@@ -17,6 +17,7 @@
 #include "pixel.h"
 #include "sprites.h"
 #include "motorbike.h"
+#include "hud.h"
 
 extern volatile struct Custom *custom;
 
@@ -37,8 +38,14 @@ static void ScrollUp(void);
 void InitializeGame()
 {
     InitializeSprites();
+    
+    // Motorbike
     LoadMotorbikeSprites();
-
+    
+    // HUD
+    InitHUDSprites();
+    SetHUDSpritePointers();
+    
     SetBackGroundColor(0x125);
 }
 

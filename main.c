@@ -17,6 +17,7 @@
 #include "pixel.h"
 #include "sprites.h"
 #include "motorbike.h"
+#include "hud.h"
  
 volatile struct Custom *custom;
 
@@ -485,6 +486,7 @@ int main(void)
  
 	custom->copjmp2 = 0;
  
+	PreDrawHUD();
 	while(!MouseLeft()) 
     {		 
 		WaitBlit();
@@ -510,6 +512,7 @@ int main(void)
 	
 		CheckJoyScroll();
 		UpdateCopperlist();
+ 
  
 	}
 

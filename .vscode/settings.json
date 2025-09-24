@@ -17,6 +17,7 @@
         "gfxbase.h": "c",
         "intbits.h": "c",
         "gfx.h": "c",
-        "dmabits.h": "c"
+        "dmabits.h": "c",
+        "types.h": "c"
     }
 }
