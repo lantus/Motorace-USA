@@ -77,6 +77,7 @@ extern UBYTE *frontbuffer,*blocksbuffer;
 extern UWORD *mapdata;
 
 extern ULONG game_score;
+extern UBYTE game_rank;
 
 void InitializeGame();
 void NewGame(UBYTE difficulty);

@@ -15,7 +15,15 @@
 #define PROGRESS_PIECE3 "\x1F"
 #define PROGRESS_PIECE4 "\x2E"
 #define PROGRESS_PIECE5 "\x2F"
- 
+
+#define BOX_TOP_LEFT_PIECE  "\x03\x04"
+#define BOX_TOP_MIDDLE_PIECE "\x04\x04"
+#define BOX_TOP_RIGHT_PIECE "\x05"
+#define BOX_BTM_LEFT_PIECE "\x01\x01"
+#define BOX_BTM_MIDDLE_PIECE "\x01\x01"
+#define BOX_BTM_RIGHT_PIECE "\x02"
+#define BOX_LEFT_SIDE_PIECE "\x13"
+#define BOX_RIGHT_SIDE_PIECE "\x15"
 
 typedef struct 
 {
@@ -36,3 +44,5 @@ void DrawHUDString(char *text, int start_sprite, int y_offset);
 void SetHUDSpritePositions(void);
 void UpdateScore(ULONG score);
 void UpdateSpeed();
+void UpdateRank(UBYTE rank);
+char *GetOrdinalSuffix(UBYTE number);

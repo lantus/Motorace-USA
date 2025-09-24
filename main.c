@@ -514,6 +514,7 @@ int main(void)
 		CheckJoyScroll();
 		UpdateCopperlist();
 		UpdateScore(0);
+		UpdateRank(0);
  
 	}
 

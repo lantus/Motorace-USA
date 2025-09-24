@@ -146,10 +146,12 @@ void ULongToString(ULONG value, char *buffer, int width, char pad_char)
     int i;
     
     // Handle zero case
-    if (value == 0) {
+    if (value == 0) 
+    {
         temp[0] = '0';
         digit_count = 1;
-    } else {
+    } else 
+    {
         // Extract digits in reverse order
         ULONG num = value;
         while (num > 0) {
@@ -160,22 +162,28 @@ void ULongToString(ULONG value, char *buffer, int width, char pad_char)
     }
     
     // Fill buffer with padding characters
-    for (i = 0; i < width - digit_count; i++) {
-        buffer[i] = pad_char;
+
+    if (pad_char != NULL)
+    {
+        for (i = 0; i < width - digit_count; i++) 
+        {
+            buffer[i] = pad_char;
+        }
     }
     
     // Copy digits in correct order
-    for (i = 0; i < digit_count; i++) {
+    for (i = 0; i < digit_count; i++)
+     {
         buffer[width - digit_count + i] = temp[digit_count - 1 - i];
     }
     
     buffer[width] = '\0';  // Null terminate
 }
 
-void ClearHUDSpriteArea(int start_sprite, int y_offset, int height)
+void ClearHUDSpriteArea(int start_sprite, int end_sprite, int y_offset, int height)
 {
     // Clear specific area of sprites
-    for (int sprite = start_sprite; sprite < 4 && sprite < start_sprite + 4; sprite++) {
+    for (int sprite = start_sprite; sprite < end_sprite && sprite < start_sprite + end_sprite; sprite++) {
         UWORD *sprite_data = hud_sprites.sprite_data[sprite];
         
         for (int line = y_offset; line < y_offset + height && line < HUD_HEIGHT; line++) {
@@ -196,24 +204,76 @@ void DrawHUDScore(ULONG score, int start_sprite, int y_offset)
     ULongToString(score, score_string, 6, ' ');
     
     // Clear the sprite area first
-    ClearHUDSpriteArea(start_sprite, y_offset, 8);
+    ClearHUDSpriteArea(start_sprite, 3, y_offset, 8);
     
     // Draw the formatted score
     DrawHUDString(score_string, start_sprite, y_offset);
 }
 
+void DrawHUDRank(UBYTE rank, int start_sprite, int y_offset)
+{
+    char rank_string[3];  
+    
+    if (rank == 0xFF)
+    {
+        rank = 1;
+    }
+
+    ULongToString(rank, rank_string, 2, NULL);
+    
+    // Clear the sprite area first
+    ClearHUDSpriteArea(start_sprite, 3, y_offset, 8);
+    
+    // Draw the formatted score
+    DrawHUDString(rank_string, start_sprite, y_offset);
+}
+
 void UpdateScore(ULONG score)
 {
-
     if (counter % 120 == 0)
     {
         game_score += 500;
         DrawHUDScore(game_score, 0, 24);
     }
-
-   
-
     counter++;
+}
+
+void UpdateRank(UBYTE rank)
+{
+    if (counter % 75 == 0)
+    {
+        game_rank--;
+        char *suffix = GetOrdinalSuffix(game_rank);
+        DrawHUDRank(game_rank,1,176);
+        DrawHUDString(suffix, 2,176);
+    }
+    counter++;
+}
+
+char* GetOrdinalSuffix(UBYTE number)
+{
+    // Handle special cases for 11th, 12th, 13th
+    UBYTE last_two_digits = number % 100;
+
+    if (last_two_digits >= 11 && last_two_digits <= 13) 
+    {
+        return "\x9c\x9d";
+    }
+    
+    // Check the last digit for other cases
+    UBYTE last_digit = number % 10;
+
+    switch (last_digit) 
+    {
+        case 1:
+            return "\x9e\x9f";
+        case 2:
+            return "\x98\x99";
+        case 3:
+            return "\x9a\x9b";
+        default:
+            return "\x9c\x9d";
+    }
 }
 
 void PreDrawHUD()
@@ -234,7 +294,6 @@ void PreDrawHUD()
     DrawHUDString(HOUSTON , 3 , status_y+61);
     DrawHUDString(LASVEGAS , 3 , status_y+81);
     DrawHUDString(LASANGELES , 3 , status_y+101);
-
 
     // Stages
 
@@ -263,7 +322,21 @@ void PreDrawHUD()
     // Fuel Gauge
 
     // Rank
-    DrawHUDString("RANK", 1, 168);
+    DrawHUDString(BOX_TOP_LEFT_PIECE,0,160);
+    DrawHUDString(BOX_TOP_MIDDLE_PIECE,1,160);
+    DrawHUDString(BOX_TOP_MIDDLE_PIECE,2,160);
+    DrawHUDString(BOX_TOP_RIGHT_PIECE,3,160);
+ 
+    DrawHUDString(BOX_LEFT_SIDE_PIECE,0,168);
+    DrawHUDString(" RANK", 0, 168);
+    DrawHUDString(BOX_RIGHT_SIDE_PIECE,3,168);
+    DrawHUDString(BOX_LEFT_SIDE_PIECE,0,176);
+    DrawHUDString(BOX_RIGHT_SIDE_PIECE,3,176);
+ 
+    DrawHUDString(BOX_BTM_LEFT_PIECE,0,184);
+    DrawHUDString(BOX_BTM_MIDDLE_PIECE,1,184);
+    DrawHUDString(BOX_BTM_MIDDLE_PIECE,2,184);
+    DrawHUDString(BOX_BTM_RIGHT_PIECE,3,184);
     
     // Speed
     DrawHUDString("SPEED", 1, 200);

@@ -25,7 +25,8 @@ UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDEDCC;
 ULONG game_score = 0;
- 
+UBYTE game_rank = 99;
+
 WORD mapposy,videoposy;
 LONG mapwidth,mapheight;
 
@@ -57,6 +58,7 @@ void NewGame(UBYTE difficulty)
     game_difficulty = difficulty;
     game_score = 0;
     bike_speed = 0;
+    game_rank = 99; // Start in 99th
 
     // Position bike near bottom of screen
     bike_position_x = SCREENWIDTH / 2;  // Center horizontally (around pixel 96 for 192px display)
