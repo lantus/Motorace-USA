@@ -9,11 +9,13 @@
 #define LASVEGAS    "\x82\x83"
 #define LASANGELES  "\x80\x81"
 
+#define PROGRESS_PIECE0 "\x3C"
 #define PROGRESS_PIECE1 "\x3B"
 #define PROGRESS_PIECE2 "\x1E"
 #define PROGRESS_PIECE3 "\x1F"
 #define PROGRESS_PIECE4 "\x2E"
 #define PROGRESS_PIECE5 "\x2F"
+ 
 
 typedef struct 
 {

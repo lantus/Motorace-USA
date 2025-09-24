@@ -228,40 +228,46 @@ void PreDrawHUD()
     DrawHUDString("1UP", 0, 16);
     DrawHUDString("00", 2, 24);
 
-    DrawHUDString(NEW_YORK , 3 , 48);
-    DrawHUDString(CHICAGO , 3 , 64);
-    DrawHUDString(ST_LOUIS , 3 , 84);
-    DrawHUDString(HOUSTON , 3 , 104);
-    DrawHUDString(LASVEGAS , 3 , 124);
-    DrawHUDString(LASANGELES , 3 , 144);
-
-    DrawHUDString("RANK", 1, 168);
-    DrawHUDString("SPEED", 1, 190);
+    DrawHUDString(NEW_YORK , 3 , status_y+3);
+    DrawHUDString(CHICAGO , 3 , status_y+21);
+    DrawHUDString(ST_LOUIS , 3 , status_y+41);
+    DrawHUDString(HOUSTON , 3 , status_y+61);
+    DrawHUDString(LASVEGAS , 3 , status_y+81);
+    DrawHUDString(LASANGELES , 3 , status_y+101);
 
 
-    // Draw the Status 
-    
+    // Stages
+
     // NY -> STL
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+8);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+16);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+24);
+    DrawHUDString(PROGRESS_PIECE0, 2, status_y);
+    DrawHUDString(PROGRESS_PIECE2, 2, status_y+8);
+    DrawHUDString(PROGRESS_PIECE2, 2, status_y+16);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+20);
     // Chicago -> STL
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+32);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+40);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+48);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+28);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+36);
+    DrawHUDString(PROGRESS_PIECE0, 2, status_y+40);
     // STL -> Houston
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+56);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+64);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+72);
+    DrawHUDString(PROGRESS_PIECE2, 2, status_y+48);
+    DrawHUDString(PROGRESS_PIECE2, 2, status_y+56);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+60);
     // Houston -> LV
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+80);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+88);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+96);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+68);
+    DrawHUDString(PROGRESS_PIECE3, 2, status_y+76);
+    DrawHUDString(PROGRESS_PIECE0, 2, status_y+80);
     // LV -> LA
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+104);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+112);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+120);
+    DrawHUDString(PROGRESS_PIECE2, 2, status_y+88);
+    DrawHUDString(PROGRESS_PIECE2, 2, status_y+96);
+    DrawHUDString(PROGRESS_PIECE1, 2, status_y+100);
+
+    // Fuel Gauge
+
+    // Rank
+    DrawHUDString("RANK", 1, 168);
+    
+    // Speed
+    DrawHUDString("SPEED", 1, 200);
+
 }
 
 void DrawHUDString(char *text, int start_sprite, int y_offset)
