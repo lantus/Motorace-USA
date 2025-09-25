@@ -37,21 +37,21 @@ static void ScrollUp(void);
 
 // One time startup for everything
 
-void InitializeGame()
+void Game_Initialize()
 {
-    InitializeSprites();
+    Sprites_Initialize();
     
     // Motorbike
     LoadMotorbikeSprites();
     
     // HUD
-    InitHUDSprites();
-    SetHUDSpritePositions();
+    HUD_InitSprites();
+    HUD_SetSpritePositions();
     
-    SetBackGroundColor(0x125);
+    Game_SetBackGroundColor(0x125);
 }
 
-void NewGame(UBYTE difficulty)
+void Game_NewGame(UBYTE difficulty)
 {
     game_stage = STAGE_LASANGELES;
     game_state = GAME_START;
@@ -70,12 +70,12 @@ void NewGame(UBYTE difficulty)
 
 }
 
-void GameLoop()
+void Game_Loop()
 {
 
 }
 
-void SetBackGroundColor(UWORD color)
+void Game_SetBackGroundColor(UWORD color)
 {
     Copper_SetPalette(0, color);
 }
@@ -113,7 +113,7 @@ static void SmoothScroll(void)
     }
 }
 
-void CheckJoyScroll(void)
+void Game_CheckJoyScroll(void)
 {
     if (JoyFire()) 
 	{
@@ -179,7 +179,7 @@ static void ScrollUp(void)
    	
 }
  
-void FillScreen(void)
+void Game_FillScreen(void)
 {
 	WORD a, b, x, y;
 	WORD start_tile_y = mapposy / BLOCKHEIGHT;

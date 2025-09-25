@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "sprites.h"
 #include "motorbike.h"
+#include "hardware.h"
 #include "cars.h"
 
 extern volatile struct Custom *custom;

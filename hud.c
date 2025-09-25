@@ -20,7 +20,7 @@
 
 HUDSprites hud_sprites;
 
-void InitHUDSprites(void)
+void HUD_InitSprites(void)
 {
     // Allocate sprite data for 4 sprites
     // Each sprite: 2 words control + (height * 2 words data) + 2 words end
@@ -36,16 +36,16 @@ void InitHUDSprites(void)
         }
         
         // Initialize sprite data
-        InitSpriteData(hud_sprites.sprite_data[i], HUD_START_X + (i * 16), 44, HUD_HEIGHT);
+        HUD_InitSpriteData(hud_sprites.sprite_data[i], HUD_START_X + (i * 16), 44, HUD_HEIGHT);
     }
 
     LoadFontSheet("font/zippyfont.BPL");
 }
 
-void InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height)
+void HUD_InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height)
 {
     // Set sprite position and size (first 2 words)
-    SetSpritePosition(sprite_data, x, y, y + height - 1);
+    Sprites_SetPosition(sprite_data, x, y, y + height - 1);
     
     // Clear sprite graphics data (all transparent)
     for (int line = 0; line < height; line++) 
@@ -59,33 +59,27 @@ void InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height)
     sprite_data[2 + height * 2 + 1] = 0;
 }
 
-void SetHUDSpritePointers(void)
+void HUD_SetSpritePointers(void)
 {
     // Set sprites 4-7 to point to HUD data
 
     ULONG sprite_addr = (ULONG)hud_sprites.sprite_data[0];
-    SetSpritePointers(&sprite_addr,1, SPRITEPTR_FOUR);
+    Sprites_SetPointers(&sprite_addr,1, SPRITEPTR_FOUR);
     sprite_addr = (ULONG)hud_sprites.sprite_data[1];
-    SetSpritePointers(&sprite_addr,1, SPRITEPTR_FIVE); 
+    Sprites_SetPointers(&sprite_addr,1, SPRITEPTR_FIVE); 
     sprite_addr = (ULONG)hud_sprites.sprite_data[2];
-    SetSpritePointers(&sprite_addr,1, SPRITEPTR_SIX);
+    Sprites_SetPointers(&sprite_addr,1, SPRITEPTR_SIX);
     sprite_addr = (ULONG)hud_sprites.sprite_data[3];   
-    SetSpritePointers(&sprite_addr,1, SPRITEPTR_SEVEN);   
+    Sprites_SetPointers(&sprite_addr,1, SPRITEPTR_SEVEN);   
 }
 
-void SetHUDWhite(void)
+void HUD_SetWhite(void)
 {
    Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
    Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
 }
-
-void SetHUDBrown(void)
-{
-   // Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
-   // Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
-}
  
-void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
+void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
 {
     UBYTE char_data[8];
 
@@ -115,7 +109,7 @@ void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
     }
 }
 
-void DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode)
+void HUD_DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode)
 {
     UBYTE char_data[8];
     GetFontChar(c, char_data);
@@ -156,7 +150,7 @@ BOOL IsValidChar(char c)
     return TRUE;
 }
 
-void DrawHUDText(char *text, int sprite_col, int y_offset)
+void HUD_DrawText(char *text, int sprite_col, int y_offset)
 {
     UWORD *sprite = hud_sprites.sprite_data[sprite_col];
 
@@ -166,7 +160,7 @@ void DrawHUDText(char *text, int sprite_col, int y_offset)
     {
         if (IsValidChar(text[i])) 
         {
-            DrawCharToSprite(sprite, text[i], char_x, y_offset);
+            HUD_DrawCharToSprite(sprite, text[i], char_x, y_offset);
             char_x += 8;  // Move 8 pixels right for next character
         }
         // Invalid characters are simply skipped
@@ -216,7 +210,7 @@ void ULongToString(ULONG value, char *buffer, int width, char pad_char)
     buffer[width] = '\0';  // Null terminate
 }
 
-void ClearHUDSpriteArea(int start_sprite, int end_sprite, int y_offset, int height)
+void HUD_ClearSpriteArea(int start_sprite, int end_sprite, int y_offset, int height)
 {
     // Clear specific area of sprites
     for (int sprite = start_sprite; sprite < end_sprite && sprite < start_sprite + end_sprite; sprite++) {
@@ -229,7 +223,7 @@ void ClearHUDSpriteArea(int start_sprite, int end_sprite, int y_offset, int heig
     }
 }
 
-void DrawHUDScore(ULONG score, int start_sprite, int y_offset)
+void HUD_DrawScore(ULONG score, int start_sprite, int y_offset)
 {
     char score_string[7];  // 6 digits + null terminator
     
@@ -240,36 +234,36 @@ void DrawHUDScore(ULONG score, int start_sprite, int y_offset)
     ULongToString(score, score_string, 6, ' ');
     
     // Clear the sprite area first
-    ClearHUDSpriteArea(start_sprite, 3, y_offset, 8);
+    HUD_ClearSpriteArea(start_sprite, 3, y_offset, 8);
     
     // Draw the formatted score
-    DrawHUDString(score_string, start_sprite, y_offset);
+    HUD_DrawString(score_string, start_sprite, y_offset);
 }
 
-void DrawHUDRank(UBYTE rank, int start_sprite, int y_offset)
+void HUD_DrawRank(UBYTE rank, int start_sprite, int y_offset)
 {
     char rank_string[3];  
     
     ULongToString(rank, rank_string, 2, NULL);
     
     // Clear the sprite area first
-    ClearHUDSpriteArea(start_sprite, 3, y_offset, 8);
+    HUD_ClearSpriteArea(start_sprite, 3, y_offset, 8);
     
     // Draw the formatted score
-    DrawHUDString(rank_string, start_sprite, y_offset);
+    HUD_DrawString(rank_string, start_sprite, y_offset);
 }
 
-void UpdateScore(ULONG score)
+void HUD_UpdateScore(ULONG score)
 {
     if (counter % 120 == 0)
     {
         game_score += 500;
-        DrawHUDScore(game_score, 0, 24);
+        HUD_DrawScore(game_score, 0, 24);
     }
     counter++;
 }
 
-void UpdateRank(UBYTE rank)
+void HUD_UpdateRank(UBYTE rank)
 {
     if (counter % 75 == 0)
     {
@@ -281,8 +275,8 @@ void UpdateRank(UBYTE rank)
         }
 
         char *suffix = GetOrdinalSuffix(game_rank);
-        DrawHUDRank(game_rank,1,176);
-        DrawHUDString(suffix, 2,176);
+        HUD_DrawRank(game_rank,1,176);
+        HUD_DrawString(suffix, 2,176);
     }
     counter++;
 }
@@ -313,74 +307,76 @@ char* GetOrdinalSuffix(UBYTE number)
     }
 }
 
-void PreDrawHUD()
-{
- 
+void HUD_DrawAll()
+{   
+    // Draw the HUD one time. then update smaller
+    // things (Rank, Score etc) as needed
+
     const UBYTE status_y = 40;
 
-    SetHUDWhite();
+    HUD_SetWhite();
 
-    DrawHUDString("HI-SCORE", 0, 0);
-    DrawHUDString("00", 2, 8);
-    DrawHUDString("1UP", 0, 16);
-    DrawHUDString("00", 2, 24);
+    HUD_DrawString("HI-SCORE", 0, 0);
+    HUD_DrawString("00", 2, 8);
+    HUD_DrawString("1UP", 0, 16);
+    HUD_DrawString("00", 2, 24);
 
-    DrawHUDString(NEW_YORK , 3 , status_y+3);
-    DrawHUDString(CHICAGO , 3 , status_y+21);
-    DrawHUDString(ST_LOUIS , 3 , status_y+41);
-    DrawHUDString(HOUSTON , 3 , status_y+61);
-    DrawHUDString(LASVEGAS , 3 , status_y+81);
-    DrawHUDString(LASANGELES , 3 , status_y+101);
+    HUD_DrawString(NEW_YORK , 3 , status_y+3);
+    HUD_DrawString(CHICAGO , 3 , status_y+21);
+    HUD_DrawString(ST_LOUIS , 3 , status_y+41);
+    HUD_DrawString(HOUSTON , 3 , status_y+61);
+    HUD_DrawString(LASVEGAS , 3 , status_y+81);
+    HUD_DrawString(LASANGELES , 3 , status_y+101);
 
     // Stages
 
     // NY -> STL
-    DrawHUDString(PROGRESS_PIECE0, 2, status_y);
-    DrawHUDString(PROGRESS_PIECE2, 2, status_y+8);
-    DrawHUDString(PROGRESS_PIECE2, 2, status_y+16);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+20);
+    HUD_DrawString(PROGRESS_PIECE0, 2, status_y);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+8);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+16);
+    HUD_DrawString(PROGRESS_PIECE1, 2, status_y+20);
     // Chicago -> STL
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+28);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+36);
-    DrawHUDString(PROGRESS_PIECE0, 2, status_y+40);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+28);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+36);
+    HUD_DrawString(PROGRESS_PIECE0, 2, status_y+40);
     // STL -> Houston
-    DrawHUDString(PROGRESS_PIECE2, 2, status_y+48);
-    DrawHUDString(PROGRESS_PIECE2, 2, status_y+56);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+60);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+48);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+56);
+    HUD_DrawString(PROGRESS_PIECE1, 2, status_y+60);
     // Houston -> LV
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+68);
-    DrawHUDString(PROGRESS_PIECE3, 2, status_y+76);
-    DrawHUDString(PROGRESS_PIECE0, 2, status_y+80);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+68);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+76);
+    HUD_DrawString(PROGRESS_PIECE0, 2, status_y+80);
     // LV -> LA
-    DrawHUDString(PROGRESS_PIECE2, 2, status_y+88);
-    DrawHUDString(PROGRESS_PIECE2, 2, status_y+96);
-    DrawHUDString(PROGRESS_PIECE1, 2, status_y+100);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+88);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+96);
+    HUD_DrawString(PROGRESS_PIECE1, 2, status_y+100);
 
     // Fuel Gauge
 
     // Rank
-    DrawHUDString(BOX_TOP_LEFT_PIECE,0,160);
-    DrawHUDString(BOX_TOP_MIDDLE_PIECE,1,160);
-    DrawHUDString(BOX_TOP_MIDDLE_PIECE,2,160);
-    DrawHUDString(BOX_TOP_RIGHT_PIECE,3,160);
+    HUD_DrawString(BOX_TOP_LEFT_PIECE,0,160);
+    HUD_DrawString(BOX_TOP_MIDDLE_PIECE,1,160);
+    HUD_DrawString(BOX_TOP_MIDDLE_PIECE,2,160);
+    HUD_DrawString(BOX_TOP_RIGHT_PIECE,3,160);
  
-    DrawHUDString(BOX_LEFT_SIDE_PIECE,0,168);
-    DrawHUDString(" RANK", 0, 168);
-    DrawHUDString(BOX_RIGHT_SIDE_PIECE,3,168);
-    DrawHUDString(BOX_LEFT_SIDE_PIECE,0,176);
-    DrawHUDString(BOX_RIGHT_SIDE_PIECE,3,176);
+    HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,168);
+    HUD_DrawString(" RANK", 0, 168);
+    HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,168);
+    HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,176);
+    HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,176);
  
-    DrawHUDString(BOX_BTM_LEFT_PIECE,0,184);
-    DrawHUDString(BOX_BTM_MIDDLE_PIECE,1,184);
-    DrawHUDString(BOX_BTM_MIDDLE_PIECE,2,184);
-    DrawHUDString(BOX_BTM_RIGHT_PIECE,3,184);
+    HUD_DrawString(BOX_BTM_LEFT_PIECE,0,184);
+    HUD_DrawString(BOX_BTM_MIDDLE_PIECE,1,184);
+    HUD_DrawString(BOX_BTM_MIDDLE_PIECE,2,184);
+    HUD_DrawString(BOX_BTM_RIGHT_PIECE,3,184);
     
     // Speed
-    DrawHUDString("SPEED", 1, 200);
+    HUD_DrawString("SPEED", 1, 200);
 
 }
 
-void DrawHUDString(char *text, int start_sprite, int y_offset)
+void HUD_DrawString(char *text, int start_sprite, int y_offset)
 {
     int text_len = strlen(text);
     int sprite_index = start_sprite;
@@ -405,22 +401,22 @@ void DrawHUDString(char *text, int start_sprite, int y_offset)
         // Draw to current sprite if we have characters
         if (chars_in_sprite > 0) 
         {
-            DrawHUDText(sprite_text, sprite_index, y_offset);
+            HUD_DrawText(sprite_text, sprite_index, y_offset);
         }
         
         sprite_index++;
     }
 }
 
-void SetHUDSpritePositions(void)
+void HUD_SetSpritePositions(void)
 {
     for (int i = 0; i < 4; i++) 
     {
         UWORD logical_x = 192 + (i * 16);  // Where you want it on screen
         UWORD sprite_x = logical_x + 128;  // Actual sprite coordinate
         
-        SetSpritePosition(hud_sprites.sprite_data[i], sprite_x, 40, 40 + HUD_HEIGHT - 1);
+        Sprites_SetPosition(hud_sprites.sprite_data[i], sprite_x, 40, 40 + HUD_HEIGHT - 1);
     }
     
-    SetHUDSpritePointers();
+    HUD_SetSpritePointers();
 }

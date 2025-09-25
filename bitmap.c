@@ -82,3 +82,9 @@ UWORD BitmapEx_GetByteWidth(BitMapEx *bitmap)
 {
     return ((ULONG)bitmap->planes[1] - (ULONG)bitmap->planes[0]);
 }
+
+
+UBYTE BitmapEx_IsInterleaved(const BitMapEx *bitmap) 
+{
+	return (bitmap->depth > 1);
+}

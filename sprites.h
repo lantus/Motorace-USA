@@ -37,11 +37,11 @@ typedef struct SpriteSheet
     
 } Sprite;
 
-BOOL LoadSpriteSheet(char *filename,Sprite *sheet);
-BOOL ApplySpritePalette(Sprite *sheet);
-void ExtractSprites(UBYTE sprite_sheet_index) ;
-void InitializeSprites();
-void SetSpritePointers(ULONG *sprite, UBYTE n, UBYTE sprite_index);
-void SetSpritePosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop);
-void FreeSpriteSheet();
-void BuildCompositeSprite(ULONG *sprite, int n, Sprite *sheet);
+BOOL Sprites_LoadFromFile(char *filename,Sprite *sheet);
+BOOL Sprites_ApplyPalette(Sprite *sheet);
+void Sprites_Extract(UBYTE sprite_sheet_index) ;
+void Sprites_Initialize();
+void Sprites_SetPointers(ULONG *sprite, UBYTE n, UBYTE sprite_index);
+void Sprites_SetPosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop);
+void Sprites_Free();
+void Sprites_BuildComposite(ULONG *sprite, int n, Sprite *sheet);

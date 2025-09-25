@@ -1,3 +1,15 @@
+// Math
+#define ABS(x) ((x)<0 ? -(x) : (x))
+#define SGN(x) ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0))
+// #define SGN(x) ((x > 0) - (x < 0)) // Branchless, subtracting is slower?
+#define MIN(x,y) ((x)<(y)? (x): (y))
+#define MAX(x,y) ((x)>(y)? (x): (y))
+#define CLAMP(x, min, max) ((x) < (min)? (min) : ((x) > (max) ? (max) : (x)))
+#define CEIL_TO_FACTOR(x, m) ((((x) + (m) - 1) / (m)) * (m))
+#define FLOOR_TO_FACTOR(x, m) (((x) / (m)) * (m))
+#define ROUND_TO_FACTOR(x, m) ((((x) + (x) / 2) / (m)) * (m))
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #define SCREENWIDTH  320
 #define SCREENHEIGHT 256
 #define BLOCKHEIGHT 16
@@ -79,9 +91,9 @@ extern UWORD *mapdata;
 extern ULONG game_score;
 extern UBYTE game_rank;
 
-void InitializeGame();
-void NewGame(UBYTE difficulty);
-void GameLoop();
-void SetBackGroundColor(UWORD color);
-void FillScreen();
-void CheckJoyScroll();
+void Game_Initialize();
+void Game_NewGame(UBYTE difficulty);
+void Game_Loop();
+void Game_SetBackGroundColor(UWORD color);
+void Game_FillScreen();
+void Game_CheckJoyScroll();

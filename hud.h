@@ -33,18 +33,18 @@ typedef struct
 
 extern HUDSprites hud_sprites;
 
-void InitHUDSprites(void);
-void InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height);
-void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y);
-void DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode);
-void SetHUDSpritePointers(void);
-void SetHUDWhite(void);
-void PreDrawHUD();
-void DrawHUDText(char *text, int sprite_col, int y_offset);
-void DrawHUDString(char *text, int start_sprite, int y_offset);
-void DrawHUDStringWithColor(char *text, int start_sprite, int y_offset, int color_mode);
-void SetHUDSpritePositions(void);
-void UpdateScore(ULONG score);
-void UpdateSpeed();
-void UpdateRank(UBYTE rank);
+void HUD_InitSprites(void);
+void HUD_InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height);
+void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y);
+void HUD_DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode);
+void HUD_SetSpritePointers(void);
+void HUD_SetHUDWhite(void);
+void HUD_DrawAll();
+void HUD_DrawText(char *text, int sprite_col, int y_offset);
+void HUD_DrawString(char *text, int start_sprite, int y_offset);
+void HUD_DrawStringWithColor(char *text, int start_sprite, int y_offset, int color_mode);
+void HUD_SetSpritePositions(void);
+void HUD_UpdateScore(ULONG score);
+void HUD_UpdateSpeed();
+void HUD_UpdateRank(UBYTE rank);
 char *GetOrdinalSuffix(UBYTE number);

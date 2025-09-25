@@ -466,7 +466,7 @@ int main(void)
 
     Delay(10);
 	
-	InitializeGame();
+	Game_Initialize();
 
 	OpenMap();
 	OpenBlocks();
@@ -481,8 +481,8 @@ int main(void)
 
 	Copper_SetPalette(0, 0x003);
 
-	NewGame(0);
-	FillScreen();
+	Game_NewGame(0);
+	Game_FillScreen();
 
 	HardWaitBlit();
 	WaitVBL();
@@ -490,7 +490,8 @@ int main(void)
  
 	custom->copjmp2 = 0;
  
-	PreDrawHUD();
+	HUD_DrawAll();
+
 	while(!MouseLeft()) 
     {		 
 		WaitBlit();
@@ -513,14 +514,13 @@ int main(void)
 
 		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
  
-	
-		CheckJoyScroll();
+		Game_CheckJoyScroll();
 		UpdateCopperlist();
 
 		UpdateCars();
 
-		UpdateScore(0);
-		UpdateRank(0);
+		HUD_UpdateScore(0);
+		HUD_UpdateRank(0);
  
 	}
 

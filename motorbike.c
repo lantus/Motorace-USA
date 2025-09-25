@@ -10,6 +10,7 @@
 #include <proto/graphics.h>
 #include <proto/dos.h>
 #include "sprites.h"
+#include "memory.h"
 #include "motorbike.h"
 
 static Sprite spr_rsrc_bike_moving1;
@@ -45,34 +46,34 @@ WORD scroll_accumulator = 0;  // Fractional scroll position (fixed point)
 
 void LoadMotorbikeSprites()
 {
-    LoadSpriteSheet(BIKE_MOVING1,&spr_rsrc_bike_moving1);
-    LoadSpriteSheet(BIKE_MOVING2,&spr_rsrc_bike_moving2);
-    LoadSpriteSheet(BIKE_MOVING3,&spr_rsrc_bike_moving3);
-    LoadSpriteSheet(BIKE_LEFT1,&spr_rsrc_bike_turn_left1);
-    LoadSpriteSheet(BIKE_LEFT2,&spr_rsrc_bike_turn_left2);
-    LoadSpriteSheet(BIKE_RIGHT1,&spr_rsrc_bike_turn_right1);
-    LoadSpriteSheet(BIKE_RIGHT2,&spr_rsrc_bike_turn_right2);
+    Sprites_LoadFromFile(BIKE_MOVING1,&spr_rsrc_bike_moving1);
+    Sprites_LoadFromFile(BIKE_MOVING2,&spr_rsrc_bike_moving2);
+    Sprites_LoadFromFile(BIKE_MOVING3,&spr_rsrc_bike_moving3);
+    Sprites_LoadFromFile(BIKE_LEFT1,&spr_rsrc_bike_turn_left1);
+    Sprites_LoadFromFile(BIKE_LEFT2,&spr_rsrc_bike_turn_left2);
+    Sprites_LoadFromFile(BIKE_RIGHT1,&spr_rsrc_bike_turn_right1);
+    Sprites_LoadFromFile(BIKE_RIGHT2,&spr_rsrc_bike_turn_right2);
 
-    spr_bike_moving1 = AllocMem(4,MEMF_CHIP);
-    spr_bike_moving2 = AllocMem(4,MEMF_CHIP);
-    spr_bike_moving3 = AllocMem(4,MEMF_CHIP);
-    spr_bike_turn_left1 = AllocMem(4,MEMF_CHIP);
-    spr_bike_turn_left2 = AllocMem(4,MEMF_CHIP);
-    spr_bike_turn_right1 = AllocMem(4,MEMF_CHIP);
-    spr_bike_turn_right2 = AllocMem(4,MEMF_CHIP);
+    spr_bike_moving1 = Mem_AllocChip(4);
+    spr_bike_moving2 = Mem_AllocChip(4);
+    spr_bike_moving3 = Mem_AllocChip(4);
+    spr_bike_turn_left1 = Mem_AllocChip(4);
+    spr_bike_turn_left2 = Mem_AllocChip(4);
+    spr_bike_turn_right1 = Mem_AllocChip(4);
+    spr_bike_turn_right2 = Mem_AllocChip(4);
 
-    BuildCompositeSprite(spr_bike_moving1,2,&spr_rsrc_bike_moving1);
-    BuildCompositeSprite(spr_bike_moving2,2,&spr_rsrc_bike_moving2);
-    BuildCompositeSprite(spr_bike_moving3,2,&spr_rsrc_bike_moving3);
-    BuildCompositeSprite(spr_bike_turn_left1,2,&spr_rsrc_bike_turn_left1);
-    BuildCompositeSprite(spr_bike_turn_left2,2,&spr_rsrc_bike_turn_left2);
-    BuildCompositeSprite(spr_bike_turn_right1,2,&spr_rsrc_bike_turn_right1);
-    BuildCompositeSprite(spr_bike_turn_right2,2,&spr_rsrc_bike_turn_right2);
+    Sprites_BuildComposite(spr_bike_moving1,2,&spr_rsrc_bike_moving1);
+    Sprites_BuildComposite(spr_bike_moving2,2,&spr_rsrc_bike_moving2);
+    Sprites_BuildComposite(spr_bike_moving3,2,&spr_rsrc_bike_moving3);
+    Sprites_BuildComposite(spr_bike_turn_left1,2,&spr_rsrc_bike_turn_left1);
+    Sprites_BuildComposite(spr_bike_turn_left2,2,&spr_rsrc_bike_turn_left2);
+    Sprites_BuildComposite(spr_bike_turn_right1,2,&spr_rsrc_bike_turn_right1);
+    Sprites_BuildComposite(spr_bike_turn_right2,2,&spr_rsrc_bike_turn_right2);
 
     current_bike_sprite = spr_bike_moving1;
 
-    ApplySpritePalette(&spr_rsrc_bike_moving1);
- 	SetSpritePointers(current_bike_sprite,2, SPRITEPTR_ZERO_AND_ONE);
+    Sprites_ApplyPalette(&spr_rsrc_bike_moving1);
+ 	Sprites_SetPointers(current_bike_sprite,2, SPRITEPTR_ZERO_AND_ONE);
 
 }
 
@@ -125,10 +126,10 @@ void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state)
          bike_anim_lr_frames++;
     }
 
-    SetSpritePointers(current_bike_sprite,2, SPRITEPTR_ZERO_AND_ONE);
+    Sprites_SetPointers(current_bike_sprite,2, SPRITEPTR_ZERO_AND_ONE);
 
-    SetSpritePosition((UWORD *)current_bike_sprite[0],x,y,y+32);
-    SetSpritePosition((UWORD *)current_bike_sprite[1],x,y,y+32);
+    Sprites_SetPosition((UWORD *)current_bike_sprite[0],x,y,y+32);
+    Sprites_SetPosition((UWORD *)current_bike_sprite[1],x,y,y+32);
 
     bike_anim_frames++;
 }

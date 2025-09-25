@@ -34,7 +34,7 @@ UWORD null_sprite_data[] =
 };
 
 
-BOOL LoadSpriteSheet(char *filename,Sprite *sheet) 
+BOOL Sprites_LoadFromFile(char *filename,Sprite *sheet) 
 {   
     // Allocate memory for sprite sheet (4 bitplanes for 16 colors)
 
@@ -62,7 +62,7 @@ BOOL LoadSpriteSheet(char *filename,Sprite *sheet)
     return TRUE;
 }
 
-BOOL ApplySpritePalette(Sprite *sheet)
+BOOL Sprites_ApplyPalette(Sprite *sheet)
 {
     for(int i=0; i < 16; i++)
 	{
@@ -72,7 +72,7 @@ BOOL ApplySpritePalette(Sprite *sheet)
     return TRUE;
 }
 
-void InitializeSprites()
+void Sprites_Initialize()
 {
     // point sprites 0-7 to nothing
 
@@ -101,7 +101,7 @@ void InitializeSprites()
     CopSPR7PTL[val] = ((ULONG) null_sprite_data) & 0xffff;
 }
 
-void BuildCompositeSprite(ULONG *sprite, int n, Sprite *sheet)
+void Sprites_BuildComposite(ULONG *sprite, int n, Sprite *sheet)
 {
     for (int i = 0; i < n; i++) 
     {
@@ -109,7 +109,7 @@ void BuildCompositeSprite(ULONG *sprite, int n, Sprite *sheet)
     }
 }
 
-void SetSpritePointers(ULONG *sprite, UBYTE n, UBYTE sprite_index)
+void Sprites_SetPointers(ULONG *sprite, UBYTE n, UBYTE sprite_index)
 {
 
     UWORD *wp = CopSPR0PTH;
@@ -123,7 +123,7 @@ void SetSpritePointers(ULONG *sprite, UBYTE n, UBYTE sprite_index)
 
 }
 
-void SetSpritePosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop)
+void Sprites_SetPosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop)
 {
     sprite_data[0] = ((vstart & 0xff) << 8) | ((hstart >> 1) & 0xff);
     // vstop + high bit of vstart + low bit of hstart
@@ -136,7 +136,7 @@ void SetSpritePosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vst
 
 // Cleanup function
 
-void FreeSpriteSheet(void) 
+void Sprites_Free(void) 
 {
     // TODO: Cleanup!
 }
