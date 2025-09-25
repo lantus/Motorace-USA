@@ -115,6 +115,42 @@ void DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
     }
 }
 
+void DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode)
+{
+    UBYTE char_data[8];
+    GetFontChar(c, char_data);
+    
+    for (int row = 0; row < 8; row++) {
+        int sprite_line = y + row;
+        if (sprite_line >= HUD_HEIGHT) break;
+        
+        UBYTE font_row = char_data[row];
+        UWORD plane_a = 0, plane_b = 0;
+        
+        for (int bit = 0; bit < 8; bit++) {
+            if (font_row & (0x80 >> bit)) {
+                switch(color_mode) {
+                    case 0: // Transparent - don't set any bits
+                        break;
+                    case 1: // Color 1 of pair (plane B only)
+                        plane_b |= (0x8000 >> (x + bit));
+                        break;
+                    case 2: // Color 2 of pair (plane A only)  
+                        plane_a |= (0x8000 >> (x + bit));
+                        break;
+                    case 3: // Color 3 of pair (both planes)
+                        plane_a |= (0x8000 >> (x + bit));
+                        plane_b |= (0x8000 >> (x + bit));
+                        break;
+                }
+            }
+        }
+        
+        sprite_data[2 + sprite_line * 2] |= plane_a;
+        sprite_data[2 + sprite_line * 2 + 1] |= plane_b;
+    }
+}
+
 BOOL IsValidChar(char c)
 {
     return TRUE;
@@ -214,11 +250,6 @@ void DrawHUDRank(UBYTE rank, int start_sprite, int y_offset)
 {
     char rank_string[3];  
     
-    if (rank == 0xFF)
-    {
-        rank = 1;
-    }
-
     ULongToString(rank, rank_string, 2, NULL);
     
     // Clear the sprite area first
@@ -243,6 +274,12 @@ void UpdateRank(UBYTE rank)
     if (counter % 75 == 0)
     {
         game_rank--;
+
+        if (game_rank <= 1)
+        {
+            game_rank = 1;
+        }
+
         char *suffix = GetOrdinalSuffix(game_rank);
         DrawHUDRank(game_rank,1,176);
         DrawHUDString(suffix, 2,176);

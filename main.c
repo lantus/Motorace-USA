@@ -18,7 +18,8 @@
 #include "sprites.h"
 #include "motorbike.h"
 #include "hud.h"
- 
+#include "cars.h"
+
 volatile struct Custom *custom;
 
 enum
@@ -476,6 +477,8 @@ int main(void)
 	InitHUD();
 	InitCopperlist();
 
+	InitTestBOBs();
+
 	Copper_SetPalette(0, 0x003);
 
 	NewGame(0);
@@ -513,6 +516,9 @@ int main(void)
 	
 		CheckJoyScroll();
 		UpdateCopperlist();
+
+		UpdateCars();
+
 		UpdateScore(0);
 		UpdateRank(0);
  
