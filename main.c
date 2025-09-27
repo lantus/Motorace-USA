@@ -63,7 +63,6 @@ struct View *ActiView;
  
 const UBYTE* planes[BLOCKSDEPTH];
 
-struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 struct RawMap *Map;
 
 WORD	bitmapheight;
@@ -94,7 +93,6 @@ struct FetchInfo
 struct Interrupt vblankInt;
 BOOL running = TRUE;
 
-void InitHUD(void);
  
 __attribute__((always_inline)) inline short MouseLeft() { return !((*(volatile UBYTE*)0xbfe001) & 64); }
 __attribute__((always_inline)) inline short MouseRight() { return !((*(volatile UWORD*)0xdff016) & (1 << 10)); }
@@ -240,33 +238,6 @@ void WaitVbl()
         vpos &= 0x1ff00;
         if (vpos == (311 << 8)) break;
     }
-}
-
-struct BitMapEx *HUDBitmap = NULL;
-
-
-void InitHUD(void)
-{
-    HUDBitmap = BitMapEx_Create(BLOCKSDEPTH, 144, SCREENHEIGHT);
-    if (!HUDBitmap) {
-        Cleanup("Failed to create HUD bitmap");
-    }
-    
-    hud_buffer = HUDBitmap->planes[0];
-    
-    // Fill with bright cyan (color 6) for debugging
-    // Set bits in planes 1 and 2 only: 0110 binary = 6
-    const USHORT hud_lineSize = 144/8;  // 18 bytes
-    
-    memset(hud_buffer, 0, hud_lineSize * SCREENHEIGHT * BLOCKSDEPTH);  // Clear all
-    
-    // Set plane 1 (offset: hud_lineSize * 1)
-    memset(hud_buffer + hud_lineSize * 1, 0xFF, hud_lineSize * SCREENHEIGHT);
-    
-    // Set plane 2 (offset: hud_lineSize * 2)  
-    memset(hud_buffer + hud_lineSize * 2, 0xFF, hud_lineSize * SCREENHEIGHT);
-    
-    KPrintF("HUD initialized: 144 x 256 pixels (cyan for debug)\n");
 }
 
  
@@ -472,13 +443,11 @@ int main(void)
 	OpenBlocks();
 	OpenDisplay();
  
+	Cars_Initialize();
+
 	KillSystem();	
 
-	InitHUD();
 	InitCopperlist();
-
-	InitTestBOBs();
-
 	Copper_SetPalette(0, 0x003);
 
 	Game_NewGame(0);
@@ -514,10 +483,10 @@ int main(void)
 
 		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
  
-		Game_CheckJoyScroll();
-		UpdateCopperlist();
+		//Game_CheckJoyScroll();
+		//UpdateCopperlist();
 
-		UpdateCars();
+		Cars_Update();
 
 		HUD_UpdateScore(0);
 		HUD_UpdateRank(0);

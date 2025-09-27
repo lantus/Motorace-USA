@@ -20,6 +20,7 @@
 #include "hud.h"
 
 extern volatile struct Custom *custom;
+ 
 
 UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
@@ -32,6 +33,8 @@ LONG mapwidth,mapheight;
 
 UBYTE *frontbuffer,*blocksbuffer;
 UWORD *mapdata;
+
+struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 
 static void ScrollUp(void);
 

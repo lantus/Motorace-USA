@@ -22,5 +22,5 @@ typedef struct BitMapEx
 
 void        BitMapEx_Destroy(BitMapEx *bitmap);
 BitMapEx*   BitMapEx_Create(UBYTE depth, UWORD width, UWORD height);
-UWORD       BitmapEx_GetByteWidth(BitMapEx *bitmap);
+UWORD       BitmapEx_GetByteWidth(const BitMapEx *bitmap);
 UBYTE       BitmapEx_IsInterleaved(const BitMapEx *bitmap);

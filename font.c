@@ -15,7 +15,7 @@
 
 FontSheet game_font;
 
-BOOL LoadFontSheet(const char *filename)
+BOOL Font_LoadSheet(const char *filename)
 {
     BPTR font_handle = Open(filename, MODE_OLDFILE);
     if (!font_handle) {
@@ -47,7 +47,7 @@ BOOL LoadFontSheet(const char *filename)
     return TRUE;
 }
 
-void GetFontChar(char c, UBYTE *char_data)
+void Font_GetChar(char c, UBYTE *char_data)
 {
     // Calculate character position in font sheet
     UBYTE char_index = (UBYTE)c;

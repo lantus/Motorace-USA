@@ -91,6 +91,8 @@ extern UWORD *mapdata;
 extern ULONG game_score;
 extern UBYTE game_rank;
 
+extern struct BitMapEx *BlocksBitmap,*ScreenBitmap;
+
 void Game_Initialize();
 void Game_NewGame(UBYTE difficulty);
 void Game_Loop();

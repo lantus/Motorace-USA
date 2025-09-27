@@ -7,45 +7,41 @@ BitMapEx* BitMapEx_Create(UBYTE depth, UWORD width, UWORD height)
 {
     struct ExecBase *SysBase = *(struct ExecBase **)4;
     BitMapEx *bitmap;
-    ULONG plane_size;
+    ULONG total_size;
     UWORD bytes_per_row;
     int i;
     
-    // Allocate memory for the bitmap structure
     bitmap = (BitMapEx*)AllocMem(sizeof(BitMapEx), MEMF_FAST);
     if (!bitmap) {
         return NULL;
     }
     
-    // Allocate array for plane pointers
     bitmap->planes = (UBYTE**)AllocMem(depth * sizeof(UBYTE*), MEMF_FAST);
     if (!bitmap->planes) {
         FreeMem(bitmap, sizeof(BitMapEx));
         return NULL;
     }
     
-    // Initialize bitmap structure
     bitmap->depth = depth;
     bitmap->width = width;
     bitmap->height = height;
-    bitmap->bytes_per_row = width/8;
     
-    // Calculate plane size
-    bytes_per_row = width >> 3;
-    plane_size = bytes_per_row * height;
+    bytes_per_row = width >> 3;  // Bytes per plane per line
+    bitmap->bytes_per_row = bytes_per_row * depth;  // Interleaved stride
     
-    // Allocate memory for each bitplane
-    for (i = 0; i < depth; i++) {
-        bitmap->planes[i] = (UBYTE*)AllocMem(plane_size, MEMF_CHIP | MEMF_CLEAR);
-        if (!bitmap->planes[i]) {
-            // Cleanup on failure
-            for (int j = 0; j < i; j++) {
-                FreeMem(bitmap->planes[j], plane_size);
-            }
-            FreeMem(bitmap->planes, depth * sizeof(UBYTE*));
-            FreeMem(bitmap, sizeof(BitMapEx));
-            return NULL;
-        }
+    // Allocate ONE block for all planes (interleaved)
+    total_size = bytes_per_row * depth * height;  // 40 * 4 * 256 = 40960 bytes
+    
+    bitmap->planes[0] = (UBYTE*)AllocMem(total_size, MEMF_CHIP | MEMF_CLEAR);
+    if (!bitmap->planes[0]) {
+        FreeMem(bitmap->planes, depth * sizeof(UBYTE*));
+        FreeMem(bitmap, sizeof(BitMapEx));
+        return NULL;
+    }
+    
+    // Set up plane pointers for interleaved access
+    for (i = 1; i < depth; i++) {
+        bitmap->planes[i] = bitmap->planes[0] + (i * bytes_per_row);
     }
     
     return bitmap;
@@ -78,13 +74,21 @@ void BitMapEx_Destroy(BitMapEx *bitmap)
     FreeMem(bitmap, sizeof(BitMapEx));
 }
 
-UWORD BitmapEx_GetByteWidth(BitMapEx *bitmap)
+UWORD BitmapEx_GetByteWidth(const BitMapEx *bitmap)
 {
-    return ((ULONG)bitmap->planes[1] - (ULONG)bitmap->planes[0]);
+    if (BitmapEx_IsInterleaved(bitmap)) {
+        return (bitmap->width / 8) * bitmap->depth;  // Interleaved stride
+    } else {
+        return bitmap->width / 8;  // Non-interleaved plane width
+    }
 }
 
 
 UBYTE BitmapEx_IsInterleaved(const BitMapEx *bitmap) 
 {
-	return (bitmap->depth > 1);
+	 if (bitmap->depth < 2) return FALSE;
+    
+    // If plane pointers are close together (one line apart), it's interleaved
+    ULONG spacing = (ULONG)bitmap->planes[1] - (ULONG)bitmap->planes[0];
+    return (spacing == bitmap->bytes_per_row);
 }

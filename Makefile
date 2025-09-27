@@ -51,6 +51,7 @@ ifdef WINDOWS
 	@XCOPY "sprites\*" "out\sprites\" /K /D /H /Y /S /E
 	@XCOPY "tiles\*" "out\tiles\" /K /D /H /Y /S /E
 	@XCOPY "font\*" "out\font\" /K /D /H /Y /S /E
+	@XCOPY "objects\*" "out\objects\" /K /D /H /Y /S /E
 endif
 
 $(OUT).exe: $(OUT).elf

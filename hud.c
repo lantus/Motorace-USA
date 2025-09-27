@@ -39,7 +39,7 @@ void HUD_InitSprites(void)
         HUD_InitSpriteData(hud_sprites.sprite_data[i], HUD_START_X + (i * 16), 44, HUD_HEIGHT);
     }
 
-    LoadFontSheet("font/zippyfont.BPL");
+    Font_LoadSheet("font/zippyfont.BPL");
 }
 
 void HUD_InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height)
@@ -83,7 +83,7 @@ void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
 {
     UBYTE char_data[8];
 
-    GetFontChar(c, char_data);
+    Font_GetChar(c, char_data);
     
     for (int row = 0; row < 8; row++) 
     {
@@ -112,7 +112,7 @@ void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
 void HUD_DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode)
 {
     UBYTE char_data[8];
-    GetFontChar(c, char_data);
+    Font_GetChar(c, char_data);
     
     for (int row = 0; row < 8; row++) {
         int sprite_line = y + row;

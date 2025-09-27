@@ -8,5 +8,5 @@ typedef struct
 
 extern FontSheet game_font;
 
-BOOL LoadFontSheet(const char *filename);
-void GetFontChar(char c, UBYTE *char_data);
+BOOL Font_LoadSheet(const char *filename);
+void Font_GetChar(char c, UBYTE *char_data);
