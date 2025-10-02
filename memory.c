@@ -56,3 +56,8 @@ void* Mem_AllocAny(ULONG size)
 {
     return Mem_Alloc(size, MEMF_ANY | MEMF_CLEAR);
 }
+
+void* Mem_AllocPublic(ULONG size)
+{
+    return Mem_Alloc(size, MEMF_PUBLIC | MEMF_CLEAR);
+}

@@ -6,3 +6,4 @@ void Mem_Free(void *ptr, ULONG size);
 void* Mem_AllocChip(ULONG size);
 void* Mem_AllocFast(ULONG size);
 void* Mem_AllocAny(ULONG size);
+void* Mem_AllocPublic(ULONG size);
