@@ -23,53 +23,21 @@
 extern volatile struct Custom *custom;
 
 Car car[MAX_CARS];
-
+ 
 void Cars_LoadSprites()
 {
-
-    BPTR car_handle = Open(CAR1_FILE, MODE_OLDFILE);
-
-    if (!car_handle) 
-    {
-        KPrintF("Failed to Car Bob file: %s\n", CAR1_FILE);
-        return;
-    }
- 
-    if (Read(car_handle, car[0].bob->planes[0], BOB_DATA_SIZE) != BOB_DATA_SIZE) 
-    {
-        Close(car_handle);
-        return;
-    }
-
-     // Load mask (128 bytes)
-    car[0].mask = (UBYTE*)Mem_AllocChip(BOB_HEIGHT * (BOB_WIDTH/8));
-    
-    BPTR mask_handle = Open(CAR1_MASK, MODE_OLDFILE);
-    if (mask_handle) {
-        Read(mask_handle, car[0].mask, BOB_HEIGHT * (BOB_WIDTH/8));
-        Close(mask_handle);
-    } else {
-        KPrintF("Failed to open mask file\n");
-    }
-   
-    debug_register_bitmap(car[0].mask, "Car BOB", 32, 32, 1, debug_resource_bitmap_interleaved);
-    
+    car[0].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
 }
 
 void Cars_Initialize(void)
 {
-// Only initialize car[0]
     car[0].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
     car[0].background = NULL;  // Don't allocate, we won't use it
     car[0].visible = TRUE;
     car[0].x = 64;
     car[0].y = 100;
     car[0].off_screen = FALSE;
-    
-    if (!car[0].bob) {
-        KPrintF("Failed to allocate car BOB\n");
-    }
-    
+ 
     Cars_LoadSprites();
 }
 
@@ -85,21 +53,7 @@ void Cars_SaveBackground(Car *c)
 
   
 }
-
-// Draw BOB to screen
-void DrawCarBOB(Car *c)
-{
-
-   if (!c->visible) return;
  
-
-    Blitter_CopyMask( c->bob, c->old_x,c->old_y, ScreenBitmap, c->x,c->y ,32, 32, c->mask );
-    
-   
-}
- 
- 
-
 void Cars_UpdatePosition(Car *c)
 {
      if (!c->visible) return;
@@ -110,6 +64,61 @@ void Cars_UpdatePosition(Car *c)
     c->moved = TRUE;
     
  
+}
+
+void DrawCarBOB(Car *car)
+{
+    if (!car->visible ) return;
+    
+    if (car->x < 0 || car->x > 160 || car->y < -32 || car->y > SCREENHEIGHT + 32) {
+        return;
+    }
+    
+    // Array to receive the restore pointers
+    UBYTE *restore_ptrs[2];
+    
+    // PARAMETERS FOR 32x32 CAR BOB:
+    
+    // Position
+    WORD x = car->x;
+    WORD y = car->y;
+    
+    // Modulos: 
+ 
+    UWORD source_mod = 4; 
+    UWORD dest_mod =  (320 - 32) / 8;
+    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+ 
+    UWORD bltsize = (128 << 6) | 2;
+    
+    // Source data
+    UBYTE *source = (UBYTE*)car[0].data  ;
+    
+    // Mask data
+    UBYTE *mask = source + 32 / 8  * 1;
+    
+    // Destination
+    UBYTE *dest = screen.bitplanes;
+    
+    // Background buffer info (using your existing background save system)
+    UBYTE *fg_buf3 = car->background;  // Your background save buffer
+    UWORD fg_offset = 0;               // No offset into background buffer
+    UWORD fg_mod = BITMAPBYTESPERROW * BLOCKSDEPTH;  // 40 * 4 = 160 bytes per line
+    
+    // Call the generic BlitBob function
+    BlitBob(x, y, admod, bltsize,
+            restore_ptrs,    // Will be filled with pointers
+            source,          // Car sprite data
+            mask,            // Mask data (same as source for now)
+            dest,            // Screen buffer
+            fg_buf3,         // Background save buffer  
+            fg_offset,       // Offset into background buffer
+            fg_mod);         // Bytes per line in screen
+    
+    // Store the restore pointers for later use
+    car->restore.background_ptr = restore_ptrs[0];
+    car->restore.screen_ptr = restore_ptrs[1];
+    car->needs_restore = TRUE;
 }
 
 // Main BOB update function

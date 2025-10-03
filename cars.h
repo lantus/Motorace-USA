@@ -1,6 +1,12 @@
+typedef struct {
+    UBYTE *background_ptr;  // Pointer to saved background
+    UBYTE *screen_ptr;      // Pointer to screen location
+} RestorePtrs;
+
 typedef struct 
 {
     BitMapEx *bob;
+    UBYTE *data;      
     UBYTE *background;      // Saved background data  
     UBYTE *mask;            // Add this
     WORD x, y;              // Current screen position
@@ -9,6 +15,7 @@ typedef struct
     BOOL moved;             // Position changed this frame
     BOOL needs_restore;   // Only restore if we drew last frame
     BOOL off_screen;      // Skip blits entirely if off-screen
+    RestorePtrs restore;
 } Car;
 
 #define CAR1_FILE "objects/car.BPL"

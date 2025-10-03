@@ -16,3 +16,7 @@
 
 void Blitter_Copy(const BitMapEx *pSrc, WORD wSrcX, WORD wSrcY,BitMapEx *pDst, WORD wDstX, WORD wDstY, WORD wWidth, WORD wHeight, UBYTE ubMinterm);
 void Blitter_CopyMask(const BitMapEx *pSrc, WORD wSrcX, WORD wSrcY,BitMapEx *pDst, WORD wDstX, WORD wDstY,WORD wWidth, WORD wHeight, const UBYTE *pMsk);
+UBYTE* Bob_CreateMask(unsigned char* bob,int bitplanes, int frames, int rows, int words);
+void BlitBob(WORD x, WORD y, ULONG admod, UWORD bltsize, 
+             UBYTE **restore_ptrs, UBYTE *source, UBYTE *mask, UBYTE *dest,
+             UBYTE *fg_buf3, UWORD fg_offset, UWORD fg_mod);

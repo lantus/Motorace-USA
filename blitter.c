@@ -12,258 +12,73 @@
 #include "game.h"
 #include "sprites.h"
 #include "copper.h"
+#include "memory.h"
 #include "hardware.h"
 #include "bitmap.h"
 #include "blitter.h"
 
 extern volatile struct Custom *custom;
 
-void Blitter_Copy(const BitMapEx *pSrc, WORD wSrcX, WORD wSrcY, BitMapEx *pDst, WORD wDstX, WORD wDstY, WORD wWidth, WORD wHeight,UBYTE ubMinterm)
-{
-	// Helper vars
-	UWORD uwBlitWords, uwBlitWidth;
-	ULONG ulSrcOffs, ulDstOffs;
-	UBYTE ubShift, ubSrcDelta, ubDstDelta, ubWidthDelta, ubMaskFShift, ubMaskLShift;
-	// Blitter register values
-	UWORD uwBltCon0, uwBltCon1, uwFirstMask, uwLastMask;
-	WORD wSrcModulo, wDstModulo;
-
-	ubSrcDelta = wSrcX & 0xF;
-	ubDstDelta = wDstX & 0xF;
-	ubWidthDelta = (ubSrcDelta + wWidth) & 0xF;
-	UBYTE isBlitInterleaved = 1;
-	 
-
-	if(ubSrcDelta > ubDstDelta || ((wWidth+ubDstDelta+15) & 0xFFF0)-(wWidth+ubSrcDelta) > 16) {
-		uwBlitWidth = (wWidth+(ubSrcDelta>ubDstDelta?ubSrcDelta:ubDstDelta)+15) & 0xFFF0;
-		uwBlitWords = uwBlitWidth >> 4;
-
-		ubMaskFShift = ((ubWidthDelta+15)&0xF0)-ubWidthDelta;
-		ubMaskLShift = uwBlitWidth - (wWidth+ubMaskFShift);
-		uwFirstMask = 0xFFFF << ubMaskFShift;
-		uwLastMask = 0xFFFF >> ubMaskLShift;
-		if(ubMaskLShift > 16) { // Fix for 2-word blits
-			uwFirstMask &= 0xFFFF >> (ubMaskLShift-16);
-		}
-
-		ubShift = uwBlitWidth - (ubDstDelta+wWidth+ubMaskFShift);
-		uwBltCon1 = (ubShift << BSHIFTSHIFT) | BLITREVERSE;
-
-		// Position on the end of last row of the bitmap.
-		// For interleaved, position on the last row of last bitplane.
-		if(isBlitInterleaved) 
-        {
-			// TODO: fix duplicating bitmapIsInterleaved() check inside bitmapGetByteWidth()
-			ulSrcOffs = pSrc->bytes_per_row * (wSrcY + wHeight) - BitmapEx_GetByteWidth(pSrc) + ((wSrcX + wWidth + ubMaskFShift - 1) / 16) * 2;
-			ulDstOffs = pDst->bytes_per_row * (wDstY + wHeight) - BitmapEx_GetByteWidth(pDst) + ((wDstX + wWidth + ubMaskFShift - 1) / 16) * 2;
-		}
-		else {
-			ulSrcOffs = pSrc->bytes_per_row * (wSrcY + wHeight - 1) + ((wSrcX + wWidth + ubMaskFShift - 1) / 16) * 2;
-			ulDstOffs = pDst->bytes_per_row * (wDstY + wHeight - 1) + ((wDstX + wWidth + ubMaskFShift - 1) / 16) * 2;
-		}
-	}
-	else 
-    {
-		uwBlitWidth = (wWidth+ubDstDelta+15) & 0xFFF0;
-		uwBlitWords = uwBlitWidth >> 4;
-
-		ubMaskFShift = ubSrcDelta;
-		ubMaskLShift = uwBlitWidth-(wWidth+ubSrcDelta);
-
-		uwFirstMask = 0xFFFF >> ubMaskFShift;
-		uwLastMask = 0xFFFF << ubMaskLShift;
-
-		ubShift = ubDstDelta-ubSrcDelta;
-		uwBltCon1 = ubShift << BSHIFTSHIFT;
-
-		ulSrcOffs = pSrc->bytes_per_row * wSrcY + (wSrcX >> 3);
-		ulDstOffs = pDst->bytes_per_row * wDstY + (wDstX >> 3);
-	}
-
-	uwBltCon0 = (ubShift << ASHIFTSHIFT) | USEB|USEC|USED | ubMinterm;
-
-	if(isBlitInterleaved) 
-    {
-		wHeight *= pSrc->depth;
-		wSrcModulo = BitmapEx_GetByteWidth(pSrc) - uwBlitWords * 2;
-		wDstModulo = BitmapEx_GetByteWidth(pDst) - uwBlitWords * 2;
-
-		HardWaitBlit(); // Don't modify registers when other blit is in progress
-		custom->bltcon0 = uwBltCon0;
-		custom->bltcon1 = uwBltCon1;
-		custom->bltafwm = uwFirstMask;
-		custom->bltalwm = uwLastMask;
-		custom->bltbmod = wSrcModulo;
-		custom->bltcmod = wDstModulo;
-		custom->bltdmod = wDstModulo;
-		custom->bltadat = 0xFFFF;
-		custom->bltbpt = &pSrc->planes[0][ulSrcOffs];
-		custom->bltcpt = &pDst->planes[0][ulDstOffs];
-		custom->bltdpt = &pDst->planes[0][ulDstOffs];
-#if defined(USE_ECS_FEATURES)
-		custom->bltsizv = wHeight;
-		custom->bltsizh = uwBlitWords;
-#else
-		custom->bltsize = (wHeight << HSIZEBITS) | uwBlitWords;
-#endif
-	}
-	else
-    {
-		wSrcModulo = pSrc->bytes_per_row - uwBlitWords * 2;
-		wDstModulo = pDst->bytes_per_row - uwBlitWords * 2;
-		UBYTE ubPlane = MIN(pSrc->depth, pDst->depth);
-
-		HardWaitBlit(); // Don't modify registers when other blit is in progress
-		custom->bltcon0 = uwBltCon0;
-		custom->bltcon1 = uwBltCon1;
-		custom->bltafwm = uwFirstMask;
-		custom->bltalwm = uwLastMask;
-		custom->bltbmod = wSrcModulo;
-		custom->bltcmod = wDstModulo;
-		custom->bltdmod = wDstModulo;
-		custom->bltadat = 0xFFFF;
-		while(ubPlane--) 
-        {
-			HardWaitBlit();
-			// This hell of a casting must stay here or else large offsets get bugged!
-			custom->bltbpt = &pSrc->planes[ubPlane][ulSrcOffs];
-			custom->bltcpt = &pDst->planes[ubPlane][ulDstOffs];
-			custom->bltdpt = &pDst->planes[ubPlane][ulDstOffs];
-
-#if defined(USE_ECS_FEATURES)
-			custom->bltsizv = wHeight;
-			custom->bltsizh = uwBlitWords;
-#else
-			custom->bltsize = (wHeight << HSIZEBITS) | uwBlitWords;
-#endif
-		}
-	}
-
-	 
-}
-
-void Blitter_CopyMask(const BitMapEx *pSrc, WORD wSrcX, WORD wSrcY,BitMapEx *pDst, WORD wDstX, WORD wDstY,WORD wWidth, WORD wHeight, const UBYTE *pMsk)
-{
-	// Helper vars
-	UWORD uwBlitWords, uwBlitWidth;
-	ULONG ulSrcOffs, ulDstOffs;
-	UBYTE ubShift, ubSrcDelta, ubDstDelta, ubWidthDelta, ubMaskFShift, ubMaskLShift;
-	// Blitter register values
-	UWORD uwBltCon0, uwBltCon1, uwFirstMask, uwLastMask;
-	WORD wSrcModulo, wDstModulo;
-
-	ubSrcDelta = wSrcX & 0xF;
-	ubDstDelta = wDstX & 0xF;
-	ubWidthDelta = (ubSrcDelta + wWidth) & 0xF;
-	UBYTE isBlitInterleaved = 1;
-	
-
-	if(ubSrcDelta > ubDstDelta || ((wWidth+ubDstDelta+15) & 0xFFF0)-(wWidth+ubSrcDelta) > 16) {
-		uwBlitWidth = (wWidth+(ubSrcDelta>ubDstDelta?ubSrcDelta:ubDstDelta)+15) & 0xFFF0;
-		uwBlitWords = uwBlitWidth >> 4;
-
-		ubMaskFShift = ((ubWidthDelta+15)&0xF0)-ubWidthDelta;
-		ubMaskLShift = uwBlitWidth - (wWidth+ubMaskFShift);
-
-		// Position on the end of last row of the bitmap.
-		// For interleaved, position on the last row of last bitplane.
-		if(isBlitInterleaved) 
-        {
-			// TODO: fix duplicating bitmapIsInterleaved() check inside bitmapGetByteWidth()
-			ulSrcOffs = pSrc->bytes_per_row * (wSrcY + wHeight) - BitmapEx_GetByteWidth(pSrc) + ((wSrcX + wWidth + ubMaskFShift - 1) / 16) * 2;
-			ulDstOffs = pDst->bytes_per_row * (wDstY + wHeight) - BitmapEx_GetByteWidth(pDst) + ((wDstX + wWidth + ubMaskFShift - 1) / 16) * 2;
-		}
-		else {
-			ulSrcOffs = pSrc->bytes_per_row * (wSrcY + wHeight - 1) + ((wSrcX + wWidth + ubMaskFShift - 1) / 16) * 2;
-			ulDstOffs = pDst->bytes_per_row * (wDstY + wHeight - 1) + ((wDstX + wWidth + ubMaskFShift - 1) / 16) * 2;
-		}
-
-		uwFirstMask = 0xFFFF << ubMaskFShift;
-		uwLastMask = 0xFFFF >> ubMaskLShift;
-		if(ubMaskLShift > 16) { // Fix for 2-word blits
-			uwFirstMask &= 0xFFFF >> (ubMaskLShift-16);
-		}
-
-		ubShift = uwBlitWidth - (ubDstDelta+wWidth+ubMaskFShift);
-		uwBltCon1 = (ubShift << BSHIFTSHIFT) | BLITREVERSE;
-	}
-	else {
-		uwBlitWidth = (wWidth+ubDstDelta+15) & 0xFFF0;
-		uwBlitWords = uwBlitWidth >> 4;
-
-		ubMaskFShift = ubSrcDelta;
-		ubMaskLShift = uwBlitWidth-(wWidth+ubSrcDelta);
-
-		uwFirstMask = 0xFFFF >> ubMaskFShift;
-		uwLastMask = 0xFFFF << ubMaskLShift;
-
-		ubShift = ubDstDelta-ubSrcDelta;
-		uwBltCon1 = ubShift << BSHIFTSHIFT;
-
-		ulSrcOffs = pSrc->bytes_per_row * wSrcY + (wSrcX >> 3);
-		ulDstOffs = pDst->bytes_per_row * wDstY + (wDstX >> 3);
-	}
-
-	 uwBltCon0 = uwBltCon1 |USEA|USEB|USEC|USED|MINTERM_COOKIE;
-
-	if(isBlitInterleaved) 
-	{
-		wHeight *= pSrc->depth;
-		wSrcModulo = BitmapEx_GetByteWidth(pSrc) - uwBlitWords * 2;
-		wDstModulo = BitmapEx_GetByteWidth(pDst) - uwBlitWords * 2;
-
-		HardWaitBlit(); // Don't modify registers when other blit is in progress
-		custom->bltcon0 = uwBltCon0;
-		custom->bltcon1 = uwBltCon1;
-		custom->bltafwm = uwFirstMask;
-		custom->bltalwm = uwLastMask;
-		custom->bltamod = -4;
-		custom->bltbmod = wSrcModulo;
-		custom->bltcmod = wDstModulo;
-		custom->bltdmod = wDstModulo;
-		custom->bltapt = (APTR)&pMsk[ulSrcOffs];
-		custom->bltbpt = &pSrc->planes[0][ulSrcOffs];
-		custom->bltcpt = &pDst->planes[0][ulDstOffs];
-		custom->bltdpt = &pDst->planes[0][ulDstOffs];
-#if defined(ACE_USE_ECS_FEATURES)
-		custom->bltsizv = wHeight;
-		custom->bltsizh = uwBlitWords;
-#else
-		custom->bltsize = (wHeight << HSIZEBITS) | uwBlitWords;
-#endif
-	}
-	else 
-	{
-		wSrcModulo = pSrc->bytes_per_row - uwBlitWords * 2;
-		wDstModulo = pDst->bytes_per_row - uwBlitWords * 2;
-		UBYTE ubPlane = MIN(pSrc->depth, pDst->depth);
-
-		HardWaitBlit(); // Don't modify registers when other blit is in progress
-		custom->bltcon0 = uwBltCon0;
-		custom->bltcon1 = uwBltCon1;
-		custom->bltafwm = uwFirstMask;
-		custom->bltalwm = uwLastMask;
-		custom->bltapt = (APTR)&pMsk[ulSrcOffs];
-		custom->bltamod = wSrcModulo;
-		custom->bltbmod = wSrcModulo;
-		custom->bltcmod = wDstModulo;
-		custom->bltdmod = wDstModulo;
-
-		while(ubPlane--) {
-			HardWaitBlit();
-			// This hell of a casting must stay here or else large offsets get bugged!
-			custom->bltapt = (APTR)&pMsk[ulSrcOffs];
-			custom->bltbpt = &pSrc->planes[ubPlane][ulSrcOffs];
-			custom->bltcpt = &pDst->planes[ubPlane][ulDstOffs];
-			custom->bltdpt = &pDst->planes[ubPlane][ulDstOffs];
-
-#if defined(ACE_USE_ECS_FEATURES)
-			custom->bltsizv = wHeight;
-			custom->bltsizh = uwBlitWords;
-#else
-			custom->bltsize = (wHeight << HSIZEBITS) | uwBlitWords;
-#endif
-		}
-	}
+typedef struct {
+    UBYTE *background_save;     // Saved background data
+    UBYTE *screen_location;     // Where BOB was drawn on screen
+    WORD x, y;                  // BOB position
+    WORD width, height;         // BOB dimensions
+    BOOL needs_restore;         // Flag if background needs restoring
+} BOBRestore;
  
+ 
+
+// BLTCON0/1 table for different pixel shifts (0-15)
+static const ULONG bl_bob_table[16] = {
+    0x0fca0000, 0x1fca1000, 0x2fca2000, 0x3fca3000,
+    0x4fca4000, 0x5fca5000, 0x6fca6000, 0x7fca7000,
+    0x8fca8000, 0x9fca9000, 0xafcaa000, 0xbfcab000,
+    0xcfcac000, 0xdfcad000, 0xefcae000, 0xffcaf000
+};
+
+void BlitBob(WORD x, WORD y, ULONG admod, UWORD bltsize, 
+             UBYTE **restore_ptrs, UBYTE *source, UBYTE *mask, UBYTE *dest,
+             UBYTE *fg_buf3, UWORD fg_offset, UWORD fg_mod)
+{
+     
+    WORD original_x = x;
+    ULONG y_offset = y * fg_mod;
+    
+    // Calculate X shift (0-15 pixels)
+    WORD x_shift = x & 15;
+    ULONG bltcon = bl_bob_table[x_shift];
+    
+    // Calculate byte offset
+    WORD x_byte_offset = x >> 3;  // Divide by 8 for byte offset
+    ULONG total_offset = y_offset + x_byte_offset;
+    
+    // Calculate restore pointer 1 (background buffer)
+    UBYTE *restore_ptr1 = fg_buf3 + fg_offset + total_offset;
+    restore_ptrs[0] = restore_ptr1;
+    
+    // Calculate restore pointer 2 (destination)
+    UBYTE *restore_ptr2 = dest + total_offset;
+    restore_ptrs[1] = restore_ptr2;
+    
+    // Wait for blitter and set up blit operation
+    HardWaitBlit();
+    
+    custom->bltcon0 = (UWORD)(bltcon >> 16);
+    custom->bltcon1 = (UWORD)(bltcon & 0xFFFF);
+    
+    // Set modulos
+    custom->bltamod = (UWORD)(admod & 0xFFFF);        // A and B modulo
+    custom->bltbmod = (UWORD)(admod & 0xFFFF);
+    custom->bltcmod = (UWORD)(admod >> 16);           // C and D modulo  
+    custom->bltdmod = (UWORD)(admod >> 16);
+    
+    // Set pointers
+    custom->bltapt = mask;           // A = mask
+    custom->bltbpt = source;         // B = source
+    custom->bltcpt = restore_ptr2;   // C = destination (for cookie-cut)
+    custom->bltdpt = restore_ptr2;   // D = destination
+    
+    // Start the blit
+    custom->bltsize = bltsize;
 }
