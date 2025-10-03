@@ -1,3 +1,13 @@
+#ifndef _GAME_
+#define _GAME_
+
+#include <clib/exec_protos.h>
+#include "disk.h"
+#include "screen.h"
+
+#include "memory.h"
+#include "bitplanes.h"
+
 // Math
 #define ABS(x) ((x)<0 ? -(x) : (x))
 #define SGN(x) ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0))
@@ -92,6 +102,7 @@ extern ULONG game_score;
 extern UBYTE game_rank;
 
 extern struct BitMapEx *BlocksBitmap,*ScreenBitmap;
+extern void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy);
 
 void Game_Initialize();
 void Game_NewGame(UBYTE difficulty);
@@ -99,3 +110,5 @@ void Game_Loop();
 void Game_SetBackGroundColor(UWORD color);
 void Game_FillScreen();
 void Game_CheckJoyScroll();
+
+#endif

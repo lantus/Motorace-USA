@@ -18,7 +18,7 @@
 
 extern volatile struct Custom *custom;
 
-void Blitter_Copy(const BitMapEx *pSrc, WORD wSrcX, WORD wSrcY,BitMapEx *pDst, WORD wDstX, WORD wDstY, WORD wWidth, WORD wHeight,UBYTE ubMinterm)
+void Blitter_Copy(const BitMapEx *pSrc, WORD wSrcX, WORD wSrcY, BitMapEx *pDst, WORD wDstX, WORD wDstY, WORD wWidth, WORD wHeight,UBYTE ubMinterm)
 {
 	// Helper vars
 	UWORD uwBlitWords, uwBlitWidth;

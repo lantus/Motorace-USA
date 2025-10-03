@@ -130,7 +130,7 @@ void Game_CheckJoyScroll(void)
     SmoothScroll();  // Use smooth scrolling instead of loop
 }
 
-__attribute__((always_inline)) inline static void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy)
+__attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy)
 {
 	 
 	x = (x / 8) & 0xFFFE;
@@ -151,7 +151,7 @@ __attribute__((always_inline)) inline static void DrawBlock(LONG x,LONG y,LONG m
 	custom->bltamod = BLOCKSBYTESPERROW - (BLOCKWIDTH / 8);
 	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
 	custom->bltapt  = blocksbuffer + mapy + mapx;
-	custom->bltdpt	= frontbuffer + y + x;
+	custom->bltdpt	= screen.bitplanes + y + x;
 	
 	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH / 16);
 }

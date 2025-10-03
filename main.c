@@ -82,7 +82,7 @@ struct FetchInfo
 	WORD	modulooffset;
 } fetchinfo [] =
 {
-	{0x38,0xD0,0},	/* normal         */
+	{0x38,0xD0,0},	/* normal         */	
 	{0x38,0xC8,0}, 	/* BPL32          */
 	{0x38,0xC8,0}, 	/* BPAGEM         */
 	{0x38,0xB8,0}	/* BPL32 + BPAGEM */
@@ -117,12 +117,12 @@ static void InitCopperlist(void)
 
 	CopFETCHMODE[VALUE] = 0;
 
-	CopBPLCON0[VALUE] = 0x4200;				// 32 Colors
+	CopBPLCON0[VALUE] = 0x4200;			 
 	CopBPLCON1[VALUE] = 0;
 	CopBPLCON3[VALUE] = (1<<6);
 
 	// bitplane modulos
-l = (BITMAPBYTESPERROW * BLOCKSDEPTH) - (26  );
+	l = (BITMAPBYTESPERROW * BLOCKSDEPTH) - (26  );
 
 	CopBPLMODA[VALUE] = l;
 	CopBPLMODB[VALUE] = l;
@@ -138,14 +138,13 @@ l = (BITMAPBYTESPERROW * BLOCKSDEPTH) - (26  );
     CopDDFSTOP[VALUE] = 0x98;   // Changed from 0xD0 to stop at 192 pixels
 	
 	// plane pointers
-
+	 
 	const USHORT lineSize=320/8;
 	 
 	for(int a=0;a<BLOCKSDEPTH;a++)
-		planes[a]=(UBYTE*)frontbuffer + lineSize * a;
+		planes[a]=(UBYTE*)screen.bitplanes + lineSize * a;
 
 	Copper_SetBitplanePointer(BLOCKSDEPTH,planes , 0);
- 
 	custom->intena = 0x7FFF;
 	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE;
 	custom->cop2lc = (ULONG)CopperList;	
@@ -173,11 +172,11 @@ void Cleanup(char *msg)
 		BitMapEx_Destroy(ScreenBitmap);
 	}
 
-	if (BlocksBitmap)
-	{
-		WaitBlit();
-		BitMapEx_Destroy(BlocksBitmap);
-	}
+	//if (BlocksBitmap)
+	//{
+	//	WaitBlit();
+	//	BitMapEx_Destroy(BlocksBitmap);
+	//}
 
 	if (Map) FreeMem(Map,MapSize);
 	if (MapHandle) Close(MapHandle);
@@ -192,10 +191,9 @@ void Cleanup(char *msg)
 static void OpenDisplay(void)
 {
 	bitmapheight = BITMAPHEIGHT + 3;
-
-	ScreenBitmap = BitMapEx_Create(BLOCKSDEPTH,BITMAPWIDTH,bitmapheight);
-	frontbuffer = ScreenBitmap->planes[0];
-
+ 
+	Screen_Initialize(BITMAPWIDTH,bitmapheight,BLOCKSDEPTH, FALSE);
+ 
 }
 
 void WaitLine(USHORT line) 
@@ -243,28 +241,9 @@ void WaitVbl()
  
 static void OpenMap(void)
 {
-	if (!(MapHandle = Open("maps/level1.map",MODE_OLDFILE)))
-	{
-		Cleanup("Find Not Found");
-	}
+	Map = Disk_AllocAndLoadAsset("maps/level1.map",MEMF_PUBLIC);
 	
-	Seek(MapHandle,0,OFFSET_END);
-	MapSize = Seek(MapHandle,0,OFFSET_BEGINNING);
-
-	if (!(Map = AllocMem(MapSize,MEMF_PUBLIC)))
-	{
-		Cleanup("Out of memory!");
-	}
-	
-	if (Read(MapHandle,Map,MapSize) != MapSize)
-	{
-	 
-		Cleanup(s);
-	}
-	
-	Close(MapHandle);MapHandle = 0;
-	
-	mapdata = Map->data;
+	mapdata = (UWORD *)Map->data;
 	mapwidth = Map->mapwidth;
 	mapheight = Map->mapheight;  
 }
@@ -276,47 +255,16 @@ static void OpenBlocks(void)
 
 	BlocksBitmap = BitMapEx_Create(BLOCKSDEPTH, BLOCKSWIDTH, BLOCKSHEIGHT);
 
-	if (!(BlocksBitmap))
-	{	 
-		Cleanup("Can't alloc blocks bitmap!");
-	}
-	
-	if (!(MapHandle = Open("tiles/lv1_tiles.BPL",MODE_OLDFILE)))
-	{
-		Cleanup(s);
-	}
-	
-	l = BLOCKSWIDTH * BLOCKSHEIGHT * BLOCKSDEPTH / 8;
-	
-	if (Read(MapHandle,BlocksBitmap->planes[0],l) != l)
-	{
-	 
-		Cleanup(s);
-	}
-	
-	Close(MapHandle);MapHandle = 0;
-
-
-	if (!(MapHandle = Open("tiles/lv1_tiles.PAL",MODE_OLDFILE)))
-	{
-		Cleanup(s);
-	}
-
-	if (Read(MapHandle,colors,PALSIZE) != PALSIZE)
-	{
-		Cleanup(s);
-	}
-
-	Close(MapHandle);MapHandle = 0;
-	
+ 
+	Disk_LoadAsset((UBYTE *)BlocksBitmap->planes[0],"tiles/lv1_tiles.BPL");
+	Disk_LoadAsset((UBYTE *)colors,"tiles/lv1_tiles.PAL");
+ 
 	blocksbuffer = BlocksBitmap->planes[0];
 
 	debug_register_bitmap(blocksbuffer, "blocksbuffer", 320, 256, 4, debug_resource_bitmap_interleaved);
 	debug_register_palette(colors,"palette",16,0); 
-
+ 
 }
-
-
  
 void TakeSystem() 
 {
@@ -397,8 +345,6 @@ static __attribute__((interrupt)) void InterruptHandler()
 #define GAMEAREA_BLOCKS 28          // blocks across the game area
  
 
-
-
 __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 {
 	LONG planeadd;
@@ -406,7 +352,7 @@ __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 	planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * BITMAPBYTESPERROW * BLOCKSDEPTH;
 	
 	// set plane pointers
-	 
+ 
 	Copper_SetBitplanePointer(BLOCKSDEPTH, planes, planeadd);
  
 }
@@ -436,11 +382,11 @@ int main(void)
 	WaitVbl();
 
     Delay(10);
-	
+ 
 	Game_Initialize();
 
-	OpenMap();
 	OpenBlocks();
+	OpenMap();
 	OpenDisplay();
  
 	Cars_Initialize();
@@ -452,7 +398,7 @@ int main(void)
 
 	Game_NewGame(0);
 	Game_FillScreen();
-
+ 
 	HardWaitBlit();
 	WaitVBL();
 
@@ -463,7 +409,7 @@ int main(void)
 
 	while(!MouseLeft()) 
     {		 
-		WaitBlit();
+ 		WaitBlit();
 		
 		WaitLine(200);
  
@@ -480,17 +426,19 @@ int main(void)
 			bike_position_x+=2;
 			bike_state = BIKE_STATE_RIGHT;
 		}
+ 
 
 		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
  
-		//Game_CheckJoyScroll();
-		//UpdateCopperlist();
+		Game_CheckJoyScroll();
 
+		UpdateCopperlist();
 		Cars_Update();
 
 		HUD_UpdateScore(0);
 		HUD_UpdateRank(0);
- 
+  
+	 
 	}
 
     ActivateSystem();

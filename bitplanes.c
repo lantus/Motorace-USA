@@ -83,5 +83,5 @@ void Bitplanes_SwapBuffers()
         screenbuffer_idx = 0;
     }
 
-   // Bitplanes_Point(screen.bitplanes+bitplaneOffset, CopPLANE1H ,screen.depth);
+    Bitplanes_Point(screen.bitplanes, CopPLANE1H ,screen.depth);
 }
