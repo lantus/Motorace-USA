@@ -83,7 +83,7 @@ void DrawCarBOB(Car *car)
     WORD x = car->x;
     WORD y = car->y;
     
-    // Modulos: 
+    // Modulos - Optimize these later
  
     UWORD source_mod = 4; 
     UWORD dest_mod =  (320 - 32) / 8;
@@ -92,7 +92,7 @@ void DrawCarBOB(Car *car)
     UWORD bltsize = (128 << 6) | 2;
     
     // Source data
-    UBYTE *source = (UBYTE*)car[0].data  ;
+    UBYTE *source = (UBYTE*)car[0].data;
     
     // Mask data
     UBYTE *mask = source + 32 / 8  * 1;
@@ -109,7 +109,7 @@ void DrawCarBOB(Car *car)
     BlitBob(x, y, admod, bltsize,
             restore_ptrs,    // Will be filled with pointers
             source,          // Car sprite data
-            mask,            // Mask data (same as source for now)
+            mask,            // Mask data  
             dest,            // Screen buffer
             fg_buf3,         // Background save buffer  
             fg_offset,       // Offset into background buffer
