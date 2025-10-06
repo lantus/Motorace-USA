@@ -430,9 +430,10 @@ int main(void)
 
 		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
  
-		Game_CheckJoyScroll();
+//		Game_CheckJoyScroll();
 
-		UpdateCopperlist();
+ 
+//		UpdateCopperlist();
 		Cars_Update();
 
 		HUD_UpdateScore(0);
