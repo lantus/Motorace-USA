@@ -145,6 +145,21 @@ extern WORD CopPLANE7H[];
 extern WORD CopPLANE7L[];
 extern WORD CopPLANE8H[];
 extern WORD CopPLANE8L[];
+
+extern WORD CopVIDEOSPLIT[];
+extern WORD CopVIDEOSPLITMODULO[];
+extern WORD CopVIDEOSPLIT2[];
+
+extern WORD CopPLANE2_1H[];
+extern WORD CopPLANE2_2H[];
+extern WORD CopPLANE2_3H[];
+extern WORD CopPLANE2_4H[];
+extern WORD CopPLANE2_5H[];
+extern WORD CopPLANE2_6H[];
+extern WORD CopPLANE2_7H[];
+extern WORD CopPLANE2_8H[];
+
+extern WORD CopVIDEOSPLITRESETMODULO[];
  
 void Copper_SetBitplanePointer(int plane, const UBYTE **planes, LONG offset);
 void Copper_SetPalette(int index,USHORT color);

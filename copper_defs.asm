@@ -76,6 +76,20 @@
 	XDEF	CopPLANE8H
 	XDEF	CopPLANE8L
 
+	XDEF	CopVIDEOSPLIT
+	XDEF	CopVIDEOSPLITMODULO
+	XDEF	CopVIDEOSPLIT2
+	XDEF	CopVIDEOSPLITRESETMODULO
+
+	XDEF	CopPLANE2_1H
+	XDEF	CopPLANE2_2H
+	XDEF	CopPLANE2_3H
+	XDEF	CopPLANE2_4H
+	XDEF	CopPLANE2_5H
+	XDEF	CopPLANE2_6H
+	XDEF	CopPLANE2_7H
+	XDEF	CopPLANE2_8H	
+
 CopperList:
 	dc.w	$180,0
 CopSPR0PTH:
@@ -251,6 +265,46 @@ CopPLANE8H:
 
 CopPLANE8L:
 	dc.w	$fe,0
+
+CopVIDEOSPLIT:
+	dc.w	-1,-2
+	dc.w	-1,-2
+
+CopVIDEOSPLITMODULO:
+	dc.w	$108,0
+	dc.w	$10A,0
+
+CopVIDEOSPLIT2:
+	dc.w	-1,-2
+	dc.w	-1,-2
+	
+CopPLANE2_1H:
+	dc.w	$e0,0
+
+CopPLANE2_2H:
+	dc.w	$e4,0
+
+CopPLANE2_3H:
+	dc.w	$e8,0
+
+CopPLANE2_4H:
+	dc.w	$ec,0
+
+CopPLANE2_5H:
+	dc.w	$f0,0
+
+CopPLANE2_6H:
+	dc.w	$f4,0
+
+CopPLANE2_7H:
+	dc.w	$f8,0
+
+CopPLANE2_8H:
+	dc.w	$fc,0
+
+CopVIDEOSPLITRESETMODULO:
+	dc.w	$108,0
+	dc.w	$10A,0
 
 	dc.w	-1,-2
 
