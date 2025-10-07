@@ -122,7 +122,7 @@ static void InitCopperlist(void)
 	CopBPLCON3[VALUE] = (1<<6);
 
 	// bitplane modulos
-	l = (BITMAPBYTESPERROW * BLOCKSDEPTH) - (26  );
+	l = (BITMAPBYTESPERROW * BLOCKSDEPTH) - (24 );
 
 	CopBPLMODA[VALUE] = l;
 	CopBPLMODB[VALUE] = l;
@@ -135,7 +135,7 @@ static void InitCopperlist(void)
 	// display data fetch start/stop
 	
 	CopDDFSTART[VALUE] = 0x38;
-    CopDDFSTOP[VALUE] = 0x98;   // Changed from 0xD0 to stop at 192 pixels
+    CopDDFSTOP[VALUE] = 0x90;   // stop at 192 pixels
 	
 	// plane pointers
 	 
@@ -409,9 +409,10 @@ int main(void)
 
 	while(!MouseLeft()) 
     {		 
- 		WaitBlit();
-		
-		WaitLine(200);
+ 		 
+		WaitLine(1);
+ 
+ 
  
 		bike_state = BIKE_STATE_MOVING;
 
@@ -430,11 +431,13 @@ int main(void)
 
 		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
  
-//		Game_CheckJoyScroll();
+		//Game_CheckJoyScroll();
 
  
-//		UpdateCopperlist();
+		//UpdateCopperlist();
 		Cars_Update();
+
+		HardWaitBlit();
 
 		HUD_UpdateScore(0);
 		HUD_UpdateRank(0);

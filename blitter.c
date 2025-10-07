@@ -116,9 +116,7 @@ void BlitBobSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     WORD x_offset = x >> 3;
     APTR dest_ptr = (UBYTE *)src + x_offset + y_offset;
     ULONG restore_admod = (admod & 0xFFFF0000);
-    
  
-
     /* Save background */
     HardWaitBlit();
     custom->bltalwm = 0xFFFF;
@@ -126,7 +124,7 @@ void BlitBobSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltcon1 = (UWORD)(bl_copy[0]);
    
     custom->bltamod = 36;
-    custom->bltdmod = 4;
+    custom->bltdmod = 0;
     
  
     custom->bltapt = dest_ptr;
