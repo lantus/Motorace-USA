@@ -159,15 +159,15 @@ void BlitClearScreen(APTR buffer, UWORD bltsize)
 void BlitRestoreBobs(ULONG admod, UWORD bltsize, WORD count, APTR *restore_array)
 {
     WORD i;
-   // volatile UWORD *dmaconr_ptr;
+    volatile UWORD *dmaconr_ptr;
     
     if (restore_array[0] == NULL)
         return;
     
     /* Setup optimized blitter wait */
-   // dmaconr_ptr = &custom->dmaconr;
+    dmaconr_ptr = &custom->dmaconr;
     
-   // custom->dmacon = 0x8400;
+    custom->dmacon = 0x8400;
     HardWaitBlit();
     
     /* One-time setup */
@@ -186,7 +186,7 @@ void BlitRestoreBobs(ULONG admod, UWORD bltsize, WORD count, APTR *restore_array
         custom->bltsize = bltsize;
     }
     
- //   custom->dmacon = 0x0400;
+    custom->dmacon = 0x0400;
 }
 
 void BlitBob(WORD x, WORD y, ULONG admod, UWORD bltsize, 
@@ -243,11 +243,9 @@ void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     ULONG bltcon = bl_bob_table[shift];
     WORD x_offset = x >> 3;
     ULONG offset = y_offset + x_offset;
-    APTR buf3_ptr = (UBYTE *)fg_buf32 + fg_offset2 + offset;
+ 
     APTR dest_ptr = (UBYTE *)dest + offset;
-    
-    *restore_ptrs++ = buf3_ptr;
-   // *restore_ptrs = dest_ptr;
+ 
     
     HardWaitBlit();
     custom->bltcon0 = (UWORD)(bltcon >> 16);

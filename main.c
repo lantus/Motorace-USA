@@ -410,8 +410,7 @@ int main(void)
 	while(!MouseLeft()) 
     {		 
  		 
-		WaitLine(1);
- 
+		WaitVBeam(220);
  
  
 		bike_state = BIKE_STATE_MOVING;

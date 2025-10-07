@@ -22,7 +22,7 @@ typedef struct
 #define CAR1_MASK "objects/carmask.BPL"
 
 // BOB system definitions
-#define MAX_CARS 1
+#define MAX_CARS 4
 #define BOB_WIDTH 32
 #define BOB_HEIGHT 32
 #define BOB_PLANES 4
