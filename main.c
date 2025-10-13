@@ -192,7 +192,7 @@ static void OpenDisplay(void)
 {
 	bitmapheight = BITMAPHEIGHT + 3;
  
-	Screen_Initialize(BITMAPWIDTH,bitmapheight,BLOCKSDEPTH, FALSE);
+	Screen_Initialize_DoubleBuff(BITMAPWIDTH,bitmapheight,BLOCKSDEPTH, FALSE);
  
 }
 
@@ -382,7 +382,7 @@ int main(void)
 	WaitVbl();
 
     Delay(10);
- 
+
 	Game_Initialize();
 
 	OpenBlocks();
@@ -393,7 +393,9 @@ int main(void)
 
 	KillSystem();	
 
+
 	InitCopperlist();
+
 	Copper_SetPalette(0, 0x003);
 
 	Game_NewGame(0);
@@ -434,6 +436,7 @@ int main(void)
 
 		
 		UpdateCopperlist();
+		
 		//Cars_Update();
 
 		HardWaitBlit();

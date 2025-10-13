@@ -33,19 +33,29 @@ struct AmigaScreen {
     UBYTE   display_start_offset_bytes;
     BOOL    dual_playfield;
     UBYTE*  bitplanes;
+    UBYTE*  offscreen_bitplanes;
     ULONG   framebuffer_size;
     UWORD   row_size;
     ULONG   offset;
 };
 
 extern struct AmigaScreen screen;
+extern struct AmigaScreen off_screen;
 extern UBYTE screenbuffer_idx;
+extern UBYTE* current_screen_bitplanes;
+
 
 void Screen_Initialize(
     UWORD   width,
     UWORD   height,
     UBYTE   depth,
     BOOL    dual_playfield);
+
+void Screen_Initialize_DoubleBuff(
+UWORD   width,
+UWORD   height,
+UBYTE   depth,
+BOOL    dual_playfield);
 
 void Screen_FadePalette(UWORD* rawPalette,UWORD* copPalette,USHORT frame,USHORT colors);
 
