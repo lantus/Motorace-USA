@@ -10,9 +10,9 @@ extern struct Custom custom;
 struct AmigaScreen screen;
 struct AmigaScreen off_screen;
  
-UBYTE screenbuffer_idx = 0;
-
-UBYTE* current_screen_bitplanes;
+UBYTE current_buffer = 0;
+UBYTE *draw_buffer;
+UBYTE *display_buffer; 
 
 void Screen_Initialize(UWORD width,
     UWORD   height,
@@ -31,8 +31,7 @@ void Screen_Initialize(UWORD width,
     screen.row_size = (width/8);
     screen.dual_playfield = dual_playfield;
     screen.height = height;
-
-    current_screen_bitplanes = screen.bitplanes;
+ 
 }
 
 void Screen_Initialize_DoubleBuff(UWORD width,
@@ -53,11 +52,12 @@ void Screen_Initialize_DoubleBuff(UWORD width,
     screen.row_size = (width/8);
     screen.dual_playfield = dual_playfield;
     screen.height = height;
-
-    current_screen_bitplanes = screen.bitplanes;
-
+ 
     BlitClearScreen(screen.bitplanes, 320 << 6 | 16 );
     BlitClearScreen(screen.offscreen_bitplanes, 320 << 6 | 16 );
+
+    draw_buffer = screen.bitplanes;
+    display_buffer = screen.bitplanes;
   
     debug_register_bitmap(screen.bitplanes, "screen.bitplanes", 320, 256, 4, 1 << 0);
     debug_register_bitmap(screen.offscreen_bitplanes, "screen.offscreen_bitplanes", 320, 256, 4, 1 << 0);

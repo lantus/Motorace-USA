@@ -235,6 +235,21 @@ void BlitBob(WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltsize = bltsize;
 }
 
+void BlitClearBob(UBYTE *restore_ptr, UBYTE *screen_ptr, UWORD modulo, UWORD bltsize)
+{
+    if (!restore_ptr) return;
+    
+    HardWaitBlit();
+    
+    custom->bltcon0 = 0x09F0; // Copy A to D (simple copy)
+    custom->bltcon1 = 0;
+    custom->bltamod = 0;      // Source is packed (saved background)
+    custom->bltdmod = modulo; // Destination has modulo (screen buffer)
+    custom->bltapt = restore_ptr;  // Source: saved background
+    custom->bltdpt = screen_ptr;   // Destination: screen location
+    custom->bltsize = bltsize;
+}
+ 
 void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
              APTR *restore_ptrs, APTR src, APTR mask, APTR dest)
 {
@@ -245,7 +260,7 @@ void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     ULONG offset = y_offset + x_offset;
  
     APTR dest_ptr = (UBYTE *)dest + offset;
- 
+    
     
     HardWaitBlit();
     custom->bltcon0 = (UWORD)(bltcon >> 16);
@@ -261,4 +276,5 @@ void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltcpt = dest_ptr;
     custom->bltdpt = dest_ptr;
     custom->bltsize = bltsize;
+ 
 }

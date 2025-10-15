@@ -9,3 +9,4 @@ void BlitRestoreBobs(ULONG admod, UWORD bltsize, WORD count, APTR *restore_array
 void BlitClearScreen(APTR buffer, UWORD bltsize);
 void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
              APTR *restore_ptrs, APTR src, APTR mask, APTR dest);
+void BlitClearBob(UBYTE *restore_ptr, UBYTE *screen_ptr, UWORD modulo, UWORD bltsize);

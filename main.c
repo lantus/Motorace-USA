@@ -357,7 +357,13 @@ __attribute__((always_inline)) inline static void UpdateCopperlist(void)
  
 }
 
+static __attribute__((interrupt)) void interruptHandler() 
+{
+	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
+
  
+}
+
 int main(void)
 {
 	LONG x = 0;
@@ -391,9 +397,7 @@ int main(void)
  
 	Cars_Initialize();
 
-	KillSystem();	
-
-
+	KillSystem();
 	InitCopperlist();
 
 	Copper_SetPalette(0, 0x003);
@@ -404,17 +408,19 @@ int main(void)
 	HardWaitBlit();
 	WaitVBL();
 
- 
 	custom->copjmp2 = 0;
  
+	//SetInterruptHandler((APTR)interruptHandler);
+	//custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB;
+
 	HUD_DrawAll();
 
 	while(!MouseLeft()) 
     {		 
- 		 
-		WaitVBeam(220);
- 
- 
+		WaitVBeam(1);
+		
+		Cars_RestoreSaved();
+		
 		bike_state = BIKE_STATE_MOVING;
 
 		if (JoyLeft())
@@ -429,22 +435,18 @@ int main(void)
 			bike_state = BIKE_STATE_RIGHT;
 		}
  
+		Game_CheckJoyScroll();
 
 		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
  
-		Game_CheckJoyScroll();
-
-		
-		UpdateCopperlist();
-		
-		//Cars_Update();
-
-		HardWaitBlit();
-
 		HUD_UpdateScore(0);
 		HUD_UpdateRank(0);
-  
-	 
+		
+ 		Game_SwapBuffers();
+		Cars_Update();
+		
+		WaitVBL();
+	
 	}
 
     ActivateSystem();

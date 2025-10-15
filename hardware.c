@@ -124,13 +124,11 @@ void WaitVBL(void)
 
 void WaitVBeam(ULONG line)
 {
-	ULONG vpos;
-
-	line *= 0x100;
-
-	do {
-			vpos = *(ULONG *)0xdff004;
-	} while ((vpos & 0x1FF00) != line);
+	while (1) {
+		volatile ULONG vpos=*(volatile ULONG*)0xDFF004;
+		if(((vpos >> 8) & 511) == line)
+			break;
+	}
 
 }
 

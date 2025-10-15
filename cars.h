@@ -33,3 +33,4 @@ void Cars_Update(void);
 void Cars_Initialize(void);
 void Cars_UpdatePosition(Car *obj_car);
 void Cars_LoadSprites();
+void Cars_RestoreSaved();

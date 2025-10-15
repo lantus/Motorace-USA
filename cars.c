@@ -141,16 +141,14 @@ void SaveCarBOB(Car *car)
     UWORD bltsize = (128 << 6) | 2;
 
     // Source data
-    UBYTE *source = (UBYTE*)screen.bitplanes;
+    UBYTE *source = (UBYTE*)draw_buffer;
 
     // Mask data
     UBYTE *mask = source + 32 / 8  * 1;
 
     // Destination
     UBYTE *dest = car->background;
-
  
-
     BlitBobSave(160, x , y ,  admod, bltsize, restore_ptr, &restore_ptrs[0], source, mask, dest);
  
 }
@@ -183,17 +181,17 @@ void DrawCarBOB(Car *car)
     UBYTE *mask = source + 32 / 8  * 1;
     
     // Destination
-    UBYTE *dest = screen.bitplanes;
+    UBYTE *dest = draw_buffer;
  
     BlitBob2(160, x, y, admod, bltsize, restore_ptrs, source, mask, dest);
-  
+   
     car->needs_restore = TRUE;
 }
 
-// Main BOB update function
-void Cars_Update(void)
+void Cars_RestoreSaved()
 {
-    // First pass: Restore backgrounds from previous frame using BlitBob's restore pointers
+      // First pass: Restore backgrounds from previous frame using BlitBob's restore pointers
+      
     for (int i = 0; i < MAX_CARS; i++) 
     {
       if (car[i].needs_restore && !car[i].off_screen)
@@ -210,7 +208,8 @@ void Cars_Update(void)
         ULONG total_offset = y_offset + x_byte_offset;
 
         restore_ptr[1] = car[i].background;
-        restore_ptr[0] = screen.bitplanes + total_offset ;
+        restore_ptr[0] = draw_buffer + total_offset ;
+        
         BlitRestoreBobs(admod,bltsize,1,restore_ptr);
        
       }
@@ -219,7 +218,11 @@ void Cars_Update(void)
 
   }
  
-  
+}
+
+// Main BOB update function
+void Cars_Update(void)
+{
   // Second pass: Update positions for all cars
   for (int i = 0; i < MAX_CARS; i++) 
   {
@@ -235,7 +238,7 @@ void Cars_Update(void)
   {
     if (car[i].visible && !car[i].off_screen) 
     {
-     
+      
       DrawCarBOB(&car[i]);   
     }
 

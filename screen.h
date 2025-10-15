@@ -40,10 +40,12 @@ struct AmigaScreen {
 };
 
 extern struct AmigaScreen screen;
-extern struct AmigaScreen off_screen;
-extern UBYTE screenbuffer_idx;
-extern UBYTE* current_screen_bitplanes;
+ 
+extern UBYTE current_buffer;  // 0 or 1
+extern UBYTE *draw_buffer;    // Pointer to current drawing buffer
+extern UBYTE *display_buffer; // Pointer to current display buffer
 
+#define BUFFER_SIZE (BITMAPBYTESPERROW * BLOCKSDEPTH * BITMAPHEIGHT)
 
 void Screen_Initialize(
     UWORD   width,

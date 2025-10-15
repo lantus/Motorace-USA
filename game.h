@@ -102,7 +102,7 @@ extern ULONG game_score;
 extern UBYTE game_rank;
 
 extern struct BitMapEx *BlocksBitmap,*ScreenBitmap;
-extern void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy);
+extern void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest);
 
 void Game_Initialize();
 void Game_NewGame(UBYTE difficulty);
@@ -110,5 +110,6 @@ void Game_Loop();
 void Game_SetBackGroundColor(UWORD color);
 void Game_FillScreen();
 void Game_CheckJoyScroll();
-
+void Game_SwapBuffers();
+void Game_RenderBackgroundToDrawBuffer();
 #endif

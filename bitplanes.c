@@ -68,20 +68,4 @@ void Bitplanes_Free(UBYTE* bitplanes)
 {
     Mem_Free(bitplanes, bpsize);
 }
-
-void Bitplanes_SwapBuffers() 
-{
-    int bitplaneOffset = 0;
-    
-    if (screenbuffer_idx == 0) 
-    {
-        screenbuffer_idx = 1;
-    } 
-    else 
-    {
-     //   bitplaneOffset = screen.framebuffer_size;
-        screenbuffer_idx = 0;
-    }
-
-    Bitplanes_Point(screen.bitplanes, CopPLANE1H ,screen.depth);
-}
+ 

@@ -20,7 +20,6 @@
 #include "hud.h"
 
 extern volatile struct Custom *custom;
- 
 
 UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
@@ -130,7 +129,7 @@ void Game_CheckJoyScroll(void)
     SmoothScroll();  // Use smooth scrolling instead of loop
 }
 
-__attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy)
+__attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest)
 {
 	 
 	x = (x / 8) & 0xFFFE;
@@ -151,7 +150,7 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	custom->bltamod = BLOCKSBYTESPERROW - (BLOCKWIDTH / 8);
 	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
 	custom->bltapt  = blocksbuffer + mapy + mapx;
-	custom->bltdpt	= screen.bitplanes + y + x;
+	custom->bltdpt	= dest + y + x;
 	
 	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH / 16);
 }
@@ -176,10 +175,17 @@ static void ScrollUp(void)
         // Limit to 192 pixels (12 tiles)
         x = mapx * BLOCKWIDTH;
         
-        DrawBlock(x, y, mapx, mapy);
-        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy);
+        DrawBlock(x, y, mapx, mapy, screen.bitplanes);
+        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.bitplanes);
+        DrawBlock(x, y, mapx, mapy, screen.offscreen_bitplanes);
+        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.offscreen_bitplanes);
     }
    	
+}
+
+void Game_RenderBackgroundToDrawBuffer(void)
+{
+ 
 }
  
 void Game_FillScreen(void)
@@ -193,12 +199,32 @@ void Game_FillScreen(void)
 		{
 			x = a * BLOCKWIDTH;
 			y = b * BLOCKPLANELINES;
-			DrawBlock(x, y, a, start_tile_y + b);
-			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b);
+			DrawBlock(x, y, a, start_tile_y + b, screen.bitplanes);
+			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.bitplanes);
+			DrawBlock(x, y, a, start_tile_y + b, screen.offscreen_bitplanes);
+			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.offscreen_bitplanes);            
 		}
 	} 
  
 }
 
+void Game_SwapBuffers(void)
+{
+    // Toggle current buffer
+    current_buffer ^= 1;
+ 
+    // Update pointers
+    draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
+    display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
+    
+    // Update copper bitplane pointers to show the new display buffer
+    const USHORT lineSize = 320/8;
+    const UBYTE* planes_temp[BLOCKSDEPTH];
+    
+    for(int a = 0; a < BLOCKSDEPTH; a++)
+        planes_temp[a] = display_buffer + lineSize * a;
+    
+    LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * BITMAPBYTESPERROW * BLOCKSDEPTH;
 
-
+    Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
+}
