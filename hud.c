@@ -331,25 +331,25 @@ void HUD_DrawAll()
     // Stages
 
     // NY -> STL
-    HUD_DrawString(PROGRESS_PIECE0, 2, status_y);
-    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+8);
-    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+16);
-    HUD_DrawString(PROGRESS_PIECE1, 2, status_y+20);
+  
+    HUD_DrawString(PROGRESS_PIECE0, 2, status_y+8);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+16);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+20);
     // Chicago -> STL
-    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+28);
-    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+36);
-    HUD_DrawString(PROGRESS_PIECE0, 2, status_y+40);
+    HUD_DrawString(PROGRESS_PIECE4, 2, status_y+28);
+    HUD_DrawString(PROGRESS_PIECE4, 2, status_y+36);
+    HUD_DrawString(PROGRESS_PIECE5, 2, status_y+40);
     // STL -> Houston
-    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+48);
-    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+56);
-    HUD_DrawString(PROGRESS_PIECE1, 2, status_y+60);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+48);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+56);
+    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+60);
     // Houston -> LV
-    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+68);
-    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+76);
-    HUD_DrawString(PROGRESS_PIECE0, 2, status_y+80);
+    HUD_DrawString(PROGRESS_PIECE4, 2, status_y+68);
+    HUD_DrawString(PROGRESS_PIECE4, 2, status_y+76);
+    HUD_DrawString(PROGRESS_PIECE5, 2, status_y+80);
     // LV -> LA
-    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+88);
-    HUD_DrawString(PROGRESS_PIECE2, 2, status_y+96);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+88);
+    HUD_DrawString(PROGRESS_PIECE3, 2, status_y+96);
     HUD_DrawString(PROGRESS_PIECE1, 2, status_y+100);
 
     // Fuel Gauge

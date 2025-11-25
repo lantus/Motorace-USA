@@ -22,5 +22,6 @@
         "gcc8_c_support.h": "c",
         "game.h": "c",
         "blitter.h": "c"
-    }
+    },
+    "makefile.configureOnOpen": false
 }
