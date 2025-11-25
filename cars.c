@@ -22,7 +22,7 @@
 
 extern volatile struct Custom *custom;
 
-Car car[MAX_CARS];
+BlitterObject car[MAX_CARS];
  
 /* Restore pointers */
 APTR restore_ptrs[MAX_CARS * 4];
@@ -47,7 +47,7 @@ void Cars_Initialize(void)
     car[0].off_screen = FALSE;
 
   
-        // Car 1 - Right lane, ahead
+    // Car 1 - Right lane, ahead
     car[1].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
     car[1].background = Mem_AllocChip(512);
     car[1].visible = TRUE;
@@ -90,7 +90,7 @@ void Cars_Initialize(void)
  
 }
  
-void Cars_UpdatePosition(Car *c)
+void Cars_UpdatePosition(BlitterObject *c)
 {
     if (!c->visible) return;
     
@@ -117,7 +117,7 @@ void Cars_UpdatePosition(Car *c)
     }
 }
 
-void SaveCarBOB(Car *car)
+void SaveCarBOB(BlitterObject *car)
 {
     if (!car->visible ) return;
     
@@ -153,7 +153,7 @@ void SaveCarBOB(Car *car)
  
 }
  
-void DrawCarBOB(Car *car)
+void DrawCarBOB(BlitterObject *car)
 {
     if (!car->visible ) return;
     

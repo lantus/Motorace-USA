@@ -1,6 +1,7 @@
 #include "support/gcc8_c_support.h"
 #include "screen.h"
 #include "bitplanes.h"
+#include "bitmap.h"
 #include "blitter.h"
 #include <clib/exec_protos.h>
 #include <clib/graphics_protos.h>

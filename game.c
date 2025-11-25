@@ -49,8 +49,12 @@ void Game_Initialize()
     // HUD
     HUD_InitSprites();
     HUD_SetSpritePositions();
+
+    // Title Screen (Logo etc)
     
     Game_SetBackGroundColor(0x125);
+
+    game_state = TITLE_SCREEN;
 }
 
 void Game_NewGame(UBYTE difficulty)
@@ -72,9 +76,15 @@ void Game_NewGame(UBYTE difficulty)
 
 }
 
-void Game_Loop()
+void Game_CheckState()
 {
-
+    switch(game_state)
+    {
+        case TITLE_SCREEN:
+            break;
+        case GAME_START:
+            break;
+    }
 }
 
 void Game_SetBackGroundColor(UWORD color)

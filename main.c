@@ -13,6 +13,7 @@
 #include "map.h"
 #include "hardware.h"
 #include "bitmap.h"
+#include "blitter.h"
 #include "copper.h"
 #include "pixel.h"
 #include "sprites.h"
@@ -402,7 +403,7 @@ int main(void)
 
 	Copper_SetPalette(0, 0x003);
 
-	Game_NewGame(0);
+	//Game_NewGame(0);
 	Game_FillScreen();
  
 	HardWaitBlit();
@@ -419,6 +420,7 @@ int main(void)
     {		 
 		WaitVBeam(1);
 		
+		Game_CheckState();
 		Cars_RestoreSaved();
 		
 		bike_state = BIKE_STATE_MOVING;
