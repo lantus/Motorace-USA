@@ -112,4 +112,6 @@ void Game_FillScreen();
 void Game_CheckJoyScroll();
 void Game_SwapBuffers();
 void Game_RenderBackgroundToDrawBuffer();
+void Game_Update();
+void Game_Draw();
 #endif

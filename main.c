@@ -404,23 +404,21 @@ int main(void)
 	Copper_SetPalette(0, 0x003);
 
 	//Game_NewGame(0);
-	Game_FillScreen();
+	//Game_FillScreen();
  
 	HardWaitBlit();
 	WaitVBL();
 
 	custom->copjmp2 = 0;
  
-	//SetInterruptHandler((APTR)interruptHandler);
-	//custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB;
-
 	HUD_DrawAll();
 
 	while(!MouseLeft()) 
     {		 
 		WaitVBeam(1);
+
+		/* 
 		
-		Game_CheckState();
 		Cars_RestoreSaved();
 		
 		bike_state = BIKE_STATE_MOVING;
@@ -444,9 +442,12 @@ int main(void)
 		HUD_UpdateScore(0);
 		HUD_UpdateRank(0);
 		
- 		Game_SwapBuffers();
-		Cars_Update();
+ 		
+		Cars_Update(); */
 		
+		Game_Update();
+		Game_Draw();
+		Game_SwapBuffers();
 		WaitVBL();
 	
 	}

@@ -18,6 +18,7 @@
 #include "sprites.h"
 #include "motorbike.h"
 #include "hud.h"
+#include "title.h"
 
 extern volatile struct Custom *custom;
 
@@ -51,7 +52,9 @@ void Game_Initialize()
     HUD_SetSpritePositions();
 
     // Title Screen (Logo etc)
+    Title_Initialize();
     
+
     Game_SetBackGroundColor(0x125);
 
     game_state = TITLE_SCREEN;
@@ -76,11 +79,25 @@ void Game_NewGame(UBYTE difficulty)
 
 }
 
-void Game_CheckState()
+void Game_Draw()
 {
     switch(game_state)
     {
         case TITLE_SCREEN:
+            Title_Draw();
+            break;
+        case GAME_START:
+            Game_Draw();
+            break;
+    }
+}
+
+void Game_Update()
+{
+    switch(game_state)
+    {
+        case TITLE_SCREEN:
+            Title_Update();
             break;
         case GAME_START:
             break;

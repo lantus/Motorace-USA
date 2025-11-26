@@ -10,7 +10,8 @@ void BlitClearScreen(APTR buffer, UWORD bltsize);
 void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
              APTR *restore_ptrs, APTR src, APTR mask, APTR dest);
 void BlitClearBob(UBYTE *restore_ptr, UBYTE *screen_ptr, UWORD modulo, UWORD bltsize);
-
+void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
+                    APTR src, APTR dest);
 typedef struct {
     UBYTE *background_ptr;  // Pointer to saved background
     UBYTE *screen_ptr;      // Pointer to screen location

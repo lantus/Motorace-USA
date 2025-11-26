@@ -19,7 +19,6 @@
 
 extern volatile struct Custom *custom;
 
- 
 /* 
  * BlitWait macro
  * Waits on the blitter, switching BLTPRI to reduce CPU usage of 
@@ -277,4 +276,34 @@ void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltdpt = dest_ptr;
     custom->bltsize = bltsize;
  
+}
+
+void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
+                    APTR src, APTR dest)
+{
+    ULONG y_offset = (ULONG)y * y_modulo;
+    WORD shift = x & 15;
+    ULONG offset = y_offset + (x >> 3);
+    
+    APTR dest_ptr = (UBYTE *)dest + offset;
+    
+    HardWaitBlit();
+    
+    // BLTCON0: Enable A and D channels, minterm 0xF0 (copy A to D)
+    custom->bltcon0 = (shift << 12) | 0x09F0;  
+    custom->bltcon1 = 0;           
+ 
+    // Set modulos - only A and D are used
+    custom->bltamod = (UWORD)(admod & 0xFFFF);        // A modulo (source)
+    custom->bltdmod = (UWORD)(admod >> 16);           // D modulo (dest)
+    
+    // Set pointers - only A source and D destination
+    custom->bltapt = src;
+    custom->bltdpt = dest_ptr;
+    
+    // Since width is exactly 80 pixels (multiple of 16), no masking needed ever!
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+
+    custom->bltsize = bltsize;
 }
