@@ -10,8 +10,12 @@ void BlitClearScreen(APTR buffer, UWORD bltsize);
 void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
              APTR *restore_ptrs, APTR src, APTR mask, APTR dest);
 void BlitClearBob(UBYTE *restore_ptr, UBYTE *screen_ptr, UWORD modulo, UWORD bltsize);
+
+// A->D stuff
 void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
                     APTR src, APTR dest);
+void BlitBobSimpleSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
+                       APTR src, APTR dest);
 typedef struct {
     UBYTE *background_ptr;  // Pointer to saved background
     UBYTE *screen_ptr;      // Pointer to screen location
@@ -22,6 +26,7 @@ typedef struct
     BitMapEx *bob;
     UBYTE *data;      
     UBYTE *background;      // Saved background data  
+    UBYTE *background2;     // Saved background data   (for DblBuf)
     UBYTE *mask;            // Add this
     WORD x, y;              // Current screen position
     WORD old_x, old_y;      // Previous position for restore

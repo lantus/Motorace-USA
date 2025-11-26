@@ -122,8 +122,8 @@ void BlitBobSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltcon0 = (UWORD)(bl_copy[0] >> 16);
     custom->bltcon1 = (UWORD)(bl_copy[0]);
    
-    custom->bltamod = 36;
-    custom->bltdmod = 0;
+    custom->bltamod = (UWORD)(admod & 0xFFFF);        // A modulo (source)
+    custom->bltdmod = (UWORD)(admod >> 16);
     
  
     custom->bltapt = dest_ptr;
@@ -302,6 +302,36 @@ void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltdpt = dest_ptr;
     
     // Since width is exactly 80 pixels (multiple of 16), no masking needed ever!
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+
+    custom->bltsize = bltsize;
+}
+
+void BlitBobSimpleSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
+                       APTR src, APTR dest)
+{
+    // Calculate offset into SOURCE (screen) at position x,y
+    ULONG y_offset = (ULONG)y * y_modulo;
+    WORD shift = x & 15;
+    ULONG offset = y_offset + (x >> 3);
+    
+    APTR src_ptr = (UBYTE *)src + offset;  // Offset the SOURCE
+    
+    HardWaitBlit();
+    
+    // BLTCON0: Enable A and D channels, minterm 0xF0 (copy A to D)
+    custom->bltcon0 = (shift << 12) | 0x09F0;  
+    custom->bltcon1 = 0;           
+ 
+    // Set modulos - only A and D are used
+    custom->bltamod = (UWORD)(admod & 0xFFFF);        // A modulo (source)
+    custom->bltdmod = (UWORD)(admod >> 16);           // D modulo (dest)
+    
+    // Set pointers
+    custom->bltapt = src_ptr;   // Source is offset to x,y position
+    custom->bltdpt = dest;      // Destination at start of buffer
+    
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
 

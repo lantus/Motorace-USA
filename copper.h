@@ -165,3 +165,4 @@ void Copper_SetBitplanePointer(int plane, const UBYTE **planes, LONG offset);
 void Copper_SetPalette(int index,USHORT color);
 void Copper_SetSpritePalette(int index, USHORT color);
 void Copper_SetHUDBitplanes(const UBYTE *hud_buffer) ;
+void Copper_SwapColors(UWORD color1, UWORD color2);

@@ -60,6 +60,5 @@ UBYTE   depth,
 BOOL    dual_playfield);
 
 void Screen_FadePalette(UWORD* rawPalette,UWORD* copPalette,USHORT frame,USHORT colors);
-
-
+ 
 #endif

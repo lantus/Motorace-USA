@@ -26,10 +26,11 @@
  
 BlitterObject zippy_logo;
 /* Restore pointers */
-APTR zippy_logo_restore_ptrs;
+APTR zippy_logo_restore_ptrs[4];
 APTR *zippy_logo_restore_ptr;
 
 static UWORD title_frames = 0;
+static UWORD title_flash_counter = 0;
 
 void Title_LoadSprites()
 {
@@ -39,10 +40,10 @@ void Title_LoadSprites()
 void Title_Initialize(void)
 {
     zippy_logo.bob = BitMapEx_Create(BLOCKSDEPTH, ZIPPY_LOGO_WIDTH, ZIPPY_LOGO_HEIGHT);
-    zippy_logo.background = Mem_AllocChip(ZIPPY_LOGO_WIDTH*ZIPPY_LOGO_HEIGHT);
+    zippy_logo.background = Mem_AllocChip((ZIPPY_LOGO_WIDTH/8) * ZIPPY_LOGO_HEIGHT * 4);
+    zippy_logo.background2 = Mem_AllocChip((ZIPPY_LOGO_WIDTH/8) * ZIPPY_LOGO_HEIGHT * 4);
     zippy_logo.visible = TRUE;
-    zippy_logo.x = 32;
-    zippy_logo.y = 160;
+ 
     zippy_logo.off_screen = FALSE;
 
     Title_LoadSprites();
@@ -53,36 +54,48 @@ void Title_Draw()
 {
     if (title_frames == 0)
     {
-        // Set everything up on the first frame
-
         Copper_SetPalette(0, 0x000);
-
-        BlitClearScreen(draw_buffer, 320 << 6 | 16 );
-        BlitClearScreen(display_buffer, 320 << 6 | 16 );
-
+        BlitClearScreen(draw_buffer, 320 << 6 | 16);
+        BlitClearScreen(display_buffer, 320 << 6 | 16);
         HUD_DrawAll();
     }
-
+ 
+    Title_RestoreLogo();
+    
+    // Save background at new position
+    Title_SaveBackground();
+    
+    // Draw logo at new position
     Title_BlitLogo();
 
+    if (title_flash_counter % 5 == 0) 
+    {
+        Copper_SwapColors(9, 13);
+    }
+
     title_frames++;
+    title_flash_counter++;
 }
 
 void Title_Update()
 {
-     zippy_logo.y++;
+    if (title_frames % 6 == 0)
+    {
+        zippy_logo.y++;
+    }
 
-     if (zippy_logo.y >= 32)
-     {
-        zippy_logo.y = 32;
-     }
+    if (zippy_logo.y >= 26)
+    {
+        zippy_logo.y = 26;
+    }
 }
 
 void Title_Reset()
 {
     zippy_logo.x = 64;
     zippy_logo.y = -32;
-
+    zippy_logo.old_x = 64;   // Same as starting x
+    zippy_logo.old_y = -32;  // Same as starting y
     title_frames = 0;
  
 }
@@ -92,7 +105,7 @@ void Title_BlitLogo()
     // Position
     WORD x = zippy_logo.x;
     WORD y = zippy_logo.y;
- 
+
     UWORD source_mod = 0; 
     UWORD dest_mod =  (320 - 80) / 8;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
@@ -101,12 +114,54 @@ void Title_BlitLogo()
     
     // Source data
     UBYTE *source = (UBYTE*)&zippy_logo.data[0];
-    
-    // Mask data
-    //UBYTE *mask = source + 32 / 8  * 1;
-    
+ 
     // Destination
     UBYTE *dest = draw_buffer;
  
     BlitBobSimple(160, x, y, admod, bltsize, source, dest);
+}
+
+void Title_SaveBackground()
+{
+    WORD x = zippy_logo.x;
+    WORD y = zippy_logo.y;
+
+    APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
+    
+    UWORD source_mod = (320 - 80) / 8;   // Screen modulo: 30 bytes
+    UWORD dest_mod = 0;                  // Background is tight-packed
+    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+    
+    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | ZIPPY_LOGO_WIDTH/16;
+    
+    UBYTE *source = draw_buffer;
+    UBYTE *dest = background;
+    
+    BlitBobSimpleSave(160, x, y, admod, bltsize, source, dest);
+}
+
+void Title_RestoreLogo()
+{
+    // Restore at OLD position
+    WORD old_x = zippy_logo.old_x;
+    WORD old_y = zippy_logo.old_y;
+
+    APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
+    
+    // Blit from background buffer to screen
+    UWORD source_mod = 0;                  // Background: tight-packed
+    UWORD dest_mod = (320 - 80) / 8;      // Screen modulo: 30 bytes
+    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+    
+    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | ZIPPY_LOGO_WIDTH/16;
+    
+    UBYTE *source = background;             // Source at 0,0 in buffer
+    UBYTE *dest = draw_buffer;              // Dest will be offset by function
+    
+    BlitBobSimple(160, old_x, old_y, admod, bltsize, source, dest);
+    
+    // Save current position for next restore
+    zippy_logo.old_x = zippy_logo.x;
+    zippy_logo.old_y = zippy_logo.y;
+
 }

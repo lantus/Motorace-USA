@@ -98,3 +98,4 @@ void Screen_FadePalette(UWORD* rawPalette,UWORD* copPalette, USHORT frame,USHORT
         copPalette+=2;
     }
 }
+ 

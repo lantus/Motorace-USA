@@ -447,7 +447,7 @@ int main(void)
 		
 		Game_Update();
 		Game_Draw();
-		Game_SwapBuffers();
+	//	Game_SwapBuffers();
 		WaitVBL();
 	
 	}

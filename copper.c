@@ -64,3 +64,16 @@ void Copper_SetDataFetch(UWORD start, UWORD stop)
     CopDDFSTOP[val] = stop;
 }
  
+__attribute__((always_inline)) inline void Copper_SwapColors(UWORD color1, UWORD color2)
+{
+    UWORD *wp = CopCOLOR00;
+    
+    // Get pointers to the color values (each entry is 2 words: register, value)
+    UWORD *color1_ptr = wp + (2 * color1) + 1;  // +1 to point to value, not register
+    UWORD *color2_ptr = wp + (2 * color2) + 1;
+    
+    // Swap them
+    UWORD temp = *color1_ptr;
+    *color1_ptr = *color2_ptr;
+    *color2_ptr = temp;
+}

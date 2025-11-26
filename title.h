@@ -6,4 +6,6 @@ void Title_Draw();
 void Title_Update();
 void Title_Reset();
 void Title_BlitLogo();
+void Title_SaveBackground();
+void Title_RestoreLogo();
 
