@@ -5,6 +5,8 @@
 #define BPL0_BPU3_F        0x10
 #define BPL0_BPUMASK	   0x7000
 
+extern BOOL os_disabled;
+
 void KillSystem(void);
 void ActivateSystem(void);
 void WaitVBL(void);

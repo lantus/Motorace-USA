@@ -88,9 +88,27 @@ enum GameDifficulty
     TWELVEHUNDREDCC = 2
 };
 
+enum GameMapType
+{
+    MAP_ATTRACT_INTRO = 0,
+    MAP_OVERHEAD_LASANGELES = 1,
+    MAP_APPROACH_LASANGELES = 2,
+    MAP_OVERHEAD_LASVEGAS = 3,
+    MAP_APPROACH_LASVEGAS = 4,
+    MAP_OVERHEAD_HOUSTON = 5,
+    MAP_APPROACH_HOUSTON = 6,
+    MAP_OVERHEAD_STLOUIS = 7,
+    MAP_APPROACH_STLOUIS = 8,
+    MAP_OVERHEAD_CHICAGO = 9,
+    MAP_APPROACH_CHICAGO = 10,
+    MAP_OVERHEAD_NEWYORK = 11,
+    MAP_APPROACH_NEWYORK = 12
+};
+
 extern UBYTE game_stage;
 extern UBYTE game_state;
 extern UBYTE game_difficulty;
+extern UBYTE game_map;
 
 extern WORD mapposy,videoposy;
 extern LONG	mapwidth,mapheight;
@@ -101,8 +119,20 @@ extern UWORD *mapdata;
 extern ULONG game_score;
 extern UBYTE game_rank;
 
+// Palettes
+extern UWORD	intro_colors[BLOCKSCOLORS];
+extern UWORD	city_colors[BLOCKSCOLORS];
+extern UWORD	desert_colors[BLOCKSCOLORS];
+
 extern struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 extern void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest);
+extern void DrawBlocks(LONG x,LONG y,
+                        LONG mapx,LONG mapy, 
+                        UWORD blocksperrow, UWORD blockbytessperrow, 
+                        UWORD blockplanelines, BOOL deltas_only,    // deltas_only = replace updated tiles only
+                        UBYTE tile_idx, UBYTE *dest);               // tile_idx = tileset we want to pull from
+
+extern void DrawBlock_Fast(LONG x, LONG y, UWORD block, UBYTE *dest);
 
 void Game_Initialize();
 void Game_NewGame(UBYTE difficulty);
@@ -114,4 +144,7 @@ void Game_SwapBuffers();
 void Game_RenderBackgroundToDrawBuffer();
 void Game_Update();
 void Game_Draw();
+void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors);
+void Game_ApplyPalette(UWORD *palette, int num_colors);
+void Game_SetMap(UBYTE maptype);
 #endif

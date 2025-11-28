@@ -32,6 +32,12 @@ extern volatile struct Custom *custom;
 
 static volatile ULONG *custom_vposr = (volatile ULONG *) 0xdff004;
 
+// System state backup
+struct View *saved_view;
+UWORD saved_intena, saved_dma, saved_adkcon;
+ 
+BOOL os_disabled = FALSE;
+
 static LONG NullInputHandler(void)
 {
 	// kills all input
@@ -197,3 +203,53 @@ BOOL LMBDown(void)
 	return ((*(UBYTE *)0xbfe001) & 64) ? FALSE : TRUE;
 }
 
+void System_DisableOS()
+{
+    if (os_disabled) return;
+    
+    GfxBase = (struct GfxBase *)OpenLibrary("graphics.library", 0);
+    
+    // Save system state
+    saved_view = GfxBase->ActiView;
+    saved_intena = custom->intenar;
+    saved_dma = custom->dmaconr;
+    saved_adkcon = custom->adkconr;
+    
+    Forbid();
+    
+    // Remove OS display
+    LoadView(NULL);
+    WaitTOF();
+    WaitTOF();
+    
+    // Disable interrupts and DMA
+    custom->intena = 0x7FFF;
+    custom->dmacon = 0x7FFF;
+    
+    os_disabled = TRUE;
+}
+
+void System_EnableOS()
+{
+    if (!os_disabled) return;
+    
+    // Stop our hardware usage
+    custom->intena = 0x7FFF;
+    custom->dmacon = 0x7FFF;
+    
+    // Restore OS state
+    custom->intena = 0x8000 | saved_intena;
+    custom->dmacon = 0x8000 | saved_dma;
+    custom->adkcon = 0x8000 | saved_adkcon;
+    
+    // Restore OS display
+    LoadView(saved_view);
+    WaitTOF();
+    WaitTOF();
+    
+    Permit();
+    
+    CloseLibrary((struct Library *)GfxBase);
+    
+    os_disabled = FALSE;
+}

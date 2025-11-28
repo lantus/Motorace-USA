@@ -25,6 +25,7 @@ extern volatile struct Custom *custom;
 UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDEDCC;
+UBYTE game_map = MAP_ATTRACT_INTRO;
 ULONG game_score = 0;
 UBYTE game_rank = 99;
 
@@ -37,6 +38,11 @@ UWORD *mapdata;
 struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 
 static void ScrollUp(void);
+
+// Palettes
+UWORD	intro_colors[BLOCKSCOLORS];
+UWORD	city_colors[BLOCKSCOLORS];
+UWORD	desert_colors[BLOCKSCOLORS];
 
 // One time startup for everything
 
@@ -51,19 +57,22 @@ void Game_Initialize()
     HUD_InitSprites();
     HUD_SetSpritePositions();
 
-    // Title Screen (Logo etc)
+    // Title Screen (Logo, Palette, etc)
     Title_Initialize();
     
-
     Game_SetBackGroundColor(0x125);
-
+   
     game_state = TITLE_SCREEN;
+    game_map = MAP_ATTRACT_INTRO;
+
+    Game_SetMap(game_map);
 }
 
 void Game_NewGame(UBYTE difficulty)
 {
     game_stage = STAGE_LASANGELES;
     game_state = GAME_START;
+    game_map = MAP_OVERHEAD_LASANGELES;
     game_difficulty = difficulty;
     game_score = 0;
     bike_speed = 0;
@@ -109,6 +118,43 @@ void Game_SetBackGroundColor(UWORD color)
     Copper_SetPalette(0, color);
 }
 
+
+void Game_SetMap(UBYTE maptype)
+{
+    switch (maptype)
+    {
+        case MAP_ATTRACT_INTRO:
+            mapdata = (UWORD *)city_attract_map->data;
+            mapwidth = city_attract_map->mapwidth;
+            mapheight = city_attract_map->mapheight;  
+            blocksbuffer = city_attract_tiles->planes[0];
+            break;
+        case MAP_OVERHEAD_LASANGELES:
+            break;
+        case MAP_APPROACH_LASANGELES:
+            break;
+        case MAP_OVERHEAD_LASVEGAS:
+            break;
+        case MAP_APPROACH_LASVEGAS:
+            break;
+        case MAP_OVERHEAD_HOUSTON:
+            break;
+        case MAP_APPROACH_HOUSTON:  
+            break;
+        case MAP_OVERHEAD_STLOUIS:
+            break;
+        case MAP_APPROACH_STLOUIS:
+            break;
+        case MAP_OVERHEAD_CHICAGO: 
+            break;
+        case MAP_APPROACH_CHICAGO:  
+            break;
+        case MAP_OVERHEAD_NEWYORK: 
+            break;
+        case MAP_APPROACH_NEWYORK: 
+            break;
+    }
+}
  
 
 // Convert speed to scroll calls
@@ -167,7 +213,6 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	mapx = (block % BLOCKSPERROW) * (BLOCKWIDTH / 8);
 	mapy = (block / BLOCKSPERROW) * (BLOCKPLANELINES * BLOCKSBYTESPERROW);
  
-	
 	HardWaitBlit();
 	
 	custom->bltcon0 = 0x9F0;	// use A and D. Op: D = A
@@ -180,6 +225,76 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	custom->bltdpt	= dest + y + x;
 	
 	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH / 16);
+}
+// Add this if you don't have it - proper blitter wait
+static inline void wbl(void)
+{
+    while ((*(volatile UBYTE*)0xDFF002) & 0x40);  // Wait for bit 6 to clear
+}
+// Optimized version that still handles individual tiles but removes overhead
+__attribute__((always_inline)) inline void DrawBlock_Fast(LONG x, LONG y, UWORD block, UBYTE *dest)
+{
+    const UWORD blocksperrow = 16;
+    const UWORD blockbytesperrow = 32;
+    const UWORD blockplanelines = 64;
+    
+    x = (x / 8) & 0xFFFE;
+    y = y * BITMAPBYTESPERROW;
+    
+    UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
+    UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
+    
+    // Wait for previous blit only
+    wbl();
+    
+    custom->bltcon0 = 0x9F0;
+    custom->bltcon1 = 0;
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+    custom->bltamod = blockbytesperrow - (BLOCKWIDTH / 8);
+    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
+    custom->bltapt = blocksbuffer + mapy + mapx;
+    custom->bltdpt = dest + y + x;
+    custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16);
+}
+ 
+__attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LONG mapy, UWORD blocksperrow, UWORD blockbytessperrow, UWORD blockplanelines, BOOL deltas_only, UBYTE tile_idx, UBYTE *dest)
+{
+	 
+	x = (x / 8) & 0xFFFE;
+	y = y * BITMAPBYTESPERROW;
+ 
+
+	UWORD block = mapdata[mapy * mapwidth + mapx];
+
+    // for deltas we assume the first 32 blocks are constant
+
+    if (deltas_only == TRUE)
+    {
+        if (block < 32) 
+        {
+            return;
+        }
+    }
+ 
+    block += tile_idx<<5;
+ 
+	mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
+	mapy = (block / blocksperrow) * (blockplanelines * blockbytessperrow);
+ 
+    HardWaitBlit();
+	
+	custom->bltcon0 = 0x9F0;	// use A and D. Op: D = A
+	custom->bltcon1 = 0;
+	custom->bltafwm = 0xFFFF;
+	custom->bltalwm = 0xFFFF;
+	custom->bltamod = blockbytessperrow - (BLOCKWIDTH / 8);
+	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
+	custom->bltapt  = blocksbuffer + mapy + mapx;
+	custom->bltdpt	= dest + y + x;
+	
+	custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16);
+ 
 }
  
 static void ScrollUp(void)
@@ -254,4 +369,84 @@ void Game_SwapBuffers(void)
     LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * BITMAPBYTESPERROW * BLOCKSDEPTH;
 
     Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
+}
+
+
+void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors)
+{
+    // Assuming Dpaint
+
+    ULONG file_size = findSize(filename);
+    UBYTE *file_data = Disk_AllocAndLoadAsset(filename, MEMF_ANY);
+    if (!file_data) return;
+    
+    UBYTE *ptr = file_data;
+    
+    // Check for "FORM" header
+    if (ptr[0] != 'F' || ptr[1] != 'O' || ptr[2] != 'R' || ptr[3] != 'M')
+    {
+        FreeMem(file_data, file_size);  // Free the loaded data
+        return;
+    }
+    
+    ptr += 4;  // Skip "FORM"
+    
+    // Skip file size (4 bytes, big-endian)
+    ptr += 4;
+    
+    // Skip form type (usually "ILBM") - 4 bytes
+    ptr += 4;
+    
+    // Now search for CMAP chunk
+    while (1)
+    {
+        // Check chunk ID
+        if (ptr[0] == 'C' && ptr[1] == 'M' && ptr[2] == 'A' && ptr[3] == 'P')
+        {
+            ptr += 4;  // Skip "CMAP"
+            
+            // Get chunk size (big-endian)
+            ULONG chunk_size = (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+            ptr += 4;
+            
+            // ptr now points to RGB data
+            UBYTE *rgb_data = ptr;
+            
+            for (int i = 0; i < num_colors && i < chunk_size/3; i++)
+            {
+                UBYTE r = *rgb_data++;
+                UBYTE g = *rgb_data++;
+                UBYTE b = *rgb_data++;
+                
+                // Convert to Amiga 4-bit per channel
+                UWORD r4 = (r >> 4) & 0x0F;
+                UWORD g4 = (g >> 4) & 0x0F;
+                UWORD b4 = (b >> 4) & 0x0F;
+                
+                palette[i] = (r4 << 8) | (g4 << 4) | b4;
+            }
+            
+            break;
+        }
+        
+        ptr += 4;  // Skip chunk ID
+        
+        // Get chunk size and skip over it
+        ULONG chunk_size = (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+        ptr += 4;
+        ptr += chunk_size;
+        
+        // Chunks are word-aligned, skip padding byte if odd size
+        if (chunk_size & 1) ptr++;
+    }
+    
+    FreeMem(file_data, file_size);  // Free the loaded data
+}
+
+void Game_ApplyPalette(UWORD *palette, int num_colors)
+{
+    for (int i = 0; i < num_colors; i++)
+    {
+        Copper_SetPalette(i, palette[i]);
+    }
 }

@@ -44,7 +44,7 @@ void Screen_Initialize_DoubleBuff(UWORD width,
     screen.framebuffer_size = (width/8)*height*depth;
 
     screen.bitplanes = Bitplanes_Initialize(screen.framebuffer_size);
-    screen.offscreen_bitplanes = Bitplanes_Initialize(screen.framebuffer_size);
+    screen.offscreen_bitplanes = screen.bitplanes;
     screen.depth = depth;
     screen.left_margin_bytes = 0;
     screen.right_margin_bytes = 0;

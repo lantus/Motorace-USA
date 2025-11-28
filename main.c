@@ -63,13 +63,11 @@ struct View *ActiView;
 #define BPLCON3_BRDNBLNK (1<<5)
  
 const UBYTE* planes[BLOCKSDEPTH];
-
-struct RawMap *Map;
-
+ 
 WORD	bitmapheight;
 
 LONG MapSize = 0;
-UWORD	colors[BLOCKSCOLORS];
+
 BOOL	option_ntsc,option_how,option_speed;
 WORD	option_fetchmode;
 UBYTE *hud_buffer = NULL;
@@ -113,7 +111,7 @@ static void InitCopperlist(void)
  
 	for(int i=0; i < 16; i++)
 	{
-		Copper_SetPalette(i, ((USHORT*)colors)[i]);
+		Copper_SetPalette(i, ((USHORT*)intro_colors)[i]);
 	}
 
 	CopFETCHMODE[VALUE] = 0;
@@ -191,7 +189,7 @@ void Cleanup(char *msg)
 
 static void OpenDisplay(void)
 {
-	bitmapheight = BITMAPHEIGHT + 3;
+	bitmapheight = 256;
  
 	Screen_Initialize_DoubleBuff(BITMAPWIDTH,bitmapheight,BLOCKSDEPTH, FALSE);
  
@@ -258,12 +256,12 @@ static void OpenBlocks(void)
 
  
 	Disk_LoadAsset((UBYTE *)BlocksBitmap->planes[0],"tiles/lv1_tiles.BPL");
-	Disk_LoadAsset((UBYTE *)colors,"tiles/lv1_tiles.PAL");
+	Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
  
 	blocksbuffer = BlocksBitmap->planes[0];
 
 	debug_register_bitmap(blocksbuffer, "blocksbuffer", 320, 256, 4, debug_resource_bitmap_interleaved);
-	debug_register_palette(colors,"palette",16,0); 
+	debug_register_palette(city_colors,"palette",16,0); 
  
 }
  
@@ -392,8 +390,8 @@ int main(void)
 
 	Game_Initialize();
 
-	OpenBlocks();
-	OpenMap();
+	//OpenBlocks();
+	//OpenMap();
 	OpenDisplay();
  
 	Cars_Initialize();
@@ -447,7 +445,7 @@ int main(void)
 		
 		Game_Update();
 		Game_Draw();
-	//	Game_SwapBuffers();
+		//Game_SwapBuffers();
 		WaitVBL();
 	
 	}

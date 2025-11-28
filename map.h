@@ -1,4 +1,4 @@
-struct RawMap
+typedef struct RawMap
 {
 	WORD	mapwidth;
 	WORD	mapheight;
@@ -8,5 +8,5 @@ struct RawMap
 	BYTE	bytesperblock;
 	BYTE	transparentblock;
 	UBYTE	data[1];
-};
+} RawMap;
 

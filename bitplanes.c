@@ -59,7 +59,7 @@ void Bitplanes_Point(UBYTE* bitplanes, UWORD* BPL1PTH_addr, UBYTE bpl_number)
 
 UBYTE* Bitplanes_Initialize(ULONG sz) 
 {
-    bpsize = sz<<1;                                    
+    bpsize = sz ;                                    
     UBYTE* bpls = Mem_AllocChip(bpsize);
     return bpls;
 }

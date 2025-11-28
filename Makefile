@@ -48,6 +48,7 @@ all: $(OUT).exe
 ifdef WINDOWS
 	@XCOPY "maps\*" "out\maps\" /K /D /H /Y /S /E 
 	@XCOPY "images\*" "out\images\" /K /D /H /Y /S /E
+	@XCOPY "palettes\*" "out\palettes\" /K /D /H /Y /S /E
 	@XCOPY "sprites\*" "out\sprites\" /K /D /H /Y /S /E
 	@XCOPY "tiles\*" "out\tiles\" /K /D /H /Y /S /E
 	@XCOPY "font\*" "out\font\" /K /D /H /Y /S /E

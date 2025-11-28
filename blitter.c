@@ -111,7 +111,7 @@ void BlitBobSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
 {
     ULONG y_offset = (ULONG)y * y_modulo;
     WORD shift = x & 15;
-    
+        
     WORD x_offset = x >> 3;
     APTR dest_ptr = (UBYTE *)src + x_offset + y_offset;
     ULONG restore_admod = (admod & 0xFFFF0000);
@@ -286,7 +286,7 @@ void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     ULONG offset = y_offset + (x >> 3);
     
     APTR dest_ptr = (UBYTE *)dest + offset;
-    
+ 
     HardWaitBlit();
     
     // BLTCON0: Enable A and D channels, minterm 0xF0 (copy A to D)
