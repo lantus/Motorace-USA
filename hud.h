@@ -49,3 +49,4 @@ void HUD_UpdateScore(ULONG score);
 void HUD_UpdateSpeed();
 void HUD_UpdateRank(UBYTE rank);
 char *GetOrdinalSuffix(UBYTE number);
+void ULongToString(ULONG value, char *buffer, int width, char pad_char);

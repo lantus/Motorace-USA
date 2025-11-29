@@ -20,6 +20,7 @@
 #include "motorbike.h"
 #include "hud.h"
 #include "title.h"
+#include "hiscore.h"
 
 extern volatile struct Custom *custom;
 
@@ -51,6 +52,7 @@ void Game_Initialize()
 {
     Timer_Init();           // Detect PAL/NTSC and initialize
     Sprites_Initialize();
+    HiScore_Initialize();
     
     // Motorbike
     LoadMotorbikeSprites();

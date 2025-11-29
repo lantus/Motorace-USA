@@ -27,4 +27,8 @@ void Title_OpenBlocks();
 void Title_DrawSkyline(BOOL deltas_only);
 void Title_PreDrawSkyline();
 
-
+// Attract Mode stuff
+void AttractMode_Update(void);
+void AttractMode_UpdateHiScores(void);
+void AttractMode_ShowHiScores(void);
+void AttractMode_DrawText(void);

@@ -23,6 +23,8 @@
 #include "roadsystem.h"
 #include "motorbike.h"
 #include "timers.h"
+#include "hiscore.h"
+#include "font.h"
 
 #define ATTRACTMODE_Y_OFFSET 192
 
@@ -48,7 +50,11 @@ BitMapEx *city_attract_tiles;
 
 GameTimer attract_timer;
 GameTimer logo_flash_timer;
- 
+GameTimer blink_timer;
+GameTimer hiscore_timer;    // timer for high score table display
+
+BOOL text_visible = TRUE;
+
 UBYTE title_state = TITLE_ATTRACT_INIT;
  
 void Title_LoadSprites()
@@ -109,8 +115,11 @@ void Title_Draw()
         }
     }
  
-    Title_DrawSkyline(TRUE);
- 
+    if (title_state < TITLE_ATTRACT_INSERT_COIN)
+    {
+        Title_DrawSkyline(TRUE);
+    }
+    
     if (title_state == TITLE_ATTRACT_LOGO_DROP)
     { 
         // Blit Logo
@@ -127,15 +136,91 @@ void Title_Draw()
         else
         {
             Timer_Stop(&logo_flash_timer);
-
+            Timer_Start(&hiscore_timer,10);     // 10 Seconds 
             title_state = TITLE_ATTRACT_INSERT_COIN;
-        }     
 
+            BlitClearScreen(draw_buffer, 320 << 6 | 64);
+            BlitClearScreen(display_buffer, 320 << 6 | 64);
+
+            Title_BlitLogo();
+
+            AttractMode_DrawText();
+ 
+        }   
     }
+    else if (title_state == TITLE_ATTRACT_INSERT_COIN)
+    {
+        if (Timer_HasElapsed(&hiscore_timer) == TRUE)
+        {
+            Timer_Reset(&hiscore_timer);
+            title_state = TITLE_ATTRACT_HIGHSCORE;
+
+            BlitClearScreen(draw_buffer, 320 << 6 | 64);
+            BlitClearScreen(display_buffer, 320 << 6 | 64);
+            AttractMode_ShowHiScores();
+           
+        }
+ 
+    }  
+
     title_frames++;
     title_flash_counter++;
 }
 
+void AttractMode_DrawText(void)
+{
+    Font_DrawStringCentered(draw_buffer, "PRESS FIRE BUTTON", 120, 12);  // Color 15 = white
+
+    Font_DrawString(draw_buffer, "1983 IREM CORP", 8, 188, 5);         
+    Font_DrawString(draw_buffer, "2026 AMIGA PORT BY MVG", 8, 198, 4);       
+}
+
+void AttractMode_ShowHiScores(void)
+{
+    // Draw high score table starting at Y=10
+    HiScore_Draw(draw_buffer, 10, 12);  // Color 15 = white
+}
+
+void AttractMode_UpdateHiScores(void)
+{
+     if (Timer_HasElapsed(&hiscore_timer) == TRUE)
+     {
+        title_state = TITLE_ATTRACT_INSERT_COIN;
+        Timer_Reset(&hiscore_timer);
+
+        BlitClearScreen(draw_buffer, 320 << 6 | 64);
+        BlitClearScreen(display_buffer, 320 << 6 | 64);
+
+        Title_BlitLogo();
+
+        AttractMode_DrawText();
+     }
+}
+
+void AttractMode_Update(void)
+{
+    if (!Timer_IsActive(&blink_timer))
+    {
+        Timer_StartMs(&blink_timer, 500);  // Blink every 500ms
+    }
+    
+    if (Timer_HasElapsed(&blink_timer))
+    {
+        text_visible = !text_visible;
+        
+        if (text_visible)
+        {
+            Font_DrawStringCentered(draw_buffer, "PRESS FIRE BUTTON", 120, 12);  // Color 15 = white
+        }
+        else
+        {
+            Font_ClearArea(draw_buffer, 0, 120, VIEWPORT_WIDTH, 8);
+        }
+        
+        Timer_Reset(&blink_timer);
+    }
+ 
+}
 
 
 void Title_Update()
@@ -221,6 +306,14 @@ void Title_Update()
                 }   
             }
         }
+    }
+    else if (title_state == TITLE_ATTRACT_INSERT_COIN)
+    {
+        AttractMode_Update();
+    }
+    else if (title_state == TITLE_ATTRACT_HIGHSCORE)
+    {
+        AttractMode_UpdateHiScores();
     }
  
 
