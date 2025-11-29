@@ -132,7 +132,7 @@ extern void DrawBlocks(LONG x,LONG y,
                         UWORD blockplanelines, BOOL deltas_only,    // deltas_only = replace updated tiles only
                         UBYTE tile_idx, UBYTE *dest);               // tile_idx = tileset we want to pull from
 
-extern void DrawBlock_Fast(LONG x, LONG y, UWORD block, UBYTE *dest);
+extern void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest);
 
 void Game_Initialize();
 void Game_NewGame(UBYTE difficulty);

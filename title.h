@@ -4,6 +4,16 @@
 extern RawMap *city_attract_map;
 extern BitMapEx *city_attract_tiles;
 
+enum TitleState {
+    TITLE_ATTRACT_INIT = 0,
+    TITLE_ATTRACT_START = 1, // draw scene. bike at 0 mph
+    TITLE_ATTRACT_ACCEL = 2, // bike accelerating to top speed
+    TITLE_ATTRACT_INTO_HORIZON = 3, // bike traveling into horizon.  drop and flash logo cut speed
+    TITLE_ATTRACT_LOGO_DROP = 4,
+    TITLE_ATTRACT_INSERT_COIN = 5,
+    TITLE_ATTRACT_HIGHSCORE = 6
+};
+
 void Title_Initialize();
 void Title_Free();
 void Title_Draw();

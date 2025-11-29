@@ -11,4 +11,6 @@
 
 #define VANISHING_POINT_X 96  // Center of road viewport
 
- 
+ extern BYTE road_tile_idx;
+
+ void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count);

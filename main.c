@@ -20,6 +20,7 @@
 #include "motorbike.h"
 #include "hud.h"
 #include "cars.h"
+#include "timers.h"
 
 volatile struct Custom *custom;
 
@@ -358,8 +359,9 @@ __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 
 static __attribute__((interrupt)) void interruptHandler() 
 {
-	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
+	Timer_VBlankUpdate();
 
+	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
  
 }
 
@@ -409,6 +411,9 @@ int main(void)
 
 	custom->copjmp2 = 0;
  
+	SetInterruptHandler((APTR)interruptHandler);
+	custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB;
+
 	HUD_DrawAll();
 
 	while(!MouseLeft()) 

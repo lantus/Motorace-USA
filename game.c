@@ -11,6 +11,7 @@
 #include <proto/dos.h>
 #include "game.h"
 #include "map.h"
+#include "timers.h"
 #include "hardware.h"
 #include "bitmap.h"
 #include "copper.h"
@@ -48,6 +49,7 @@ UWORD	desert_colors[BLOCKSCOLORS];
 
 void Game_Initialize()
 {
+    Timer_Init();           // Detect PAL/NTSC and initialize
     Sprites_Initialize();
     
     // Motorbike
@@ -226,37 +228,6 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	
 	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH / 16);
 }
-// Add this if you don't have it - proper blitter wait
-static inline void wbl(void)
-{
-    while ((*(volatile UBYTE*)0xDFF002) & 0x40);  // Wait for bit 6 to clear
-}
-// Optimized version that still handles individual tiles but removes overhead
-__attribute__((always_inline)) inline void DrawBlock_Fast(LONG x, LONG y, UWORD block, UBYTE *dest)
-{
-    const UWORD blocksperrow = 16;
-    const UWORD blockbytesperrow = 32;
-    const UWORD blockplanelines = 64;
-    
-    x = (x / 8) & 0xFFFE;
-    y = y * BITMAPBYTESPERROW;
-    
-    UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
-    UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
-    
-    // Wait for previous blit only
-    wbl();
-    
-    custom->bltcon0 = 0x9F0;
-    custom->bltcon1 = 0;
-    custom->bltafwm = 0xFFFF;
-    custom->bltalwm = 0xFFFF;
-    custom->bltamod = blockbytesperrow - (BLOCKWIDTH / 8);
-    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
-    custom->bltapt = blocksbuffer + mapy + mapx;
-    custom->bltdpt = dest + y + x;
-    custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16);
-}
  
 __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LONG mapy, UWORD blocksperrow, UWORD blockbytessperrow, UWORD blockplanelines, BOOL deltas_only, UBYTE tile_idx, UBYTE *dest)
 {
@@ -266,19 +237,7 @@ __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LO
  
 
 	UWORD block = mapdata[mapy * mapwidth + mapx];
-
-    // for deltas we assume the first 32 blocks are constant
-
-    if (deltas_only == TRUE)
-    {
-        if (block < 32) 
-        {
-            return;
-        }
-    }
- 
-    block += tile_idx<<5;
- 
+  
 	mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
 	mapy = (block / blocksperrow) * (blockplanelines * blockbytessperrow);
  
@@ -295,6 +254,29 @@ __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LO
 	
 	custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16);
  
+}
+ 
+__attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest)
+{
+    x = (x / 8) & 0xFFFE;
+    y = y * BITMAPBYTESPERROW;
+    
+    UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
+    UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
+    
+    HardWaitBlit();
+    
+    custom->bltcon0 = 0x9F0;
+    custom->bltcon1 = 0;
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+    custom->bltamod = blockbytesperrow - (BLOCKWIDTH / 8);
+    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8) * count;  // Skip over tiles we're not writing
+    custom->bltapt  = blocksbuffer + mapy + mapx;
+    custom->bltdpt  = dest + y + x;
+    
+    // Blit width is count * BLOCKWIDTH
+    custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16) * count;
 }
  
 static void ScrollUp(void)

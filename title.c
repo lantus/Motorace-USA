@@ -21,6 +21,10 @@
 #include "hud.h"
 #include "title.h"
 #include "roadsystem.h"
+#include "motorbike.h"
+#include "timers.h"
+
+#define ATTRACTMODE_Y_OFFSET 192
 
 #define ZIPPY_LOGO_WIDTH 80
 #define ZIPPY_LOGO_HEIGHT 48
@@ -32,30 +36,35 @@
 extern volatile struct Custom *custom;
 
 BlitterObject zippy_logo;
-//BlitterObject city_attract;
-/* Restore pointers */
+ 
 APTR zippy_logo_restore_ptrs[4];
 APTR *zippy_logo_restore_ptr;
 
 static UWORD title_frames = 0;
 static UWORD title_flash_counter = 0;
-static BYTE road_tile_idx = 0;
+ 
 RawMap *city_attract_map;
 BitMapEx *city_attract_tiles;
+
+GameTimer attract_timer;
+GameTimer logo_flash_timer;
+ 
+UBYTE title_state = TITLE_ATTRACT_INIT;
  
 void Title_LoadSprites()
 {
     zippy_logo.data = Disk_AllocAndLoadAsset(ZIPPY_LOGO, MEMF_CHIP);
-    //city_attract.data = Disk_AllocAndLoadAsset(CITY_ATTRACT,MEMF_CHIP);
 }
 
 void Title_Initialize(void)
 {
     // Load Zippy Race Logo Bob
+
     zippy_logo.background = Mem_AllocChip((ZIPPY_LOGO_WIDTH/8) * ZIPPY_LOGO_HEIGHT * 4);
     zippy_logo.background2 = zippy_logo.background ;
     zippy_logo.visible = TRUE;
     zippy_logo.off_screen = FALSE;
+
     Title_LoadSprites();
 
     // Attract Mode Tiles/Tilemap
@@ -66,71 +75,154 @@ void Title_Initialize(void)
     Game_LoadPalette("palettes/intro.pal", intro_colors, BLOCKSCOLORS);
     Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
 
+    title_state = TITLE_ATTRACT_INIT;
+    
     // Reset Positions
     Title_Reset();
+
+    title_state = TITLE_ATTRACT_START;
 }
 
 void Title_Draw()
 {
-    
-    if (title_frames == 0)
+    if (title_state == TITLE_ATTRACT_START)
     {
-        Copper_SetPalette(0, 0x000);
+        if (title_frames == 0)
+        {
+            Copper_SetPalette(0, 0x000);
 
-        BlitClearScreen(draw_buffer, 320 << 6 | 16);
-        BlitClearScreen(display_buffer, 320 << 6 | 16);
+            BlitClearScreen(draw_buffer, 320 << 6 | 16);
+            BlitClearScreen(display_buffer, 320 << 6 | 16);
 
-        // So we pre-draw the city skyline ones
-        // then on update we only draw the tiles being replaced
-      
-        Title_RestoreLogo();
+            // So we pre-draw the city skyline ones
+            // then on update we only draw the tiles being replaced
         
-        Title_PreDrawSkyline();
+            Title_RestoreLogo();
+            
+            Title_PreDrawSkyline();
 
-        // Draw the hud
-        HUD_DrawAll();
+            // Draw the hud
+            HUD_DrawAll();
 
+            title_state = TITLE_ATTRACT_ACCEL;            
+
+        }
     }
-    
-    // Save background at new position
-    //Title_SaveBackground();
-
+ 
     Title_DrawSkyline(TRUE);
  
-    // Draw logo at new position
-    //Title_BlitLogo();
+    if (title_state == TITLE_ATTRACT_LOGO_DROP)
+    { 
+        // Blit Logo
 
-    if (title_flash_counter % 5 == 0) 
-    {          
-        Copper_SwapColors(7, 12);
+        Title_BlitLogo();
+ 
+        if (Timer_HasElapsed(&logo_flash_timer) == FALSE)
+        {
+            if (title_flash_counter % 5 == 0) 
+            {          
+                Copper_SwapColors(7, 12);
+            }
+        }
+        else
+        {
+            Timer_Stop(&logo_flash_timer);
+
+            title_state = TITLE_ATTRACT_INSERT_COIN;
+        }     
+
     }
-
     title_frames++;
     title_flash_counter++;
 }
 
+
+
 void Title_Update()
 {
-    if (title_frames % 4 == 0)
+ 
+    if (title_state == TITLE_ATTRACT_ACCEL)
     {
-        zippy_logo.y++;
-    }
+        AccelerateMotorBike();
+        UpdateRoadScroll(bike_speed, title_frames);
 
-    if (zippy_logo.y >= 26)
-    {
-        zippy_logo.y = 26;
+        if (bike_speed >= MAX_SPEED)
+        {
+            if (Timer_IsActive(&attract_timer) == FALSE)
+            {
+                Timer_Start(&attract_timer, 3);  // 2 second countdown
+            }
+        }
+ 
+        if (Timer_IsActive(&attract_timer) == TRUE)
+        {
+            BYTE remaining = Timer_GetRemainingSeconds(&attract_timer);
+         
+            if (Timer_HasElapsed(&attract_timer))
+            {
+                Timer_Stop(&attract_timer);
+                title_state = TITLE_ATTRACT_INTO_HORIZON;
+            }     
+        }
     }
+    else if (title_state == TITLE_ATTRACT_INTO_HORIZON  || 
+             title_state == TITLE_ATTRACT_LOGO_DROP)
+    {
+        // start decelerating
+        BrakeMotorBike();
 
-    if (JoyLeft())
-    {
-        road_tile_idx--;
-    }
+        if (title_state == TITLE_ATTRACT_INTO_HORIZON )
+        {
+            if (bike_speed <= 80)
+            {
+                // clamp it 
 
-    if (JoyRight())
-    {
-        road_tile_idx++;
-       
+                bike_speed = 80;
+
+                if (Timer_IsActive(&attract_timer) == FALSE)
+                {
+                    Timer_Start(&attract_timer, 5);  // 3 second countdown
+                }
+            }
+        }
+
+        UpdateRoadScroll(bike_speed, title_frames);
+
+        if (Timer_IsActive(&attract_timer) == TRUE)
+        {
+            BYTE remaining = Timer_GetRemainingSeconds(&attract_timer);
+         
+            if (remaining == 4)
+            {
+                title_state = TITLE_ATTRACT_LOGO_DROP;
+            }
+
+            if (Timer_HasElapsed(&attract_timer))
+            {
+                Timer_Stop(&attract_timer);
+            }     
+        }
+
+        if (title_state == TITLE_ATTRACT_LOGO_DROP)
+        {
+            
+            if (title_frames % 4 == 0)
+            {
+                zippy_logo.y++;
+            }
+
+            if (zippy_logo.y >= 26)
+            {
+                zippy_logo.y = 26;
+
+                if (Timer_IsActive(&logo_flash_timer) == FALSE)
+                {
+                    Timer_Start(&logo_flash_timer, 3);  // Logo Flash Timer
+                }   
+            }
+        }
     }
+ 
 
     if (road_tile_idx > NUM_ROAD_FRAMES)
     {
@@ -235,29 +327,6 @@ void Title_OpenBlocks(void)
 	Disk_LoadAsset((UBYTE *)city_attract_tiles->planes[0],"tiles/city_attract.BPL");  
 }
  
-void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest)
-{
-    x = (x / 8) & 0xFFFE;
-    y = y * BITMAPBYTESPERROW;
-    
-    UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
-    UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
-    
-    HardWaitBlit();
-    
-    custom->bltcon0 = 0x9F0;
-    custom->bltcon1 = 0;
-    custom->bltafwm = 0xFFFF;
-    custom->bltalwm = 0xFFFF;
-    custom->bltamod = blockbytesperrow - (BLOCKWIDTH / 8);
-    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8) * count;  // Skip over tiles we're not writing
-    custom->bltapt  = blocksbuffer + mapy + mapx;
-    custom->bltdpt  = dest + y + x;
-    
-    // Blit width is count * BLOCKWIDTH
-    custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16) * count;
-}
-
 void Title_PreDrawSkyline()
 {
     const UBYTE blocksperrow = 16;
@@ -268,13 +337,13 @@ void Title_PreDrawSkyline()
     // Enable DMA ONCE at start
     custom->dmacon = 0x8400;
     
-    for (b = 0; b < 11; b++)
+    for (b = 0; b < 10; b++)
     {
         for (a = 0; a < 12; a++)
         {
             x = a * BLOCKWIDTH;
             y = b * blockplanelines;
-            DrawBlocks(x, y, a, b, blocksperrow, blockbytesperrow, 
+            DrawBlocks(x, y+ATTRACTMODE_Y_OFFSET, a, b, blocksperrow, blockbytesperrow, 
                       blockplanelines, FALSE, road_tile_idx, draw_buffer); 
         }
     }
@@ -293,7 +362,7 @@ void Title_DrawSkyline(BOOL deltas_only)
     
     custom->dmacon = 0x8400;
     
-    for (b = 0; b < 11; b++)
+    for (b = 0; b < 10; b++)
     {
         a = 0;
         while (a < 12)
@@ -319,9 +388,9 @@ void Title_DrawSkyline(BOOL deltas_only)
                 y = b * blockplanelines;
                 
                 // Blit 'run_length' tiles in one operation
-                DrawBlockRun(x, y, block, run_length, blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
+                DrawBlockRun(x, y+ATTRACTMODE_Y_OFFSET, block, run_length, blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
             }
-            
+
             a += run_length;
            
         }

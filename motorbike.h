@@ -1,8 +1,8 @@
 #define ACCEL_RATE 2         // Speed increase per frame when accelerating
 #define DECEL_RATE 1         // Speed decrease per frame when coasting
 
-#define MIN_SPEED 42
-#define MAX_SPEED 150
+#define MIN_SPEED 0
+#define MAX_SPEED 210
 
 #define BIKE_MOVING1    "sprites/bike/bike1.spr"
 #define BIKE_MOVING2    "sprites/bike/bike2.spr"
