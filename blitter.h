@@ -34,5 +34,6 @@ typedef struct
     BOOL moved;             // Position changed this frame
     BOOL needs_restore;     // Only restore if we drew last frame
     BOOL off_screen;        // Skip blits entirely if off-screen
+    ULONG size;
     RestorePtrs restore;
 } BlitterObject;

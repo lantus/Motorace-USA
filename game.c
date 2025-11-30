@@ -21,6 +21,7 @@
 #include "hud.h"
 #include "title.h"
 #include "hiscore.h"
+#include "city_approach.h"
 
 extern volatile struct Custom *custom;
 
@@ -63,6 +64,9 @@ void Game_Initialize()
 
     // Title Screen (Logo, Palette, etc)
     Title_Initialize();
+
+    // City Skyline
+    City_Initialize();
     
     Game_SetBackGroundColor(0x125);
    

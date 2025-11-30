@@ -418,7 +418,7 @@ int main(void)
 
 	while(!MouseLeft()) 
     {		 
-		WaitVBeam(1);
+		WaitVBeam(10);
 
 		/* 
 		

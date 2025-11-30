@@ -3,6 +3,8 @@
 
 extern RawMap *city_attract_map;
 extern BitMapEx *city_attract_tiles;
+ 
+#define ATTRACTMODE_Y_OFFSET 192
 
 enum TitleState {
     TITLE_ATTRACT_INIT = 0,
@@ -24,8 +26,6 @@ void Title_SaveBackground();
 void Title_RestoreLogo();
 void Title_OpenMap();
 void Title_OpenBlocks();
-void Title_DrawSkyline(BOOL deltas_only);
-void Title_PreDrawSkyline();
 
 // Attract Mode stuff
 void AttractMode_Update(void);

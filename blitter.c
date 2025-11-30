@@ -301,7 +301,6 @@ void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltapt = src;
     custom->bltdpt = dest_ptr;
     
-    // Since width is exactly 80 pixels (multiple of 16), no masking needed ever!
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
 

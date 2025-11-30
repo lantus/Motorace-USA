@@ -25,9 +25,8 @@
 #include "timers.h"
 #include "hiscore.h"
 #include "font.h"
-
-#define ATTRACTMODE_Y_OFFSET 192
-
+#include "city_approach.h"
+ 
 #define ZIPPY_LOGO_WIDTH 80
 #define ZIPPY_LOGO_HEIGHT 48
 
@@ -72,7 +71,7 @@ void Title_Initialize(void)
     zippy_logo.off_screen = FALSE;
 
     Title_LoadSprites();
-
+ 
     // Attract Mode Tiles/Tilemap
     Title_OpenMap();
     Title_OpenBlocks();
@@ -102,10 +101,8 @@ void Title_Draw()
 
             // So we pre-draw the city skyline ones
             // then on update we only draw the tiles being replaced
-        
-            Title_RestoreLogo();
-            
-            Title_PreDrawSkyline();
+      
+            City_PreDrawRoad();
 
             // Draw the hud
             HUD_DrawAll();
@@ -117,7 +114,7 @@ void Title_Draw()
  
     if (title_state < TITLE_ATTRACT_INSERT_COIN)
     {
-        Title_DrawSkyline(TRUE);
+        City_DrawRoad();
     }
     
     if (title_state == TITLE_ATTRACT_LOGO_DROP)
@@ -314,8 +311,7 @@ void Title_Update()
     else if (title_state == TITLE_ATTRACT_HIGHSCORE)
     {
         AttractMode_UpdateHiScores();
-    }
- 
+    } 
 
     if (road_tile_idx > NUM_ROAD_FRAMES)
     {
@@ -388,7 +384,7 @@ void Title_RestoreLogo()
     
     // Blit from background buffer to screen
     UWORD source_mod = 0;                  // Background: tight-packed
-    UWORD dest_mod = (320 - 80) / 8;      // Screen modulo: 30 bytes
+    UWORD dest_mod = (320 - ZIPPY_LOGO_WIDTH) / 8;      // Screen modulo: 30 bytes
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
     UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | ZIPPY_LOGO_WIDTH/16;
@@ -420,75 +416,3 @@ void Title_OpenBlocks(void)
 	Disk_LoadAsset((UBYTE *)city_attract_tiles->planes[0],"tiles/city_attract.BPL");  
 }
  
-void Title_PreDrawSkyline()
-{
-    const UBYTE blocksperrow = 16;
-    const UBYTE blockbytesperrow = 32;
-    const UBYTE blockplanelines = 64;
-    WORD a, b, x, y;
-    
-    // Enable DMA ONCE at start
-    custom->dmacon = 0x8400;
-    
-    for (b = 0; b < 10; b++)
-    {
-        for (a = 0; a < 12; a++)
-        {
-            x = a * BLOCKWIDTH;
-            y = b * blockplanelines;
-            DrawBlocks(x, y+ATTRACTMODE_Y_OFFSET, a, b, blocksperrow, blockbytesperrow, 
-                      blockplanelines, FALSE, road_tile_idx, draw_buffer); 
-        }
-    }
-    
-    // Disable DMA ONCE at end
-    custom->dmacon = 0x0400;
-}
-
-void Title_DrawSkyline(BOOL deltas_only)
-{
-    const UBYTE blocksperrow = 16;
-    const UBYTE blockbytesperrow = 32;
-    const UBYTE blockplanelines = 64;
-
-    WORD a, b, x, y;
-    
-    custom->dmacon = 0x8400;
-    
-    for (b = 0; b < 10; b++)
-    {
-        a = 0;
-        while (a < 12)
-        {
-            UWORD block = mapdata[b * mapwidth + a];
-            WORD run_length = 1;
-
-            if (block >= 32)
-            {
-                block += road_tile_idx << 5;
-
-                // Count how many consecutive tiles are the same
-          
-                while (a + run_length < 12)
-                {
-                    UWORD next_block = mapdata[b * mapwidth + a + run_length];
-                    next_block += road_tile_idx << 5;
-                    if (next_block != block) break;
-                    run_length++;
-                }
-            
-                x = a * BLOCKWIDTH;
-                y = b * blockplanelines;
-                
-                // Blit 'run_length' tiles in one operation
-                DrawBlockRun(x, y+ATTRACTMODE_Y_OFFSET, block, run_length, blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
-            }
-
-            a += run_length;
-           
-        }
-    }
-    
-    custom->dmacon = 0x0400;
- 
-}
