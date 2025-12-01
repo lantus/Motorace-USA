@@ -66,7 +66,7 @@ void Title_Initialize(void)
     // Load Zippy Race Logo Bob
 
     zippy_logo.background = Mem_AllocChip((ZIPPY_LOGO_WIDTH/8) * ZIPPY_LOGO_HEIGHT * 4);
-    zippy_logo.background2 = zippy_logo.background ;
+    zippy_logo.background2 = Mem_AllocChip((ZIPPY_LOGO_WIDTH/8) * ZIPPY_LOGO_HEIGHT * 4);
     zippy_logo.visible = TRUE;
     zippy_logo.off_screen = FALSE;
 
@@ -102,10 +102,19 @@ void Title_Draw()
             // So we pre-draw the city skyline ones
             // then on update we only draw the tiles being replaced
       
-            City_PreDrawRoad();
 
+            City_PreDrawRoad();
+            Title_SaveBackground();
             // Draw the hud
             HUD_DrawAll();
+
+            #if defined (DEBUG)
+            char line_buffer[8] = {0};
+            ULongToString(Mem_GetFreeChip(), line_buffer, 8, ' ');
+            Font_DrawString(draw_buffer, line_buffer, 32, 170, 9);
+            ULongToString(Mem_GetFreeFast(), line_buffer, 8, ' ');
+            Font_DrawString(draw_buffer, line_buffer, 32, 180, 10);
+            #endif
 
             title_state = TITLE_ATTRACT_ACCEL;            
 
@@ -120,7 +129,8 @@ void Title_Draw()
     if (title_state == TITLE_ATTRACT_LOGO_DROP)
     { 
         // Blit Logo
-
+        Title_RestoreLogo();
+        Title_SaveBackground();
         Title_BlitLogo();
  
         if (Timer_HasElapsed(&logo_flash_timer) == FALSE)
@@ -159,7 +169,7 @@ void Title_Draw()
         }
  
     }  
-
+ 
     title_frames++;
     title_flash_counter++;
 }
@@ -321,6 +331,7 @@ void Title_Update()
     {
         road_tile_idx = NUM_ROAD_FRAMES;
     }
+ 
 }
 
 void Title_Reset()
@@ -336,23 +347,25 @@ void Title_Reset()
 
 void Title_BlitLogo()
 {
-    // Position
     WORD x = zippy_logo.x;
     WORD y = zippy_logo.y;
 
-    UWORD source_mod = 0; 
-    UWORD dest_mod =  (320 - 80) / 8;
+    UWORD source_mod = 10;   // Width in bytes - skips the interleaved mask
+    UWORD dest_mod = (320 - ZIPPY_LOGO_WIDTH) / 8;     // Screen modulo
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
     UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | ZIPPY_LOGO_WIDTH/16;
     
-    // Source data
     UBYTE *source = (UBYTE*)&zippy_logo.data[0];
- 
+    
+    // Mask is 10 bytes after image (interleaved)
+    UBYTE *mask = source + ZIPPY_LOGO_WIDTH/8 * 1;  // +10 bytes
+    
     // Destination
     UBYTE *dest = draw_buffer;
  
-    BlitBobSimple(160, x, y, admod, bltsize, source, dest);
+    // Use BlitBob2 for cookie-cutter masking
+    BlitBob2(160, x, y, admod, bltsize, zippy_logo_restore_ptrs, source, mask, dest);
 }
 
 void Title_SaveBackground()

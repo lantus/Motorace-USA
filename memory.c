@@ -2,14 +2,19 @@
 #include <proto/dos.h>  
 #include "memory.h"
 
-ULONG Mem_GetFreeChipSize(void) 
+ULONG Mem_GetFreeChip(void) 
 {
 	return AvailMem(MEMF_CHIP);
 }
 
-ULONG Mem_GetFreeSize(void) 
+ULONG Mem_GetFreeAny(void) 
 {
 	return AvailMem(MEMF_ANY);
+}
+
+ULONG Mem_GetFreeFast(void) 
+{
+	return AvailMem(MEMF_FAST);
 }
 
 UBYTE Mem_GetType(const void *pMem) 

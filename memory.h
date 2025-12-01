@@ -1,5 +1,6 @@
-ULONG Mem_GetFreeChipSize(void);
-ULONG Mem_GetFreeSize(void);
+ULONG Mem_GetFreeChip(void);
+ULONG Mem_GetFreeAny(void);
+ULONG Mem_GetFreeFast(void) ;
 UBYTE Mem_GetType(const void *pMem);
 void* Mem_Alloc(ULONG size, ULONG requirements);
 void Mem_Free(void *ptr, ULONG size);
