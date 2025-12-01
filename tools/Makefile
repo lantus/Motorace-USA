@@ -1,0 +1,1 @@
+gcc collision_editor.c -lSDL2 -lSDL2_image -o collision_editor
