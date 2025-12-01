@@ -183,7 +183,7 @@ void DrawCarBOB(BlitterObject *car)
     // Destination
     UBYTE *dest = draw_buffer;
  
-    BlitBob2(160, x, y, admod, bltsize, restore_ptrs, source, mask, dest);
+    //BlitBob2(160, x, y, admod, bltsize, restore_ptrs, source, mask, dest);
    
     car->needs_restore = TRUE;
 }

@@ -29,6 +29,7 @@
  
 #define ZIPPY_LOGO_WIDTH 80
 #define ZIPPY_LOGO_HEIGHT 48
+#define ZIPPY_LOGO_WIDTH_WORDS 6  // (includes padding)
 
 #define ATTRACTMODE_TILES_WIDTH 256
 #define ATTRACTMODE_TILES_HEIGHT 512
@@ -65,8 +66,8 @@ void Title_Initialize(void)
 {
     // Load Zippy Race Logo Bob
 
-    zippy_logo.background = Mem_AllocChip((ZIPPY_LOGO_WIDTH/8) * ZIPPY_LOGO_HEIGHT * 4);
-    zippy_logo.background2 = Mem_AllocChip((ZIPPY_LOGO_WIDTH/8) * ZIPPY_LOGO_HEIGHT * 4);
+    zippy_logo.background = Mem_AllocChip((ZIPPY_LOGO_WIDTH_WORDS * 2) * ZIPPY_LOGO_HEIGHT * 4);
+    zippy_logo.background2 = Mem_AllocChip((ZIPPY_LOGO_WIDTH_WORDS * 2) * ZIPPY_LOGO_HEIGHT * 4);
     zippy_logo.visible = TRUE;
     zippy_logo.off_screen = FALSE;
 
@@ -336,9 +337,9 @@ void Title_Update()
 
 void Title_Reset()
 {
-    zippy_logo.x = 64;
+    zippy_logo.x = 56;
     zippy_logo.y = -32;
-    zippy_logo.old_x = 64;   // Same as starting x
+    zippy_logo.old_x = 56;   // Same as starting x
     zippy_logo.old_y = -32;  // Same as starting y
     road_tile_idx = 0;
     title_frames = 0;
@@ -350,22 +351,18 @@ void Title_BlitLogo()
     WORD x = zippy_logo.x;
     WORD y = zippy_logo.y;
 
-    UWORD source_mod = 10;   // Width in bytes - skips the interleaved mask
-    UWORD dest_mod = (320 - ZIPPY_LOGO_WIDTH) / 8;     // Screen modulo
+    UWORD source_mod = 12;
+    UWORD dest_mod = 28;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
-    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | ZIPPY_LOGO_WIDTH/16;
+    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | 6;
     
     UBYTE *source = (UBYTE*)&zippy_logo.data[0];
-    
-    // Mask is 10 bytes after image (interleaved)
-    UBYTE *mask = source + ZIPPY_LOGO_WIDTH/8 * 1;  // +10 bytes
-    
-    // Destination
+    UBYTE *mask = source + 12;
     UBYTE *dest = draw_buffer;
  
-    // Use BlitBob2 for cookie-cutter masking
-    BlitBob2(160, x, y, admod, bltsize, zippy_logo_restore_ptrs, source, mask, dest);
+    BlitBob2(160, x, y, admod, bltsize, ZIPPY_LOGO_WIDTH, 
+             zippy_logo_restore_ptrs, source, mask, dest);
 }
 
 void Title_SaveBackground()
@@ -375,11 +372,12 @@ void Title_SaveBackground()
 
     APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
     
-    UWORD source_mod = (320 - 80) / 8;   // Screen modulo: 30 bytes
-    UWORD dest_mod = 0;                  // Background is tight-packed
+    // Save from screen (planar) to buffer (tight-packed)
+    UWORD source_mod = (320 / 8) - (6 * 2);  // 40 - 12 = 28
+    UWORD dest_mod = 0;  // Tight-packed
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
-    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | ZIPPY_LOGO_WIDTH/16;
+    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT << 2) << 6) | 6;  // 192 lines, 6 words
     
     UBYTE *source = draw_buffer;
     UBYTE *dest = background;
@@ -389,25 +387,23 @@ void Title_SaveBackground()
 
 void Title_RestoreLogo()
 {
-    // Restore at OLD position
     WORD old_x = zippy_logo.old_x;
     WORD old_y = zippy_logo.old_y;
 
     APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
     
-    // Blit from background buffer to screen
-    UWORD source_mod = 0;                  // Background: tight-packed
-    UWORD dest_mod = (320 - ZIPPY_LOGO_WIDTH) / 8;      // Screen modulo: 30 bytes
+    // Restore from buffer (tight-packed) to screen (planar)
+    UWORD source_mod = 0;  // Tight-packed
+    UWORD dest_mod = (320 / 8) - (6 * 2);  // 40 - 12 = 28
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
-    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | ZIPPY_LOGO_WIDTH/16;
+    UWORD bltsize = ((ZIPPY_LOGO_HEIGHT << 2) << 6) | 6;  // 192 lines, 6 words
     
-    UBYTE *source = background;             // Source at 0,0 in buffer
-    UBYTE *dest = draw_buffer;              // Dest will be offset by function
+    UBYTE *source = background;
+    UBYTE *dest = draw_buffer;
     
     BlitBobSimple(160, old_x, old_y, admod, bltsize, source, dest);
     
-    // Save current position for next restore
     zippy_logo.old_x = zippy_logo.x;
     zippy_logo.old_y = zippy_logo.y;
 

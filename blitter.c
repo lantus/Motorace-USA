@@ -250,89 +250,85 @@ void BlitClearBob(UBYTE *restore_ptr, UBYTE *screen_ptr, UWORD modulo, UWORD blt
 }
  
 void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
-             APTR *restore_ptrs, APTR src, APTR mask, APTR dest)
+             UWORD width_pixels, APTR *restore_ptrs, APTR src, APTR mask, APTR dest)
 {
     ULONG y_offset = (ULONG)y * y_modulo;
     WORD shift = x & 15;
     ULONG bltcon = bl_bob_table[shift];
-    WORD x_offset = x >> 3;
+    
+    WORD x_offset = (x >> 4) << 1;
     ULONG offset = y_offset + x_offset;
  
     APTR dest_ptr = (UBYTE *)dest + offset;
-    
-    
+ 
+   
     HardWaitBlit();
     custom->bltcon0 = (UWORD)(bltcon >> 16);
     custom->bltcon1 = (UWORD)bltcon;
-    // Set modulos
-    custom->bltamod = (UWORD)(admod & 0xFFFF);        // A and B modulo
+    
+    custom->bltamod = (UWORD)(admod & 0xFFFF);
     custom->bltbmod = (UWORD)(admod & 0xFFFF);
-    custom->bltcmod = (UWORD)(admod >> 16);           // C and D modulo  
+    custom->bltcmod = (UWORD)(admod >> 16);
     custom->bltdmod = (UWORD)(admod >> 16);
+
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
 
     custom->bltapt = mask;
     custom->bltbpt = src;
     custom->bltcpt = dest_ptr;
     custom->bltdpt = dest_ptr;
     custom->bltsize = bltsize;
- 
 }
 
 void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
                     APTR src, APTR dest)
 {
     ULONG y_offset = (ULONG)y * y_modulo;
-    WORD shift = x & 15;
-    ULONG offset = y_offset + (x >> 3);
+    
+    // Simple byte-aligned offset - no shift needed
+    WORD x_offset = (x >> 4) << 1;  // Word boundary
+    ULONG offset = y_offset + x_offset;
     
     APTR dest_ptr = (UBYTE *)dest + offset;
- 
+    
     HardWaitBlit();
+    custom->bltcon0 = 0x09F0;  // Simple copy: D = A
+    custom->bltcon1 = 0x0000;  // No shift
     
-    // BLTCON0: Enable A and D channels, minterm 0xF0 (copy A to D)
-    custom->bltcon0 = (shift << 12) | 0x09F0;  
-    custom->bltcon1 = 0;           
- 
-    // Set modulos - only A and D are used
-    custom->bltamod = (UWORD)(admod & 0xFFFF);        // A modulo (source)
-    custom->bltdmod = (UWORD)(admod >> 16);           // D modulo (dest)
-    
-    // Set pointers - only A source and D destination
-    custom->bltapt = src;
-    custom->bltdpt = dest_ptr;
+    custom->bltamod = (UWORD)(admod & 0xFFFF);
+    custom->bltdmod = (UWORD)(admod >> 16);
     
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
-
+    
+    custom->bltapt = src;
+    custom->bltdpt = dest_ptr;
     custom->bltsize = bltsize;
 }
 
 void BlitBobSimpleSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
                        APTR src, APTR dest)
 {
-    // Calculate offset into SOURCE (screen) at position x,y
     ULONG y_offset = (ULONG)y * y_modulo;
-    WORD shift = x & 15;
-    ULONG offset = y_offset + (x >> 3);
     
-    APTR src_ptr = (UBYTE *)src + offset;  // Offset the SOURCE
+    // Simple byte-aligned offset - no shift needed
+    WORD x_offset = (x >> 4) << 1;  // Word boundary
+    ULONG offset = y_offset + x_offset;
+    
+    APTR src_ptr = (UBYTE *)src + offset;
     
     HardWaitBlit();
+    custom->bltcon0 = 0x09F0;  // Simple copy: D = A
+    custom->bltcon1 = 0x0000;  // No shift
     
-    // BLTCON0: Enable A and D channels, minterm 0xF0 (copy A to D)
-    custom->bltcon0 = (shift << 12) | 0x09F0;  
-    custom->bltcon1 = 0;           
- 
-    // Set modulos - only A and D are used
-    custom->bltamod = (UWORD)(admod & 0xFFFF);        // A modulo (source)
-    custom->bltdmod = (UWORD)(admod >> 16);           // D modulo (dest)
-    
-    // Set pointers
-    custom->bltapt = src_ptr;   // Source is offset to x,y position
-    custom->bltdpt = dest;      // Destination at start of buffer
+    custom->bltamod = (UWORD)(admod & 0xFFFF);
+    custom->bltdmod = (UWORD)(admod >> 16);
     
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
-
+    
+    custom->bltapt = src_ptr;
+    custom->bltdpt = dest;
     custom->bltsize = bltsize;
 }
