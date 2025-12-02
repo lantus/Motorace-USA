@@ -129,6 +129,31 @@ void Title_Draw()
  
     if (title_state < TITLE_ATTRACT_INSERT_COIN)
     {
+        // Update approach frame based on Y position (perspective)
+        MotorBike_UpdateApproachFrame(bike_position_y);
+        
+        // Only do the 2-frame animation for the closest view (frames 1-2)
+        if (bike_position_y >= 176)
+        {
+            // Calculate animation speed based on bike speed
+            UWORD anim_speed = 15 - (bike_speed / 20);
+            if (anim_speed < 3) anim_speed = 3;
+            
+            if (title_frames % anim_speed == 0)
+            {
+                bike_anim_frame ^= 1;
+                
+                if (bike_anim_frame == 0)
+                {
+                    MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+                }
+                else
+                {
+                    MotorBike_SetFrame(BIKE_FRAME_APPROACH2);
+                }
+            }
+        }
+        
         City_DrawRoad();
     }
  
@@ -241,6 +266,30 @@ void AttractMode_Update(void)
 void Title_Update()
 {
  
+     // Animate bike sprite during attract mode - speed based
+    if (title_state < TITLE_ATTRACT_INSERT_COIN)
+    {
+        // Calculate animation speed based on bike speed
+        // At min speed (42), change every ~12 frames
+        // At max speed (210), change every ~3 frames
+        UWORD anim_speed = 15 - (bike_speed / 20);  // Faster bike = smaller number
+        if (anim_speed < 3) anim_speed = 3;  // Cap at minimum 3 frames
+        
+        if (title_frames % anim_speed == 0)
+        {
+            bike_anim_frame ^= 1;
+            
+            if (bike_anim_frame == 0)
+            {
+                MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+            }
+            else
+            {
+                MotorBike_SetFrame(BIKE_FRAME_APPROACH2);
+            }
+        }
+    }
+
     if (title_state == TITLE_ATTRACT_ACCEL)
     {
         AccelerateMotorBike();
@@ -250,7 +299,7 @@ void Title_Update()
         {
             if (Timer_IsActive(&attract_timer) == FALSE)
             {
-                Timer_Start(&attract_timer, 3);  // 2 second countdown
+                Timer_Start(&attract_timer, 4);  // 4 second countdown
             }
         }
  
@@ -341,26 +390,6 @@ void Title_Update()
     {
         road_tile_idx = NUM_ROAD_FRAMES;
     }
-
-    // Animate bike sprite during attract mode
-    if (title_state < TITLE_ATTRACT_INSERT_COIN)
-    {
-        if (Timer_HasElapsed(&bike_anim_timer))
-        {
-            bike_anim_frame ^= 1;
-            
-            if (bike_anim_frame == 0)
-            {
-                MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
-            }
-            else
-            {
-                MotorBike_SetFrame(BIKE_FRAME_APPROACH2);
-            }
-            
-            Timer_Reset(&bike_anim_timer);
-        }
-    }
  
 }
 
@@ -377,6 +406,7 @@ void Title_Reset()
     bike_position_y = 200;
 
     bike_anim_frame = 0;
+
     MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
     Timer_StartMs(&bike_anim_timer, 150);
  

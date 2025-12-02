@@ -34,7 +34,6 @@ typedef struct SpriteSheet
     UWORD palette[MAX_SPRITE_PALETTE_SIZE];
     UWORD sprite_offsets[MAX_SPRITES_PER_SHEET];
     UBYTE *imgdata;
-    
 } Sprite;
 
 BOOL Sprites_LoadFromFile(char *filename,Sprite *sheet);
@@ -46,3 +45,4 @@ void Sprites_SetPosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD v
 void Sprites_Free();
 void Sprites_BuildComposite(ULONG *sprite, int n, Sprite *sheet);
 void Sprites_SetScreenPosition(UWORD *sprite_data, WORD x, UWORD y, UWORD height);
+void Sprites_ClearLower();

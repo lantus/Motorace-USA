@@ -66,6 +66,10 @@ WORD bike_speed = 42;        // Current speed in mph (starts at idle)
 WORD bike_acceleration = 0;  // Current acceleration
 WORD scroll_accumulator = 0;  // Fractional scroll position (fixed point)
 
+static UBYTE approach_frame_index = 1;  // Track which approach frame we're on
+static UBYTE vibration_counter = 0;
+static UBYTE current_sprite_count = 2;  // Track whether using 2 or 4 sprites
+
 void MotorBike_Initialize()
 {
     Sprites_LoadFromFile(BIKE_MOVING1,&spr_rsrc_bike_moving1);
@@ -103,11 +107,11 @@ void MotorBike_Initialize()
     spr_approach_bike_frame1_left = Mem_AllocChip(4);
     spr_approach_bike_frame1_right = Mem_AllocChip(4);
     spr_approach_bike_frame2 = Mem_AllocChip(4);
-    spr_approach_bike_frame3 = Mem_AllocChip(4);
-    spr_approach_bike_frame4 = Mem_AllocChip(4);
-    spr_approach_bike_frame5 = Mem_AllocChip(4);  
-    spr_approach_bike_frame6 = Mem_AllocChip(4);  
-    spr_approach_bike_frame7 = Mem_AllocChip(4);       
+    spr_approach_bike_frame3 = Mem_AllocChip(2);
+    spr_approach_bike_frame4 = Mem_AllocChip(2);
+    spr_approach_bike_frame5 = Mem_AllocChip(2);  
+    spr_approach_bike_frame6 = Mem_AllocChip(2);  
+    spr_approach_bike_frame7 = Mem_AllocChip(2);       
 
    
 
@@ -124,8 +128,13 @@ void MotorBike_Initialize()
     Sprites_BuildComposite(spr_approach_bike_frame1_left,4,&spr_rsrc_approach_bike_frame1_left);
     Sprites_BuildComposite(spr_approach_bike_frame1_right,4,&spr_rsrc_approach_bike_frame1_right);
     Sprites_BuildComposite(spr_approach_bike_frame1,4,&spr_rsrc_approach_bike_frame1);
+    Sprites_BuildComposite(spr_approach_bike_frame7,2,&spr_rsrc_approach_bike_frame7);
+    Sprites_BuildComposite(spr_approach_bike_frame6,2,&spr_rsrc_approach_bike_frame6); 
+    Sprites_BuildComposite(spr_approach_bike_frame5,2,&spr_rsrc_approach_bike_frame5);
+    Sprites_BuildComposite(spr_approach_bike_frame4,2,&spr_rsrc_approach_bike_frame4);   
+    Sprites_BuildComposite(spr_approach_bike_frame3,2,&spr_rsrc_approach_bike_frame3);   
     Sprites_BuildComposite(spr_approach_bike_frame2,4,&spr_rsrc_approach_bike_frame2);
-
+    
     Sprites_ApplyPalette(&spr_rsrc_bike_moving1);
  
 }
@@ -147,12 +156,21 @@ void MotorBike_Reset()
 
 void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
 {
-    Sprites_SetPointers(current_bike_sprite, 4, SPRITEPTR_ZERO_AND_ONE);
-
-    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0], x, y, 32);  // height = 32
-    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1], x, y, 32);
-    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[2], x+16, y, 32);
-    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[3], x+16, y, 32);
+    if (current_sprite_count == 2)
+    {
+        Sprites_ClearLower();
+        // 16-pixel wide sprite (2 hardware sprites)
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0], x, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1], x, y, 32);
+    }
+    else // current_sprite_count == 4
+    {
+        // 32-pixel wide sprite (4 hardware sprites)
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0], x, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1], x, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[2], x+16, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[3], x+16, y, 32);
+    }
 }
 
 void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state)
@@ -277,6 +295,26 @@ void MotorBike_SetFrame(BikeFrame frame)
             current_bike_sprite = spr_approach_bike_frame2;
             num_sprites = 4;
             break;
+        case BIKE_FRAME_APPROACH3:
+            current_bike_sprite = spr_approach_bike_frame3;
+            num_sprites = 2;
+            break;
+        case BIKE_FRAME_APPROACH4:
+            current_bike_sprite = spr_approach_bike_frame4;
+            num_sprites = 2;
+            break;
+        case BIKE_FRAME_APPROACH5:
+            current_bike_sprite = spr_approach_bike_frame5;
+            num_sprites = 2;
+            break;
+        case BIKE_FRAME_APPROACH6:
+            current_bike_sprite = spr_approach_bike_frame6;
+            num_sprites = 2;
+            break;
+        case BIKE_FRAME_APPROACH7:
+            current_bike_sprite = spr_approach_bike_frame7;
+            num_sprites = 2;
+            break;                                                                
         case BIKE_FRAME_APPROACH1_LEFT:
             current_bike_sprite = spr_approach_bike_frame1_left;
             num_sprites = 4;
@@ -289,5 +327,69 @@ void MotorBike_SetFrame(BikeFrame frame)
             return;
     }
     
+    current_sprite_count = num_sprites;  // Store for MotorBike_Draw
+
     Sprites_SetPointers(current_bike_sprite, num_sprites, SPRITEPTR_ZERO_AND_ONE);
+}
+
+void MotorBike_UpdateApproachFrame(UWORD y)
+{
+    BikeFrame new_frame;
+    UBYTE new_index = 1;  // Default to frame 1
+    
+    // Determine frame based on Y position (perspective scaling)
+    if (y >= 176)
+    {
+        new_frame = BIKE_FRAME_APPROACH1;
+        new_index = 1;
+    }
+    else if (y >= 144)
+    {
+        new_frame = BIKE_FRAME_APPROACH3;
+        new_index = 3;
+    }
+    else if (y >= 128)
+    {
+        new_frame = BIKE_FRAME_APPROACH4;
+        new_index = 4;
+    }
+    else if (y >= 112)
+    {
+        new_frame = BIKE_FRAME_APPROACH5;
+        new_index = 5;
+    }
+    else if (y >= 96)
+    {
+        new_frame = BIKE_FRAME_APPROACH6;
+        new_index = 6;
+    }
+    else  // y < 96
+    {
+        new_frame = BIKE_FRAME_APPROACH7;
+        new_index = 7;
+    }
+    
+    approach_frame_index = new_index;
+    MotorBike_SetFrame(new_frame);
+}
+
+WORD MotorBike_GetVibrationOffset(void)
+{
+    // Only vibrate for frames 3 and beyond (smaller/distant sprites)
+    if (approach_frame_index < 3)
+    {
+        return 0;
+    }
+    
+    // Alternate between -1, 0, +1 for subtle vibration
+    vibration_counter++;
+    
+    switch (vibration_counter % 4)
+    {
+        case 0: return -1;
+        case 1: return 0;
+        case 2: return 1;
+        case 3: return 0;
+        default: return 0;
+    }
 }

@@ -92,6 +92,17 @@ void Sprites_Initialize()
     CopSPR7PTL[val] = ((ULONG) null_sprite_data) & 0xffff;
 }
 
+void Sprites_ClearLower()
+{
+
+    CopSPR2PTH[val] = (((ULONG) null_sprite_data) >> 16) & 0xffff;
+    CopSPR2PTL[val] = ((ULONG) null_sprite_data) & 0xffff;
+
+    CopSPR3PTH[val] = (((ULONG) null_sprite_data) >> 16) & 0xffff;
+    CopSPR3PTL[val] = ((ULONG) null_sprite_data) & 0xffff;
+ 
+}
+
 void Sprites_BuildComposite(ULONG *sprite, int n, Sprite *sheet)
 {
     for (int i = 0; i < n; i++) 

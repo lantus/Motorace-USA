@@ -14,6 +14,11 @@ typedef enum {
     BIKE_FRAME_RIGHT2,
     BIKE_FRAME_APPROACH1,
     BIKE_FRAME_APPROACH2,
+    BIKE_FRAME_APPROACH3,
+    BIKE_FRAME_APPROACH4,
+    BIKE_FRAME_APPROACH5,
+    BIKE_FRAME_APPROACH6,       
+    BIKE_FRAME_APPROACH7,  
     BIKE_FRAME_APPROACH1_LEFT,
     BIKE_FRAME_APPROACH1_RIGHT
 } BikeFrame;
@@ -29,12 +34,12 @@ typedef enum {
 #define APPROACH_BIKE1          "sprites/bike/3dbike1.spr"
 #define APPROACH_BIKE_LEFT      "sprites/bike/3dbike1-left.spr"
 #define APPROACH_BIKE_RIGHT     "sprites/bike/3dbike1-right.spr"
-#define APPROACH_BIKE2          "sprites/bike/3dbike1.spr"
-#define APPROACH_BIKE3          "sprites/bike/3dbike1.spr"
-#define APPROACH_BIKE4          "sprites/bike/3dbike1.spr"
-#define APPROACH_BIKE5          "sprites/bike/3dbike1.spr"
-#define APPROACH_BIKE6          "sprites/bike/3dbike1.spr"
-#define APPROACH_BIKE7          "sprites/bike/3dbike1.spr"
+#define APPROACH_BIKE2          "sprites/bike/3dbike2.spr"
+#define APPROACH_BIKE3          "sprites/bike/3dbike3.spr"
+#define APPROACH_BIKE4          "sprites/bike/3dbike4.spr"
+#define APPROACH_BIKE5          "sprites/bike/3dbike5.spr"
+#define APPROACH_BIKE6          "sprites/bike/3dbike6.spr"
+#define APPROACH_BIKE7          "sprites/bike/3dbike7.spr"
  
 extern UWORD bike_position_x;
 extern UWORD bike_position_y;
@@ -69,3 +74,5 @@ void BrakeMotorBike();
 void MotorBike_Reset();
 void MotorBike_Draw(WORD x, UWORD y, UBYTE state);
 void MotorBike_SetFrame(BikeFrame frame); 
+void MotorBike_UpdateApproachFrame(UWORD y);
+WORD MotorBike_GetVibrationOffset(void);
