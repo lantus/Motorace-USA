@@ -29,11 +29,14 @@
  
 #define ZIPPY_LOGO_WIDTH 80
 #define ZIPPY_LOGO_HEIGHT 48
-#define ZIPPY_LOGO_WIDTH_WORDS 6  // (includes padding)
+#define ZIPPY_LOGO_WIDTH_WORDS 6            // (includes padding)
+#define ATTRACT_MOTORBIKE_CENTER_X 80       // X position of the bike during attract
 
 #define ATTRACTMODE_TILES_WIDTH 256
 #define ATTRACTMODE_TILES_HEIGHT 512
 #define NUM_ROAD_FRAMES 14
+
+
  
 extern volatile struct Custom *custom;
 
@@ -52,7 +55,9 @@ GameTimer attract_timer;
 GameTimer logo_flash_timer;
 GameTimer blink_timer;
 GameTimer hiscore_timer;    // timer for high score table display
+GameTimer bike_anim_timer;  // Add this
 
+UBYTE bike_anim_frame = 0;  // Add this to track current frame
 BOOL text_visible = TRUE;
 
 UBYTE title_state = TITLE_ATTRACT_INIT;
@@ -126,7 +131,7 @@ void Title_Draw()
     {
         City_DrawRoad();
     }
-    
+ 
     if (title_state == TITLE_ATTRACT_LOGO_DROP)
     { 
         // Blit Logo
@@ -171,6 +176,8 @@ void Title_Draw()
  
     }  
  
+    MotorBike_Draw(bike_position_x,bike_position_y,0);
+
     title_frames++;
     title_flash_counter++;
 }
@@ -264,6 +271,8 @@ void Title_Update()
         // start decelerating
         BrakeMotorBike();
 
+        bike_position_y--;
+
         if (title_state == TITLE_ATTRACT_INTO_HORIZON )
         {
             if (bike_speed <= 80)
@@ -304,9 +313,9 @@ void Title_Update()
                 zippy_logo.y++;
             }
 
-            if (zippy_logo.y >= 26)
+            if (zippy_logo.y >= 16)
             {
-                zippy_logo.y = 26;
+                zippy_logo.y = 16;
 
                 if (Timer_IsActive(&logo_flash_timer) == FALSE)
                 {
@@ -332,6 +341,26 @@ void Title_Update()
     {
         road_tile_idx = NUM_ROAD_FRAMES;
     }
+
+    // Animate bike sprite during attract mode
+    if (title_state < TITLE_ATTRACT_INSERT_COIN)
+    {
+        if (Timer_HasElapsed(&bike_anim_timer))
+        {
+            bike_anim_frame ^= 1;
+            
+            if (bike_anim_frame == 0)
+            {
+                MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+            }
+            else
+            {
+                MotorBike_SetFrame(BIKE_FRAME_APPROACH2);
+            }
+            
+            Timer_Reset(&bike_anim_timer);
+        }
+    }
  
 }
 
@@ -343,6 +372,13 @@ void Title_Reset()
     zippy_logo.old_y = -32;  // Same as starting y
     road_tile_idx = 0;
     title_frames = 0;
+
+    bike_position_x = 80;
+    bike_position_y = 200;
+
+    bike_anim_frame = 0;
+    MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+    Timer_StartMs(&bike_anim_timer, 150);
  
 }
 
@@ -371,9 +407,8 @@ void Title_SaveBackground()
     WORD y = zippy_logo.y;
 
     APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
-    
-    // Save from screen (planar) to buffer (tight-packed)
-    UWORD source_mod = (320 / 8) - (6 * 2);  // 40 - 12 = 28
+ 
+    UWORD source_mod = (320 / 8) - (6 * 2);  
     UWORD dest_mod = 0;  // Tight-packed
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
@@ -391,9 +426,8 @@ void Title_RestoreLogo()
     WORD old_y = zippy_logo.old_y;
 
     APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
-    
-    // Restore from buffer (tight-packed) to screen (planar)
-    UWORD source_mod = 0;  // Tight-packed
+ 
+    UWORD source_mod = 0;   
     UWORD dest_mod = (320 / 8) - (6 * 2);  // 40 - 12 = 28
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     

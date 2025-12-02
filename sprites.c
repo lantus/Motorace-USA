@@ -9,19 +9,10 @@
 #include <proto/exec.h>
 #include <proto/graphics.h>
 #include <proto/dos.h>
+#include "hardware.h"
 #include "sprites.h"
 #include "copper.h"
  
-/* Sprite sheet dimensions */
-#define SHEET_WIDTH 16
-#define SHEET_HEIGHT 32
-#define SPRITE_WIDTH 16
-#define SPRITE_HEIGHT 32
-#define SPRITES_PER_ROW 10
-#define SPRITES_PER_COL 4
-#define SPRITE_COLORS 16
-#define TOTAL_SPRITES SPRITES_PER_ROW * SPRITES_PER_COL
-
 #define SCREEN_DEPTH 4  // 16 colors = 4 bitplanes
 
 #define SPRITEPALSIZE (SPRITE_COLORS * 2)
@@ -121,6 +112,16 @@ void Sprites_SetPointers(ULONG *sprite, UBYTE n, UBYTE sprite_index)
         wp[val + i * 4 + 2] = ((ULONG) sprite[i]) & 0xffff;
     }
 
+}
+
+// Screen-space positioning wrapper
+void Sprites_SetScreenPosition(UWORD *sprite_data, WORD x, UWORD y, UWORD height)
+{
+    UWORD hstart = x + g_sprite_hoffset;
+    UWORD vstart = y;
+    UWORD vstop = vstart + height;
+    
+    Sprites_SetPosition(sprite_data, hstart, vstart, vstop);
 }
 
 void Sprites_SetPosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop)

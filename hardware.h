@@ -6,6 +6,11 @@
 #define BPL0_BPUMASK	   0x7000
 
 extern BOOL os_disabled;
+ 
+extern BOOL  g_is_pal;
+extern UWORD g_sprite_hoffset;   // Horizontal offset (usually same for both)
+extern UWORD g_sprite_voffset;   // Vertical offset (differs PAL/NTSC)
+extern UWORD g_screen_height ;   // Screen height
 
 void KillSystem(void);
 void ActivateSystem(void);

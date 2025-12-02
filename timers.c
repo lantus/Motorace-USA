@@ -1,4 +1,5 @@
 #include "timers.h"
+#include "hardware.h"
 #include "support/gcc8_c_support.h"
 #include <exec/types.h>
 #include <exec/exec.h>
@@ -15,25 +16,39 @@
 static volatile ULONG timer_vblank_ticks = 0;
 static UWORD timer_refresh_rate = 50;  // Hz (PAL or NTSC)
 
+// Global display offsets (set once at init)
+BOOL  g_is_pal = TRUE;
+UWORD g_sprite_hoffset = 129;  // Horizontal offset (usually same for both)
+UWORD g_sprite_voffset = 44;   // Vertical offset (differs PAL/NTSC)
+UWORD g_screen_height = 256;   // Screen height
+
 // Detect PAL/NTSC by counting scanlines
 void Timer_Init(void)
 {
     volatile UWORD *vposr = (UWORD *)0xDFF004;
-    UWORD max_vpos = 0;
-    
-    // Sample vertical position to detect PAL (312 lines) vs NTSC (262 lines)
-    for (int i = 0; i < 5000; i++)
-    {
-        UWORD vpos = (*vposr) >> 8;
-        if (vpos > max_vpos) max_vpos = vpos;
+
+    UWORD vpos = *vposr;
+    if (vpos & 0x2000) {
+        // PAL system
+        g_sprite_voffset = 44;   // or 0x2C
+        g_screen_height = 256;
+
+        timer_refresh_rate = 50;
+    } else {
+        // NTSC system
+        g_sprite_voffset = 44;   // Same, but shorter display
+        g_screen_height = 200;
+
+         timer_refresh_rate = 60;
     }
-    
-    timer_refresh_rate = (max_vpos > 280) ? 50 : 60;
+
     timer_vblank_ticks = 0;
-    
+ 
     KPrintF("Timer: Detected %s (%ld Hz)\n", 
             timer_refresh_rate == 60 ? "NTSC" : "PAL",
             timer_refresh_rate);
+
+    g_is_pal = timer_refresh_rate == 60 ? FALSE : TRUE;            
 }
 
 // Call this in your VBlank interrupt handler

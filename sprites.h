@@ -45,3 +45,4 @@ void Sprites_SetPointers(ULONG *sprite, UBYTE n, UBYTE sprite_index);
 void Sprites_SetPosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop);
 void Sprites_Free();
 void Sprites_BuildComposite(ULONG *sprite, int n, Sprite *sheet);
+void Sprites_SetScreenPosition(UWORD *sprite_data, WORD x, UWORD y, UWORD height);

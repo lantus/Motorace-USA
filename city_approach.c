@@ -91,7 +91,7 @@ void City_DrawRoad()
     
     custom->dmacon = 0x8400;
     
-    for (b = 0; b < 10; b++)
+    for (b = 1; b < 10; b++)
     {
         a = 0;
         while (a < 12)

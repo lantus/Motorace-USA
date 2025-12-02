@@ -56,7 +56,7 @@ void Game_Initialize()
     HiScore_Initialize();
     
     // Motorbike
-    LoadMotorbikeSprites();
+    MotorBike_Initialize();
     
     // HUD
     HUD_InitSprites();
@@ -74,6 +74,8 @@ void Game_Initialize()
     game_map = MAP_ATTRACT_INTRO;
 
     Game_SetMap(game_map);
+
+    MotorBike_Reset();
 }
 
 void Game_NewGame(UBYTE difficulty)
