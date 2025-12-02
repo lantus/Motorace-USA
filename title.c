@@ -114,13 +114,14 @@ void Title_Draw()
             // Draw the hud
             HUD_DrawAll();
 
-            //#if defined (DEBUG)
+            #if defined (DEBUG)
             char line_buffer[8] = {0};
+            
             ULongToString(Mem_GetFreeChip(), line_buffer, 8, ' ');
             Font_DrawString(draw_buffer, line_buffer, 32, 170, 9);
             ULongToString(Mem_GetFreeFast(), line_buffer, 8, ' ');
             Font_DrawString(draw_buffer, line_buffer, 32, 180, 10);
-            //#endif
+            #endif
 
             title_state = TITLE_ATTRACT_ACCEL;            
 
@@ -166,7 +167,7 @@ void Title_Draw()
  
         if (Timer_HasElapsed(&logo_flash_timer) == FALSE)
         {
-            if (title_flash_counter % 5 == 0) 
+            if (title_flash_counter % 2 == 0) 
             {          
                 Copper_SwapColors(7, 12);
             }
@@ -201,7 +202,9 @@ void Title_Draw()
  
     }  
  
-    MotorBike_Draw(bike_position_x,bike_position_y,0);
+    // Apply vibration offset for distant sprites (ADD THIS)
+    WORD vibration_x = MotorBike_GetVibrationOffset();
+    MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
 
     title_frames++;
     title_flash_counter++;
@@ -266,7 +269,7 @@ void AttractMode_Update(void)
 void Title_Update()
 {
  
-     // Animate bike sprite during attract mode - speed based
+    // Animate bike sprite during attract mode - speed based
     if (title_state < TITLE_ATTRACT_INSERT_COIN)
     {
         // Calculate animation speed based on bike speed
@@ -290,23 +293,27 @@ void Title_Update()
         }
     }
 
-    if (title_state == TITLE_ATTRACT_ACCEL)
+     if (title_state == TITLE_ATTRACT_ACCEL)
     {
-        AccelerateMotorBike();
+        // Slower acceleration - more cinematic buildup
+        bike_speed += 1;  // Changed from ACCEL_RATE (2) to 1
+        if (bike_speed > MAX_SPEED)
+        {
+            bike_speed = MAX_SPEED;
+        }
+        
         UpdateRoadScroll(bike_speed, title_frames);
 
         if (bike_speed >= MAX_SPEED)
         {
             if (Timer_IsActive(&attract_timer) == FALSE)
             {
-                Timer_Start(&attract_timer, 4);  // 4 second countdown
+                Timer_Start(&attract_timer, 4);  // Changed from 4 to 6 seconds
             }
         }
  
         if (Timer_IsActive(&attract_timer) == TRUE)
         {
-            BYTE remaining = Timer_GetRemainingSeconds(&attract_timer);
-         
             if (Timer_HasElapsed(&attract_timer))
             {
                 Timer_Stop(&attract_timer);
@@ -315,48 +322,56 @@ void Title_Update()
         }
     }
     else if (title_state == TITLE_ATTRACT_INTO_HORIZON  || 
-             title_state == TITLE_ATTRACT_LOGO_DROP)
+         title_state == TITLE_ATTRACT_LOGO_DROP)
     {
-        // start decelerating
-        BrakeMotorBike();
+        // Gentler deceleration
+        if (bike_speed > 80 && title_frames % 2 == 0)
+        {
+            bike_speed -= 1;
+        }
 
-        bike_position_y--;
+        // Faster Y movement for more dramatic perspective - speed based
+        UWORD y_speed;
 
-        if (title_state == TITLE_ATTRACT_INTO_HORIZON )
+        if (bike_speed > 150)
+        {
+            y_speed = 2;  
+        }
+        else if (bike_speed > 100)
+        {
+            y_speed = 2;   
+        }
+        else
+        {
+            y_speed = 2;   
+        }
+        
+        if (title_frames % y_speed == 0)
+        {
+            bike_position_y--;
+        }
+
+        // Trigger logo drop when bike reaches frame 4 (Y <= 128)
+        if (bike_position_y <= 128 && title_state == TITLE_ATTRACT_INTO_HORIZON)
+        {
+            title_state = TITLE_ATTRACT_LOGO_DROP;
+        }
+
+        if (title_state == TITLE_ATTRACT_INTO_HORIZON)
         {
             if (bike_speed <= 80)
             {
-                // clamp it 
-
                 bike_speed = 80;
-
-                if (Timer_IsActive(&attract_timer) == FALSE)
-                {
-                    Timer_Start(&attract_timer, 5);  // 3 second countdown
-                }
             }
         }
 
         UpdateRoadScroll(bike_speed, title_frames);
 
-        if (Timer_IsActive(&attract_timer) == TRUE)
-        {
-            BYTE remaining = Timer_GetRemainingSeconds(&attract_timer);
-         
-            if (remaining == 4)
-            {
-                title_state = TITLE_ATTRACT_LOGO_DROP;
-            }
-
-            if (Timer_HasElapsed(&attract_timer))
-            {
-                Timer_Stop(&attract_timer);
-            }     
-        }
-
         if (title_state == TITLE_ATTRACT_LOGO_DROP)
         {
-            
+            // Logo drops every frame for smooth motion
+
+            // Slower logo drop
             if (title_frames % 4 == 0)
             {
                 zippy_logo.y++;
@@ -368,7 +383,7 @@ void Title_Update()
 
                 if (Timer_IsActive(&logo_flash_timer) == FALSE)
                 {
-                    Timer_Start(&logo_flash_timer, 3);  // Logo Flash Timer
+                    Timer_Start(&logo_flash_timer, 3);
                 }   
             }
         }

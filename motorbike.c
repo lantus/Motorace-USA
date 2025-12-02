@@ -373,7 +373,7 @@ void MotorBike_UpdateApproachFrame(UWORD y)
         new_frame = BIKE_FRAME_APPROACH7;
         new_index = 7;
     }    
-    else if (y >= 92)
+    else if (y >= 88)
     {
         new_frame = BIKE_FRAME_APPROACH8;
         new_index = 8;
@@ -393,8 +393,8 @@ void MotorBike_UpdateApproachFrame(UWORD y)
 
 WORD MotorBike_GetVibrationOffset(void)
 {
-    // Only vibrate for frames 3 and beyond (smaller/distant sprites)
-    if (approach_frame_index < 3)
+    // Only vibrate for frames 2 and beyond (smaller/distant sprites)
+    if (approach_frame_index < 2)
     {
         return 0;
     }
@@ -402,7 +402,7 @@ WORD MotorBike_GetVibrationOffset(void)
     // Alternate between -1, 0, +1 for subtle vibration
     vibration_counter++;
     
-    switch (vibration_counter % 4)
+    switch (vibration_counter % 2)
     {
         case 0: return -1;
         case 1: return 0;
