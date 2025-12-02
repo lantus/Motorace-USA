@@ -95,6 +95,19 @@ void Sprites_Initialize()
 void Sprites_ClearLower()
 {
 
+    // 0-1
+    CopSPR0PTH[val] = (((ULONG) null_sprite_data) >> 16) & 0xffff;
+    CopSPR0PTL[val] = ((ULONG) null_sprite_data) & 0xffff;
+
+    CopSPR1PTH[val] = (((ULONG) null_sprite_data) >> 16) & 0xffff;
+    CopSPR1PTL[val] = ((ULONG) null_sprite_data) & 0xffff;
+ 
+}
+
+void Sprites_ClearHigher()
+{
+
+    //2-3
     CopSPR2PTH[val] = (((ULONG) null_sprite_data) >> 16) & 0xffff;
     CopSPR2PTL[val] = ((ULONG) null_sprite_data) & 0xffff;
 

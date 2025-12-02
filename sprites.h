@@ -46,3 +46,4 @@ void Sprites_Free();
 void Sprites_BuildComposite(ULONG *sprite, int n, Sprite *sheet);
 void Sprites_SetScreenPosition(UWORD *sprite_data, WORD x, UWORD y, UWORD height);
 void Sprites_ClearLower();
+void Sprites_ClearHigher();

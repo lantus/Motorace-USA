@@ -19,6 +19,7 @@ typedef enum {
     BIKE_FRAME_APPROACH5,
     BIKE_FRAME_APPROACH6,       
     BIKE_FRAME_APPROACH7,  
+    BIKE_FRAME_APPROACH8,    
     BIKE_FRAME_APPROACH1_LEFT,
     BIKE_FRAME_APPROACH1_RIGHT
 } BikeFrame;
@@ -40,6 +41,7 @@ typedef enum {
 #define APPROACH_BIKE5          "sprites/bike/3dbike5.spr"
 #define APPROACH_BIKE6          "sprites/bike/3dbike6.spr"
 #define APPROACH_BIKE7          "sprites/bike/3dbike7.spr"
+#define APPROACH_BIKE8          "sprites/bike/3dbike8.spr"
  
 extern UWORD bike_position_x;
 extern UWORD bike_position_y;

@@ -114,13 +114,13 @@ void Title_Draw()
             // Draw the hud
             HUD_DrawAll();
 
-            #if defined (DEBUG)
+            //#if defined (DEBUG)
             char line_buffer[8] = {0};
             ULongToString(Mem_GetFreeChip(), line_buffer, 8, ' ');
             Font_DrawString(draw_buffer, line_buffer, 32, 170, 9);
             ULongToString(Mem_GetFreeFast(), line_buffer, 8, ' ');
             Font_DrawString(draw_buffer, line_buffer, 32, 180, 10);
-            #endif
+            //#endif
 
             title_state = TITLE_ATTRACT_ACCEL;            
 
