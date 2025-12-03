@@ -51,6 +51,7 @@ extern UWORD bike_position_y;
 
 enum BikeState
 {
+    BIKE_STATE_STOPPED = 0,
     BIKE_STATE_MOVING = 1,
     BIKE_STATE_LEFT = 2,
     BIKE_STATE_RIGHT = 3,

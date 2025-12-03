@@ -26,6 +26,11 @@
 
 extern volatile struct Custom *custom;
 
+
+UBYTE stage_state = STAGE_COUNTDOWN;
+GameTimer countdown_timer;
+UBYTE countdown_value = 5;
+
 UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDEDCC;
@@ -102,7 +107,7 @@ void Game_NewGame(UBYTE difficulty)
     // Position bike near bottom of screen
     bike_position_x = SCREENWIDTH / 2;  // Center horizontally (around pixel 96 for 192px display)
     bike_position_y = SCREENHEIGHT - 64;  // Near bottom
-    bike_state = BIKE_STATE_MOVING; 
+    bike_state = BIKE_STATE_STOPPED; 
     
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     videoposy = mapposy % HALFBITMAPHEIGHT;
@@ -519,6 +524,10 @@ void GameReady_Update(void)
         // Transition to actual game
         game_state = STAGE_START;
 
+        stage_state = STAGE_COUNTDOWN;
+        countdown_value = 5;
+        Timer_Start(&countdown_timer, 1);  // 1 second timer
+    
         Game_NewGame(0);
 
         Game_ApplyPalette(city_colors,BLOCKSCOLORS);
@@ -548,29 +557,24 @@ void Stage_Initialize(void)
 
 void Stage_Draw()
 {
-    //Cars_RestoreSaved();
-		
-    bike_state = BIKE_STATE_MOVING;
-
-    if (JoyLeft())
+    if (stage_state == STAGE_COUNTDOWN)
     {
-        bike_position_x-=2;
-        bike_state = BIKE_STATE_LEFT;
+        // Draw countdown number centered on screen
+        if (countdown_value > 0)
+        { 
+            // TODO: draw the countdown sprites
+        }
+        
     }
-
-    if (JoyRight())
+    else if (stage_state == STAGE_PLAYING)
     {
-        bike_position_x+=2;
-        bike_state = BIKE_STATE_RIGHT;
+        //Cars_RestoreSaved();
+        Game_CheckJoyScroll();
+        HUD_UpdateScore(0);
+        HUD_UpdateRank(0);
     }
-
-    Game_CheckJoyScroll();
 
     UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
-
-    HUD_UpdateScore(0);
-    HUD_UpdateRank(0);
-
    // Cars_Update();  
 
     Game_SwapBuffers();
@@ -578,6 +582,43 @@ void Stage_Draw()
 
 void Stage_Update()
 {
+    if (stage_state == STAGE_COUNTDOWN)
+    {
+        // Handle countdown timer
+        if (Timer_HasElapsed(&countdown_timer))
+        {
+            if (countdown_value > 0)
+            {
+                countdown_value--;
+                Timer_Reset(&countdown_timer);  // Reset for next second
+            }
+            else
+            {
+                // Countdown complete - start gameplay
+                stage_state = STAGE_PLAYING;
+                Timer_Stop(&countdown_timer);
+            }
+        }
+    }
+    else if (stage_state == STAGE_PLAYING)
+    {
+        // Only process gameplay input when actually playing
+        bike_state = BIKE_STATE_MOVING;
 
+        if (JoyLeft())
+        {
+            bike_position_x -= 2;
+            bike_state = BIKE_STATE_LEFT;
+        }
+
+        if (JoyRight())
+        {
+            bike_position_x += 2;
+            bike_state = BIKE_STATE_RIGHT;
+        }
+
+        // Handle acceleration/scrolling
+        Game_CheckJoyScroll();
+    }
 }
  

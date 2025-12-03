@@ -106,10 +106,20 @@ enum GameMapType
     MAP_APPROACH_NEWYORK = 12
 };
 
+enum StageState
+{
+    STAGE_COUNTDOWN = 0,
+    STAGE_PLAYING = 1,
+    STAGE_COMPLETE = 2
+};
+
+
 extern UBYTE game_stage;
 extern UBYTE game_state;
 extern UBYTE game_difficulty;
 extern UBYTE game_map;
+
+extern UBYTE stage_state;
 
 extern WORD mapposy,videoposy;
 extern LONG	mapwidth,mapheight;
