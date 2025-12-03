@@ -84,7 +84,7 @@ enum GameStages
 
 enum GameDifficulty
 {
-    FIVEHUNDEDCC = 0,
+    FIVEHUNDREDCC = 0,
     SEVENFIFTYCC = 1,
     TWELVEHUNDREDCC = 2
 };
@@ -166,4 +166,5 @@ void GameReady_Update(void);
 void Stage_Initialize(void);
 void Stage_Draw(void);
 void Stage_Update(void);
+void Stage_ShowInfo(void);
 #endif

@@ -33,7 +33,7 @@ UBYTE countdown_value = 5;
 
 UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
-UBYTE game_difficulty = FIVEHUNDEDCC;
+UBYTE game_difficulty = FIVEHUNDREDCC;
 UBYTE game_map = MAP_ATTRACT_INTRO;
 ULONG game_score = 0;
 UBYTE game_rank = 99;
@@ -99,7 +99,7 @@ void Game_NewGame(UBYTE difficulty)
     game_map = MAP_OVERHEAD_LASANGELES;
     game_difficulty = difficulty;
     game_score = 0;
-    bike_speed = 0;
+    bike_speed = 42;
     game_rank = 99; // Start in 99th
 
     Game_SetMap(game_map);
@@ -514,7 +514,6 @@ void GameReady_Draw(void)
 
 void GameReady_Update(void)
 {
- 
     if (JoyFirePressed())
     {
         // Clear screens for game start
@@ -565,6 +564,7 @@ void Stage_Draw()
             // TODO: draw the countdown sprites
         }
         
+        Stage_ShowInfo();
     }
     else if (stage_state == STAGE_PLAYING)
     {
@@ -572,12 +572,11 @@ void Stage_Draw()
         Game_CheckJoyScroll();
         HUD_UpdateScore(0);
         HUD_UpdateRank(0);
+        Game_SwapBuffers();
     }
 
     UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
-   // Cars_Update();  
-
-    Game_SwapBuffers();
+   // Cars_Update(); 
 }
 
 void Stage_Update()
@@ -622,3 +621,57 @@ void Stage_Update()
     }
 }
  
+void Stage_ShowInfo(void)
+{
+    char* difficulty_text;
+    char* stage_text;
+    
+    // Determine difficulty text
+    switch(game_difficulty)
+    {
+        case FIVEHUNDREDCC:
+            difficulty_text = "500CC    READY";
+            break;
+        case SEVENFIFTYCC:
+            difficulty_text = "750CC    READY";
+            break;
+        case TWELVEHUNDREDCC:
+            difficulty_text = "1200CC   READY";
+            break;
+        default:
+            difficulty_text = "500CC    READY";
+            break;
+    }
+    
+    // Determine stage text
+    switch(game_stage)
+    {
+        case STAGE_LASANGELES:
+            stage_text = " LOS ANGELES";
+            break;
+        case STAGE_LASVEGAS:
+            stage_text = "   LAS VEGAS";
+            break;
+        case STAGE_HOUSTON:
+            stage_text = "    HOUSTON";
+            break;
+        case STAGE_STLOUIS:
+            stage_text = "   ST.LOUIS";
+            break;
+        case STAGE_CHICAGO:
+            stage_text = "   CHICAGO";
+            break;
+        case STAGE_NEWYORK:
+            stage_text = "   NEW YORK";
+            break;
+        default:
+            stage_text = " LOS ANGELES";
+            break;
+    }
+    
+    // Draw difficulty at top  
+    Font_DrawString(draw_buffer, difficulty_text, 48, 30, 13);  
+ 
+    // Draw stage name at bottom  
+    Font_DrawStringCentered(draw_buffer, stage_text, 120, 13);   
+}
