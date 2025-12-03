@@ -325,7 +325,7 @@ void Title_Update()
          title_state == TITLE_ATTRACT_LOGO_DROP)
     {
         // Gentler deceleration
-        if (bike_speed > 80 && title_frames % 2 == 0)
+        if (bike_speed > 80 && title_frames % 3 == 0)
         {
             bike_speed -= 1;
         }
