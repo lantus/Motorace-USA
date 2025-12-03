@@ -74,11 +74,11 @@ void Game_Initialize()
     // City Skyline
     City_Initialize();
 
+    Game_SetBackGroundColor(0x125);
+
     // Stage Tiles and TileMaps
     Stage_Initialize();
  
-    Game_SetBackGroundColor(0x125);
-   
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
 
@@ -97,16 +97,15 @@ void Game_NewGame(UBYTE difficulty)
     bike_speed = 0;
     game_rank = 99; // Start in 99th
 
+    Game_SetMap(game_map);
+
     // Position bike near bottom of screen
     bike_position_x = SCREENWIDTH / 2;  // Center horizontally (around pixel 96 for 192px display)
     bike_position_y = SCREENHEIGHT - 64;  // Near bottom
     bike_state = BIKE_STATE_MOVING; 
-
+    
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     videoposy = mapposy % HALFBITMAPHEIGHT;
-
-    Game_SetMap(game_map);
-
 }
 
 void Game_Draw()
@@ -388,8 +387,8 @@ void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors)
 {
     // Assuming Dpaint
 
-    ULONG file_size = findSize(filename);
-    UBYTE *file_data = Disk_AllocAndLoadAsset(filename, MEMF_ANY);
+    ULONG file_size = findSize((char *)filename);
+    UBYTE *file_data = Disk_AllocAndLoadAsset((char *)filename, MEMF_ANY);
     if (!file_data) return;
     
     UBYTE *ptr = file_data;
@@ -521,8 +520,15 @@ void GameReady_Update(void)
         game_state = STAGE_START;
 
         Game_NewGame(0);
+
+        Game_ApplyPalette(city_colors,BLOCKSCOLORS);
+
+        MotorBike_Reset();
+        HUD_SetSpritePositions();
         HUD_DrawAll();
+        
         Game_FillScreen();
+
     }    
  
 }
@@ -537,35 +543,37 @@ void Stage_Initialize(void)
     mapdata = (UWORD *)la_map->data;
 	mapwidth = la_map->mapwidth;
 	mapheight = la_map->mapheight;   
+
 }
 
 void Stage_Draw()
 {
-    Cars_RestoreSaved();
+    //Cars_RestoreSaved();
 		
-		bike_state = BIKE_STATE_MOVING;
+    bike_state = BIKE_STATE_MOVING;
 
-		if (JoyLeft())
-		{
-			bike_position_x-=2;
-			bike_state = BIKE_STATE_LEFT;
-		}
+    if (JoyLeft())
+    {
+        bike_position_x-=2;
+        bike_state = BIKE_STATE_LEFT;
+    }
 
-		if (JoyRight())
-		{
-			bike_position_x+=2;
-			bike_state = BIKE_STATE_RIGHT;
-		}
- 
-		Game_CheckJoyScroll();
+    if (JoyRight())
+    {
+        bike_position_x+=2;
+        bike_state = BIKE_STATE_RIGHT;
+    }
 
-		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
- 
-		HUD_UpdateScore(0);
-		HUD_UpdateRank(0);
-		
- 		
-		Cars_Update();  
+    Game_CheckJoyScroll();
+
+    UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
+
+    HUD_UpdateScore(0);
+    HUD_UpdateRank(0);
+
+   // Cars_Update();  
+
+    Game_SwapBuffers();
 }
 
 void Stage_Update()

@@ -190,7 +190,7 @@ void Cleanup(char *msg)
 
 static void OpenDisplay(void)
 {
-	bitmapheight = 256;
+	bitmapheight = BITMAPHEIGHT + 3;
  
 	Screen_Initialize_DoubleBuff(BITMAPWIDTH,bitmapheight,BLOCKSDEPTH, FALSE);
  
@@ -360,18 +360,15 @@ int main(void)
  	option_fetchmode = 0;
 	
 	WaitVbl();
-
     Delay(10);
 
 	Game_Initialize();
- 
 	OpenDisplay();
- 
 	Cars_Initialize();
-
+	
 	KillSystem();
-	InitCopperlist();
 
+	InitCopperlist();
 	Copper_SetPalette(0, 0x003);
  
 	custom->copjmp2 = 0;
@@ -384,12 +381,10 @@ int main(void)
 	while(!MouseLeft()) 
     {		 
 		WaitVBeam(10);
-
  
-		
 		Game_Update();
 		Game_Draw();
-		//Game_SwapBuffers();
+		
 		WaitVBL();
 	
 	}
