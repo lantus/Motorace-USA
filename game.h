@@ -66,9 +66,10 @@ enum GameState
 {
 	TITLE_SCREEN = 0,
 	ROLLING_DEMO = 1,
-    GAME_START = 2,
-    GAME_OVER = 3,
-    HIGH_SCORE = 4
+    GAME_READY = 2,
+    STAGE_START = 3,
+    GAME_OVER = 4,
+    HIGH_SCORE = 5
 };
 
 enum GameStages
@@ -134,17 +135,25 @@ extern void DrawBlocks(LONG x,LONG y,
 
 extern void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest);
 
-void Game_Initialize();
+void Game_Initialize(void);
 void Game_NewGame(UBYTE difficulty);
 void Game_CheckState();
 void Game_SetBackGroundColor(UWORD color);
-void Game_FillScreen();
-void Game_CheckJoyScroll();
-void Game_SwapBuffers();
-void Game_RenderBackgroundToDrawBuffer();
-void Game_Update();
-void Game_Draw();
+void Game_FillScreen(void);
+void Game_CheckJoyScroll(void);
+void Game_SwapBuffers(void);
+void Game_RenderBackgroundToDrawBuffer(void);
+void Game_Update(void);
+void Game_Draw(void);
 void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors);
 void Game_ApplyPalette(UWORD *palette, int num_colors);
 void Game_SetMap(UBYTE maptype);
+
+void GameReady_Initialize(void);
+void GameReady_Draw(void);
+void GameReady_Update(void);
+
+void Stage_Initialize(void);
+void Stage_Draw(void);
+void Stage_Update(void);
 #endif

@@ -239,33 +239,6 @@ void WaitVbl()
 }
 
  
-static void OpenMap(void)
-{
-	Map = Disk_AllocAndLoadAsset("maps/level1.map",MEMF_PUBLIC);
-	
-	mapdata = (UWORD *)Map->data;
-	mapwidth = Map->mapwidth;
-	mapheight = Map->mapheight;  
-}
- 
-static void OpenBlocks(void)
-{
-	 
-	LONG l = 0;
-
-	BlocksBitmap = BitMapEx_Create(BLOCKSDEPTH, BLOCKSWIDTH, BLOCKSHEIGHT);
-
- 
-	Disk_LoadAsset((UBYTE *)BlocksBitmap->planes[0],"tiles/lv1_tiles.BPL");
-	Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
- 
-	blocksbuffer = BlocksBitmap->planes[0];
-
-	debug_register_bitmap(blocksbuffer, "blocksbuffer", 320, 256, 4, debug_resource_bitmap_interleaved);
-	debug_register_palette(city_colors,"palette",16,0); 
- 
-}
- 
 void TakeSystem() 
 {
 	Forbid();
@@ -391,9 +364,7 @@ int main(void)
     Delay(10);
 
 	Game_Initialize();
-
-	//OpenBlocks();
-	//OpenMap();
+ 
 	OpenDisplay();
  
 	Cars_Initialize();
@@ -402,13 +373,7 @@ int main(void)
 	InitCopperlist();
 
 	Copper_SetPalette(0, 0x003);
-
-	//Game_NewGame(0);
-	//Game_FillScreen();
  
-	HardWaitBlit();
-	WaitVBL();
-
 	custom->copjmp2 = 0;
  
 	SetInterruptHandler((APTR)interruptHandler);
@@ -420,33 +385,7 @@ int main(void)
     {		 
 		WaitVBeam(10);
 
-		/* 
-		
-		Cars_RestoreSaved();
-		
-		bike_state = BIKE_STATE_MOVING;
-
-		if (JoyLeft())
-		{
-			bike_position_x-=2;
-			bike_state = BIKE_STATE_LEFT;
-		}
-
-		if (JoyRight())
-		{
-			bike_position_x+=2;
-			bike_state = BIKE_STATE_RIGHT;
-		}
  
-		Game_CheckJoyScroll();
-
-		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
- 
-		HUD_UpdateScore(0);
-		HUD_UpdateRank(0);
-		
- 		
-		Cars_Update(); */
 		
 		Game_Update();
 		Game_Draw();

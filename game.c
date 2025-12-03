@@ -19,6 +19,7 @@
 #include "sprites.h"
 #include "motorbike.h"
 #include "hud.h"
+#include "font.h"
 #include "title.h"
 #include "hiscore.h"
 #include "city_approach.h"
@@ -41,6 +42,11 @@ UWORD *mapdata;
 struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 
 static void ScrollUp(void);
+
+// Tiles and TileMaps
+
+RawMap *la_map;
+BitMapEx *la_tiles;
 
 // Palettes
 UWORD	intro_colors[BLOCKSCOLORS];
@@ -67,7 +73,10 @@ void Game_Initialize()
 
     // City Skyline
     City_Initialize();
-    
+
+    // Stage Tiles and TileMaps
+    Stage_Initialize();
+ 
     Game_SetBackGroundColor(0x125);
    
     game_state = TITLE_SCREEN;
@@ -81,7 +90,7 @@ void Game_Initialize()
 void Game_NewGame(UBYTE difficulty)
 {
     game_stage = STAGE_LASANGELES;
-    game_state = GAME_START;
+    game_state = STAGE_START;
     game_map = MAP_OVERHEAD_LASANGELES;
     game_difficulty = difficulty;
     game_score = 0;
@@ -96,6 +105,8 @@ void Game_NewGame(UBYTE difficulty)
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     videoposy = mapposy % HALFBITMAPHEIGHT;
 
+    Game_SetMap(game_map);
+
 }
 
 void Game_Draw()
@@ -105,8 +116,11 @@ void Game_Draw()
         case TITLE_SCREEN:
             Title_Draw();
             break;
-        case GAME_START:
-            Game_Draw();
+        case GAME_READY:
+            GameReady_Draw();
+            break;    
+        case STAGE_START:
+            Stage_Draw();
             break;
     }
 }
@@ -118,7 +132,11 @@ void Game_Update()
         case TITLE_SCREEN:
             Title_Update();
             break;
-        case GAME_START:
+        case GAME_READY:
+            GameReady_Update();
+            break;   
+        case STAGE_START:
+            Stage_Update();
             break;
     }
 }
@@ -140,6 +158,10 @@ void Game_SetMap(UBYTE maptype)
             blocksbuffer = city_attract_tiles->planes[0];
             break;
         case MAP_OVERHEAD_LASANGELES:
+            mapdata = (UWORD *)la_map->data;
+            mapwidth = la_map->mapwidth;
+            mapheight = la_map->mapheight;  
+            blocksbuffer = la_tiles->planes[0];
             break;
         case MAP_APPROACH_LASANGELES:
             break;
@@ -200,7 +222,7 @@ static void SmoothScroll(void)
 
 void Game_CheckJoyScroll(void)
 {
-    if (JoyFire()) 
+    if (JoyFireHeld()) 
 	{
         AccelerateMotorBike();
     } 
@@ -440,3 +462,114 @@ void Game_ApplyPalette(UWORD *palette, int num_colors)
         Copper_SetPalette(i, palette[i]);
     }
 }
+
+// Game Ready Stuff
+
+// Add these static variables with the other timers
+static GameTimer ready_blink_timer;
+static BOOL ready_text_visible = TRUE;
+
+void GameReady_Initialize(void)
+{
+      // Turn off sprites
+    Sprites_Initialize();
+
+    // Clear entire screen including HUD area
+    BlitClearScreen(draw_buffer, 320 << 6 | 256);
+    BlitClearScreen(display_buffer, 320 << 6 | 256);
+ 
+    // Start blink timer
+    ready_text_visible = TRUE;
+    Timer_StartMs(&ready_blink_timer, 800);  // Blink every 800ms
+
+    Font_DrawStringCentered(draw_buffer, "            PUSH BUTTON", 60, 17);   
+    Font_DrawStringCentered(draw_buffer, "            ONLY 1 PLAYER", 100, 17);  
+}
+
+void GameReady_Draw(void)
+{
+    // Handle blinking "PUSH BUTTON" text
+    if (Timer_HasElapsed(&ready_blink_timer))
+    {
+        ready_text_visible = !ready_text_visible;
+        
+        if (ready_text_visible)
+        {
+            Font_DrawStringCentered(draw_buffer, "            PUSH BUTTON", 60, 17);   
+            Font_DrawStringCentered(draw_buffer, "            ONLY 1 PLAYER", 100, 17);  
+        }
+        else
+        {
+            // Clear the "PUSH BUTTON" area
+            Font_ClearArea(draw_buffer, 0, 60, SCREENWIDTH, 8);
+        }
+        
+        Timer_Reset(&ready_blink_timer);
+    }
+}
+
+void GameReady_Update(void)
+{
+ 
+    if (JoyFirePressed())
+    {
+        // Clear screens for game start
+        BlitClearScreen(draw_buffer, 320 << 6 | 256);
+        BlitClearScreen(display_buffer, 320 << 6 | 256);
+        
+        // Transition to actual game
+        game_state = STAGE_START;
+
+        Game_NewGame(0);
+        HUD_DrawAll();
+        Game_FillScreen();
+    }    
+ 
+}
+
+void Stage_Initialize(void)
+{
+	la_tiles = BitMapEx_Create(BLOCKSDEPTH, BLOCKSWIDTH, BLOCKSHEIGHT);
+	Disk_LoadAsset((UBYTE *)la_tiles->planes[0],"tiles/lv1_tiles.BPL");
+	Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
+	la_map = Disk_AllocAndLoadAsset("maps/level1.map",MEMF_PUBLIC);
+
+    mapdata = (UWORD *)la_map->data;
+	mapwidth = la_map->mapwidth;
+	mapheight = la_map->mapheight;   
+}
+
+void Stage_Draw()
+{
+    Cars_RestoreSaved();
+		
+		bike_state = BIKE_STATE_MOVING;
+
+		if (JoyLeft())
+		{
+			bike_position_x-=2;
+			bike_state = BIKE_STATE_LEFT;
+		}
+
+		if (JoyRight())
+		{
+			bike_position_x+=2;
+			bike_state = BIKE_STATE_RIGHT;
+		}
+ 
+		Game_CheckJoyScroll();
+
+		UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
+ 
+		HUD_UpdateScore(0);
+		HUD_UpdateRank(0);
+		
+ 		
+		Cars_Update();  
+}
+
+void Stage_Update()
+{
+
+}
+ 

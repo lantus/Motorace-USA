@@ -23,6 +23,7 @@ BOOL JoyLeft(void);
 BOOL JoyRight(void);
 BOOL JoyUp(void);
 BOOL JoyDown(void);
-BOOL JoyFire(void);
+BOOL JoyFireHeld(void);
+BOOL JoyFirePressed(void);
 BOOL LMBDown(void);
  

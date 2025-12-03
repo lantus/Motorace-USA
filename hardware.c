@@ -38,6 +38,9 @@ UWORD saved_intena, saved_dma, saved_adkcon;
  
 BOOL os_disabled = FALSE;
 
+// Track previous fire button state for edge detection
+static BOOL prev_fire_state = FALSE;
+
 static LONG NullInputHandler(void)
 {
 	// kills all input
@@ -193,9 +196,24 @@ BOOL JoyDown(void)
 	return ((w ^ custom->joy1dat) & 2) ? TRUE : FALSE;
 }
 
-BOOL JoyFire(void)
+BOOL JoyFireHeld(void)
 {
 	return ((*(UBYTE *)0xbfe001) & 128) ? FALSE : TRUE;
+}
+
+BOOL JoyFirePressed(void)
+{
+    BOOL current_fire = JoyFireHeld();
+    BOOL pressed = FALSE;
+    
+    // Detect rising edge (was not pressed, now is pressed)
+    if (current_fire && !prev_fire_state)
+    {
+        pressed = TRUE;
+    }
+    
+    prev_fire_state = current_fire;
+    return pressed;
 }
 
 BOOL LMBDown(void)

@@ -59,9 +59,9 @@ GameTimer bike_anim_timer;  // Add this
 
 UBYTE bike_anim_frame = 0;  // Add this to track current frame
 BOOL text_visible = TRUE;
-
 UBYTE title_state = TITLE_ATTRACT_INIT;
  
+
 void Title_LoadSprites()
 {
     zippy_logo.data = Disk_AllocAndLoadAsset(ZIPPY_LOGO, MEMF_CHIP);
@@ -253,11 +253,11 @@ void AttractMode_Update(void)
         
         if (text_visible)
         {
-            Font_DrawStringCentered(draw_buffer, "PRESS FIRE BUTTON", 120, 12);  // Color 15 = white
+           Font_DrawStringCentered(draw_buffer, "PRESS FIRE BUTTON", 120, 12);  // Color 15 = white
         }
         else
         {
-            Font_ClearArea(draw_buffer, 0, 120, VIEWPORT_WIDTH, 8);
+            Font_ClearArea(draw_buffer, 0, 120, SCREENWIDTH, 8);
         }
         
         Timer_Reset(&blink_timer);
@@ -268,6 +268,21 @@ void AttractMode_Update(void)
 
 void Title_Update()
 {
+    if (JoyFirePressed())
+    {
+        // Clear screens
+        BlitClearScreen(draw_buffer, 320 << 6 | 256);
+        BlitClearScreen(display_buffer, 320 << 6 | 256);
+        
+        // Turn off sprites
+        Sprites_ClearLower();
+        Sprites_ClearHigher();
+        
+        // Transition to game start
+        game_state = GAME_READY;
+        GameReady_Initialize();  // Initialize the ready screen
+        return;  // Exit early, don't process rest of attract mode
+    }
  
     // Animate bike sprite during attract mode - speed based
     if (title_state < TITLE_ATTRACT_INSERT_COIN)
