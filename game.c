@@ -29,6 +29,7 @@ extern volatile struct Custom *custom;
 
 UBYTE stage_state = STAGE_COUNTDOWN;
 GameTimer countdown_timer;
+GameTimer hud_update_timer;   
 UBYTE countdown_value = 5;
 
 UBYTE game_stage = STAGE_LASANGELES;
@@ -37,6 +38,7 @@ UBYTE game_difficulty = FIVEHUNDREDCC;
 UBYTE game_map = MAP_ATTRACT_INTRO;
 ULONG game_score = 0;
 UBYTE game_rank = 99;
+ULONG game_frame_count = 0;
 
 WORD mapposy,videoposy;
 LONG mapwidth,mapheight;
@@ -57,7 +59,7 @@ BitMapEx *la_tiles;
 UWORD	intro_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
 UWORD	desert_colors[BLOCKSCOLORS];
-
+ 
 // One time startup for everything
 
 void Game_Initialize()
@@ -99,7 +101,7 @@ void Game_NewGame(UBYTE difficulty)
     game_map = MAP_OVERHEAD_LASANGELES;
     game_difficulty = difficulty;
     game_score = 0;
-    bike_speed = 42;
+    bike_speed = 0;
     game_rank = 99; // Start in 99th
 
     Game_SetMap(game_map);
@@ -196,15 +198,39 @@ void Game_SetMap(UBYTE maptype)
 // Convert speed to scroll calls
 WORD GetScrollAmount(WORD speed)
 {
-    // Map 42-150 mph to 2-6 scroll calls
-    // Linear interpolation: scrolls = 2 + ((speed - 42) / (150 - 42)) * 4
-    if (speed <= MIN_SPEED) return 2;
-    if (speed >= MAX_SPEED) return 6;
-    
-    // Calculate proportional scroll amount
-    WORD range = speed - MIN_SPEED;
-    WORD max_range = MAX_SPEED - MIN_SPEED;
-    return 2 + ((range * 4) / max_range);
+    if (speed == 0)
+    {
+        return 0;
+    }
+    else if (speed <= 10)
+    {
+        // Very slow start (0 to 0.5 pixels/frame)
+        return speed / 20;  // Returns 0-0.5
+    }
+    else if (speed <= 21)
+    {
+        // Picking up speed (0.5 to 1 pixel/frame)
+        return ((speed - 10) / 11) + 0;  // Returns 0.5-1
+    }
+    else if (speed <= 42)
+    {
+        // Reaching cruising speed (1 to 2 pixels/frame)
+        return ((speed - 21) / 21) + 1;  // Returns 1-2
+    }
+    else if (speed <= 105)
+    {
+        // Accelerating beyond cruise (2 to 4 pixels/frame)
+        return 2 + ((speed - 42) * 2) / 63;  // Returns 2-4
+    }
+    else if (speed <= 210)
+    {
+        // High speed (4 to 6 pixels/frame)
+        return 4 + ((speed - 105) * 2) / 105;  // Returns 4-6
+    }
+    else
+    {
+        return 6;  // Max
+    }
 }
 
 static void SmoothScroll(void)
@@ -223,20 +249,7 @@ static void SmoothScroll(void)
         scroll_accumulator -= 256;
     }
 }
-
-void Game_CheckJoyScroll(void)
-{
-    if (JoyFireHeld()) 
-	{
-        AccelerateMotorBike();
-    } 
-	else 
-	{
-		BrakeMotorBike();
-	}
-    
-    SmoothScroll();  // Use smooth scrolling instead of loop
-}
+ 
 
 __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest)
 {
@@ -526,6 +539,9 @@ void GameReady_Update(void)
         stage_state = STAGE_COUNTDOWN;
         countdown_value = 5;
         Timer_Start(&countdown_timer, 1);  // 1 second timer
+
+        // Start HUD update timer (update every 96 frames)
+        Timer_StartMs(&hud_update_timer, 96);
     
         Game_NewGame(0);
 
@@ -565,14 +581,22 @@ void Stage_Draw()
         }
         
         Stage_ShowInfo();
+
+        game_frame_count = 0;
     }
     else if (stage_state == STAGE_PLAYING)
     {
-        //Cars_RestoreSaved();
-        Game_CheckJoyScroll();
-        HUD_UpdateScore(0);
-        HUD_UpdateRank(0);
         Game_SwapBuffers();
+    }
+    
+     // === PERIODIC HUD UPDATE ===
+    if (Timer_HasElapsed(&hud_update_timer))
+    {
+        //HUD_UpdateScore(player_score);     // Use actual score variable
+        //HUD_UpdateRank(player_rank);       // Use actual rank variable
+        HUD_UpdateBikeSpeed(bike_speed);
+        
+        Timer_Reset(&hud_update_timer);
     }
 
     UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
@@ -581,6 +605,8 @@ void Stage_Draw()
 
 void Stage_Update()
 {
+    game_frame_count++;
+
     if (stage_state == STAGE_COUNTDOWN)
     {
         // Handle countdown timer
@@ -601,23 +627,70 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_PLAYING)
     {
-        // Only process gameplay input when actually playing
-        bike_state = BIKE_STATE_MOVING;
+      
+        // === ACCELERATION LOGIC ===
 
+        if (JoyFireHeld())
+        {
+            // Fire button held - accelerate to max speed
+            bike_speed += ACCEL_RATE;   
+            if (bike_speed > MAX_SPEED)
+            {
+                bike_speed = MAX_SPEED;
+            }
+            bike_state = BIKE_STATE_ACCELERATING;
+        }
+        else
+        {
+            // Fire button not held - auto-adjust to cruising speed
+            if (bike_speed < MIN_CRUISING_SPEED)
+            {
+                // Auto-accelerate to cruising speed SLOWLY  
+                bike_speed += 1;   
+                if (bike_speed > MIN_CRUISING_SPEED)
+                {
+                    bike_speed = MIN_CRUISING_SPEED;
+                }
+                bike_state = BIKE_STATE_ACCELERATING;
+            }
+            else if (bike_speed > MIN_CRUISING_SPEED)
+            {
+                // Decelerate back to cruising speed
+                bike_speed -= DECEL_RATE;
+                if (bike_speed < MIN_CRUISING_SPEED)
+                {
+                    bike_speed = MIN_CRUISING_SPEED;
+                }
+                bike_state = BIKE_STATE_BRAKING;
+            }
+            else
+            {
+                // Maintain cruising speed
+                bike_state = BIKE_STATE_MOVING;
+            }
+        }        
+        // === SCROLLING LOGIC  
+        SmoothScroll();   
+        
+        // === LEFT/RIGHT MOVEMENT ===
         if (JoyLeft())
         {
             bike_position_x -= 2;
-            bike_state = BIKE_STATE_LEFT;
+            // Preserve acceleration state but show turning
+            if (bike_state == BIKE_STATE_MOVING || bike_state == BIKE_STATE_ACCELERATING)
+            {
+                bike_state = BIKE_STATE_LEFT;
+            }
         }
 
         if (JoyRight())
         {
             bike_position_x += 2;
-            bike_state = BIKE_STATE_RIGHT;
+            if (bike_state == BIKE_STATE_MOVING || bike_state == BIKE_STATE_ACCELERATING)
+            {
+                bike_state = BIKE_STATE_RIGHT;
+            }
         }
-
-        // Handle acceleration/scrolling
-        Game_CheckJoyScroll();
     }
 }
  

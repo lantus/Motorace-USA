@@ -1,5 +1,5 @@
 #define ACCEL_RATE 2         // Speed increase per frame when accelerating
-#define DECEL_RATE 1         // Speed decrease per frame when coasting
+#define DECEL_RATE 2         // Speed decrease per frame when coasting
 
 #define MIN_SPEED 0
 #define MAX_SPEED 210
@@ -66,8 +66,10 @@ extern UBYTE bike_state;
 extern ULONG bike_anim_frames;
 extern WORD bike_speed;        // Current speed in mph (starts at idle)
 extern WORD bike_acceleration;  // Current acceleration
-extern WORD scroll_accumulator;  // Fractional scroll position (fixed poin
+extern WORD scroll_accumulator;  // Fractional scroll position (fixed point)
 
+#define MIN_CRUISING_SPEED 42  // Minimum automatic speed
+ 
 void MotorBike_Initialize();
 void CleanupMotorbikeSprites();
 void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state);
@@ -79,3 +81,5 @@ void MotorBike_Draw(WORD x, UWORD y, UBYTE state);
 void MotorBike_SetFrame(BikeFrame frame); 
 void MotorBike_UpdateApproachFrame(UWORD y);
 WORD MotorBike_GetVibrationOffset(void);
+void MotorBike_AutoAccelerate(void);
+void MotorBike_DecelerateToCruising(void);

@@ -3,6 +3,8 @@
 
 #include <exec/types.h>
 
+extern BOOL  g_is_pal;
+
 // Timer structure - you can create as many as you need
 typedef struct {
     ULONG start_tick;

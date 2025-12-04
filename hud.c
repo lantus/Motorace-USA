@@ -14,11 +14,14 @@
 #include "memory.h"
 #include "sprites.h"
 #include "hud.h"
+#include "timers.h"
 #include "font.h"
 
 #define VALUE 1
 
 HUDSprites hud_sprites;
+
+static UBYTE last_speed;
 
 void HUD_InitSprites(void)
 {
@@ -253,6 +256,19 @@ void HUD_DrawRank(UBYTE rank, int start_sprite, int y_offset)
     HUD_DrawString(rank_string, start_sprite, y_offset);
 }
 
+void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset)
+{
+    char speed_string[4];  
+ 
+    ULongToString(speed, speed_string, 3, ' ');
+    
+    // Clear the sprite area first
+    HUD_ClearSpriteArea(start_sprite, 3, y_offset, 8);
+    
+    // Draw the bike speed
+    HUD_DrawString(speed_string, start_sprite, y_offset);
+}
+
 void HUD_UpdateScore(ULONG score)
 {
     if (counter % 120 == 0)
@@ -263,22 +279,28 @@ void HUD_UpdateScore(ULONG score)
     counter++;
 }
 
+void HUD_UpdateBikeSpeed(ULONG bike_speed)
+{
+    if (bike_speed != last_speed)
+    {
+        last_speed = bike_speed;
+        HUD_DrawBikeSpeed(last_speed, 1, 192); 
+        HUD_DrawString(g_is_pal ? KMH_PIECE : MPH_PIECE, 3,192);
+    }
+}
+
 void HUD_UpdateRank(UBYTE rank)
 {
-    if (counter % 75 == 0)
+    game_rank--;
+
+    if (game_rank <= 1)
     {
-        game_rank--;
-
-        if (game_rank <= 1)
-        {
-            game_rank = 1;
-        }
-
-        char *suffix = GetOrdinalSuffix(game_rank);
-        HUD_DrawRank(game_rank,1,176);
-        HUD_DrawString(suffix, 2,176);
+        game_rank = 1;
     }
-    counter++;
+
+    char *suffix = GetOrdinalSuffix(game_rank);
+    HUD_DrawRank(game_rank,1,168);
+    HUD_DrawString(suffix, 2,168);
 }
 
 char* GetOrdinalSuffix(UBYTE number)
@@ -355,25 +377,26 @@ void HUD_DrawAll()
     // Fuel Gauge
 
     // Rank
-    HUD_DrawString(BOX_TOP_LEFT_PIECE,0,160);
-    HUD_DrawString(BOX_TOP_MIDDLE_PIECE,1,160);
-    HUD_DrawString(BOX_TOP_MIDDLE_PIECE,2,160);
-    HUD_DrawString(BOX_TOP_RIGHT_PIECE,3,160);
+    HUD_DrawString(BOX_TOP_LEFT_PIECE,0,160-8);
+    HUD_DrawString(BOX_TOP_MIDDLE_PIECE,1,160-8);
+    HUD_DrawString(BOX_TOP_MIDDLE_PIECE,2,160-8);
+    HUD_DrawString(BOX_TOP_RIGHT_PIECE,3,160-8);
  
-    HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,168);
-    HUD_DrawString(" RANK", 0, 168);
-    HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,168);
-    HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,176);
-    HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,176);
+    HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,168-8);
+    HUD_DrawString(" RANK", 0, 168-8);
+    HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,168-8);
+    HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,176-8);
+    HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,176-8);
  
-    HUD_DrawString(BOX_BTM_LEFT_PIECE,0,184);
-    HUD_DrawString(BOX_BTM_MIDDLE_PIECE,1,184);
-    HUD_DrawString(BOX_BTM_MIDDLE_PIECE,2,184);
-    HUD_DrawString(BOX_BTM_RIGHT_PIECE,3,184);
+    HUD_DrawString(BOX_BTM_LEFT_PIECE,0,184-8);
+    HUD_DrawString(BOX_BTM_MIDDLE_PIECE,1,184-8);
+    HUD_DrawString(BOX_BTM_MIDDLE_PIECE,2,184-8);
+    HUD_DrawString(BOX_BTM_RIGHT_PIECE,3,184-8);
     
     // Speed
-    HUD_DrawString("SPEED", 1, 200);
-
+    HUD_DrawString("SPEED", 1, 184);
+    HUD_DrawString("000", 1, 192);
+    HUD_DrawString(g_is_pal ? KMH_PIECE : MPH_PIECE, 3,192);
 }
 
 void HUD_DrawString(char *text, int start_sprite, int y_offset)

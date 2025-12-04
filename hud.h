@@ -26,6 +26,10 @@
 #define BOX_LEFT_SIDE_PIECE "\x13"
 #define BOX_RIGHT_SIDE_PIECE "\x15"
 
+#define KMH_PIECE "\x8A\x8B"
+#define MPH_PIECE "\x8D\x8E"
+#define COPYRIGHT "\x8C"
+
 typedef struct 
 {
     UWORD *sprite_data[4];  // Pointers to sprite data for sprites 4-7
@@ -44,6 +48,8 @@ void HUD_DrawAll();
 void HUD_DrawText(char *text, int sprite_col, int y_offset);
 void HUD_DrawString(char *text, int start_sprite, int y_offset);
 void HUD_DrawStringWithColor(char *text, int start_sprite, int y_offset, int color_mode);
+void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset);
+void HUD_UpdateBikeSpeed(ULONG bike_speed);
 void HUD_SetSpritePositions(void);
 void HUD_UpdateScore(ULONG score);
 void HUD_UpdateSpeed();

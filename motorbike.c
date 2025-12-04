@@ -411,3 +411,35 @@ WORD MotorBike_GetVibrationOffset(void)
         default: return 0;
     }
 }
+
+void MotorBike_AutoAccelerate(void)
+{
+    // Auto-accelerate to minimum cruising speed (42 mph)
+    if (bike_speed < MIN_CRUISING_SPEED)
+    {
+        bike_speed += ACCEL_RATE;
+        if (bike_speed > MIN_CRUISING_SPEED)
+        {
+            bike_speed = MIN_CRUISING_SPEED;
+        }
+        bike_state = BIKE_STATE_ACCELERATING;
+    }
+    else
+    {
+        bike_state = BIKE_STATE_MOVING;
+    }
+}
+
+void MotorBike_DecelerateToCruising(void)
+{
+    // Decelerate back to cruising speed (42 mph)
+    if (bike_speed > MIN_CRUISING_SPEED)
+    {
+        bike_speed -= DECEL_RATE;
+        if (bike_speed < MIN_CRUISING_SPEED)
+        {
+            bike_speed = MIN_CRUISING_SPEED;
+        }
+        bike_state = BIKE_STATE_BRAKING;
+    }
+}

@@ -39,7 +39,7 @@ void Timer_Init(void)
         g_sprite_voffset = 44;   // Same, but shorter display
         g_screen_height = 200;
 
-         timer_refresh_rate = 60;
+        timer_refresh_rate = 60;
     }
 
     timer_vblank_ticks = 0;
