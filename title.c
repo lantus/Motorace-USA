@@ -214,7 +214,7 @@ void AttractMode_DrawText(void)
 {
     Font_DrawStringCentered(draw_buffer, "PRESS FIRE BUTTON", 120, 12);  
 
-    Font_DrawString(draw_buffer, "1983 IREM CORP", 8, 188, 5);         
+    Font_DrawString(draw_buffer, COPYRIGHT "1983 IREM CORP", 8, 188, 5);         
     Font_DrawString(draw_buffer, "2026 AMIGA PORT BY MVG", 8, 198, 4);       
 }
 

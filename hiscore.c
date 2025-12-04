@@ -23,15 +23,15 @@ static HiScoreTable hiscore_table;
 
 // Default high score table (from your image)
 static const HiScoreEntry default_scores[MAX_HISCORE_ENTRIES] = {
-    {36500, 01, "IEO"},
+    {68000, 01, "AMI"},
     {32700, 03, "RRT"},
     {29400, 02, "ESE"},
     {24800, 10, "MEM"},
     {21900, 00, "NUO"},     // 0 = Retire
     {16100, 11, "OSI"},
     {13300, 00, "TAI"},     // 0 = Retire
-    {9600,  40, "AMI"},    
-    {7200,  40, "GA!"},    
+    {9600,  40, "IEO"},    
+    {7200,  40, "DIM"},    
     {5000,  00, "MVG"}      // 0 = Retire
 };
 
@@ -101,6 +101,11 @@ HiScoreEntry* HiScore_GetEntry(UBYTE position)
 HiScoreTable* HiScore_GetTable(void)
 {
     return &hiscore_table;
+}
+
+ULONG HiScore_GetTopScore(void)
+{
+    return hiscore_table.entries[0].score;
 }
 
 void HiScore_FormatRank(UBYTE rank, char *buffer)

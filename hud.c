@@ -13,6 +13,7 @@
 #include "copper.h"
 #include "memory.h"
 #include "sprites.h"
+#include "hiscore.h"
 #include "hud.h"
 #include "timers.h"
 #include "font.h"
@@ -80,6 +81,13 @@ void HUD_SetWhite(void)
 {
    Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
    Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
+}
+
+void HUD_SetRed(void)
+{
+   Copper_SetSpritePalette(9, 0xF00);   // Color 25 - White (sprites 4&5)
+   Copper_SetSpritePalette(13, 0xF00);  // Color 29 - White (sprites 6&7)  
+   Copper_SetSpritePalette(30, 0xF00);  // Color 29 - White (sprites 6&7)  
 }
  
 void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
@@ -291,8 +299,7 @@ void HUD_UpdateBikeSpeed(ULONG bike_speed)
 
 void HUD_UpdateRank(UBYTE rank)
 {
-    game_rank--;
-
+ 
     if (game_rank <= 1)
     {
         game_rank = 1;
@@ -334,12 +341,19 @@ void HUD_DrawAll()
     // Draw the HUD one time. then update smaller
     // things (Rank, Score etc) as needed
 
-    const UBYTE status_y = 40;
-
     HUD_SetWhite();
 
+    const UBYTE status_y = 40;
+
+    ULONG top_score = HiScore_GetTopScore();
+    char score_buffer[6];
+    
+    // Format the high score (5 digits with leading zeros or spaces)
+    ULongToString(top_score, score_buffer, 5, '0');
     HUD_DrawString("HI-SCORE", 0, 0);
-    HUD_DrawString("00", 2, 8);
+    HUD_DrawString(score_buffer, 1, 8);  // Draw the actual high score
+   
+
     HUD_DrawString("1UP", 0, 16);
     HUD_DrawString("00", 2, 24);
 
@@ -397,6 +411,8 @@ void HUD_DrawAll()
     HUD_DrawString("SPEED", 1, 184);
     HUD_DrawString("000", 1, 192);
     HUD_DrawString(g_is_pal ? KMH_PIECE : MPH_PIECE, 3,192);
+
+    HUD_UpdateRank(90);
 }
 
 void HUD_DrawString(char *text, int start_sprite, int y_offset)

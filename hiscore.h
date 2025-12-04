@@ -33,5 +33,5 @@ void HiScore_Save(void);
 void HiScore_Load(void);
 // Format rank as string (e.g., "1st", "2nd", "Retire")
 void HiScore_FormatRank(UBYTE rank, char *buffer);
-
+ULONG HiScore_GetTopScore(void);
 #endif // HISCORE_H

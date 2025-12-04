@@ -37,7 +37,7 @@ UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDREDCC;
 UBYTE game_map = MAP_ATTRACT_INTRO;
 ULONG game_score = 0;
-UBYTE game_rank = 99;
+UBYTE game_rank = 90;
 ULONG game_frame_count = 0;
 
 WORD mapposy,videoposy;
