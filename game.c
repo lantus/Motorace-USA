@@ -767,8 +767,8 @@ void Stage_ShowInfo(void)
     }
     
     // Draw difficulty at top  
-    Font_DrawString(draw_buffer, difficulty_text, 48, 50, 13);  
+    Font_DrawString(draw_buffer, difficulty_text, 48, 50, 12);  
  
     // Draw stage name at bottom  
-    Font_DrawStringCentered(draw_buffer, stage_text, 120, 13);   
+    Font_DrawStringCentered(draw_buffer, stage_text, 120, 12);   
 }
