@@ -15,6 +15,11 @@
 #define SPRITEPTR_SIX 6
 #define SPRITEPTR_SEVEN 7
 
+#define COUNTDOWN_ZERO            "sprites/misc/num0.spr"
+#define COUNTDOWN_ONE             "sprites/misc/num1.spr"
+#define COUNTDOWN_TWO             "sprites/misc/num2.spr"
+#define COUNTDOWN_THREE           "sprites/misc/num3.spr"
+
 typedef struct SpriteSheetHeader 
 {
     UBYTE id[FILE_ID_LEN];

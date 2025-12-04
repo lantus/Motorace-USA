@@ -59,7 +59,13 @@ BitMapEx *la_tiles;
 UWORD	intro_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
 UWORD	desert_colors[BLOCKSCOLORS];
- 
+
+// Used for the Countdown
+static Sprite spr_countdown_timer[4];
+ULONG *spr_countdown[4];
+ULONG *current_countdown_spr;
+UBYTE countdown_idx = 0;
+
 // One time startup for everything
 
 void Game_Initialize()
@@ -537,7 +543,7 @@ void GameReady_Update(void)
         game_state = STAGE_START;
 
         stage_state = STAGE_COUNTDOWN;
-        countdown_value = 5;
+        countdown_value = 4;
         Timer_Start(&countdown_timer, 1);  // 1 second timer
 
         // Start HUD update timer (update every 96 frames)
@@ -564,6 +570,24 @@ void Stage_Initialize(void)
 	Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
 	la_map = Disk_AllocAndLoadAsset("maps/level1.map",MEMF_PUBLIC);
 
+     // Used for the Countdown
+    Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);
+    Sprites_LoadFromFile(COUNTDOWN_ONE,&spr_countdown_timer[1]);
+    Sprites_LoadFromFile(COUNTDOWN_TWO,&spr_countdown_timer[2]);
+    Sprites_LoadFromFile(COUNTDOWN_THREE,&spr_countdown_timer[3]);
+
+    spr_countdown[0] = Mem_AllocChip(32);
+    spr_countdown[1] = Mem_AllocChip(32);
+    spr_countdown[2] = Mem_AllocChip(32);
+    spr_countdown[3] = Mem_AllocChip(32);
+
+    Sprites_BuildComposite(spr_countdown[0],2,&spr_countdown_timer[0]);
+    Sprites_BuildComposite(spr_countdown[1],2,&spr_countdown_timer[1]);
+    Sprites_BuildComposite(spr_countdown[2],2,&spr_countdown_timer[2]);
+    Sprites_BuildComposite(spr_countdown[3],2,&spr_countdown_timer[3]); 
+
+    current_countdown_spr = spr_countdown[3];
+ 
     mapdata = (UWORD *)la_map->data;
 	mapwidth = la_map->mapwidth;
 	mapheight = la_map->mapheight;   
@@ -572,16 +596,10 @@ void Stage_Initialize(void)
 
 void Stage_Draw()
 {
+ 
     if (stage_state == STAGE_COUNTDOWN)
     {
-        // Draw countdown number centered on screen
-        if (countdown_value > 0)
-        { 
-            // TODO: draw the countdown sprites
-        }
-        
         Stage_ShowInfo();
-
         game_frame_count = 0;
     }
     else if (stage_state == STAGE_PLAYING)
@@ -616,12 +634,18 @@ void Stage_Update()
             {
                 countdown_value--;
                 Timer_Reset(&countdown_timer);  // Reset for next second
+                current_countdown_spr = spr_countdown[countdown_value];
+                Sprites_SetPointers(current_countdown_spr, 2, SPRITEPTR_TWO_AND_THREE);
+                Sprites_SetScreenPosition((UWORD *)current_countdown_spr[0],96,100,32);
+                Sprites_SetScreenPosition((UWORD *)current_countdown_spr[1],96,100,32);
             }
             else
             {
                 // Countdown complete - start gameplay
                 stage_state = STAGE_PLAYING;
                 Timer_Stop(&countdown_timer);
+
+                Sprites_ClearHigher();
             }
         }
     }
@@ -743,7 +767,7 @@ void Stage_ShowInfo(void)
     }
     
     // Draw difficulty at top  
-    Font_DrawString(draw_buffer, difficulty_text, 48, 30, 13);  
+    Font_DrawString(draw_buffer, difficulty_text, 48, 50, 13);  
  
     // Draw stage name at bottom  
     Font_DrawStringCentered(draw_buffer, stage_text, 120, 13);   
