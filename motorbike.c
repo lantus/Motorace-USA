@@ -227,9 +227,9 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 
     Sprites_SetPointers(current_bike_sprite,2, SPRITEPTR_ZERO_AND_ONE);
 
-    Sprites_SetPosition((UWORD *)current_bike_sprite[0],x,y,y+32);
-    Sprites_SetPosition((UWORD *)current_bike_sprite[1],x,y,y+32);
-
+    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0],x,y,32);
+    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1],x,y,32);
+   
     bike_anim_frames++;
 }
 

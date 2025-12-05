@@ -113,7 +113,7 @@ void Game_NewGame(UBYTE difficulty)
     Game_SetMap(game_map);
 
     // Position bike near bottom of screen
-    bike_position_x = SCREENWIDTH / 2;  // Center horizontally (around pixel 96 for 192px display)
+    bike_position_x = (ROAD_WIDTH / 2);
     bike_position_y = SCREENHEIGHT - 64;  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
     

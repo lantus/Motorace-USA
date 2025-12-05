@@ -61,6 +61,9 @@
 #define ROUND2BLOCKWIDTH(x)  ((x) & ~(BLOCKWIDTH - 1))
 #define ROUND2BLOCKHEIGHT(x) ((x) & ~(BLOCKHEIGHT - 1))
  
+#define ROAD_LEFT_OFFSET 64     
+#define ROAD_WIDTH 192
+#define BIKE_SPRITE_WIDTH 16
 
 enum GameState
 {
