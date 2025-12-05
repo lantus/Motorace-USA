@@ -617,7 +617,7 @@ void Stage_Draw()
         Timer_Reset(&hud_update_timer);
     }
 
-    UpdateMotorBikePosition(bike_position_x,bike_position_y,bike_state);
+    MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
    // Cars_Update(); 
 }
 

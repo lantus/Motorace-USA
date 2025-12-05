@@ -174,13 +174,15 @@ void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
     }
 }
 
-void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state)
+void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 {
-    if (state == BIKE_STATE_MOVING)
+    if (state == BIKE_STATE_MOVING || 
+        state == BIKE_STATE_ACCELERATING  || 
+        state == BIKE_STATE_BRAKING)
     {
         bike_anim_lr_frames = 0;
 
-        if (bike_anim_frames % 10 == 0)
+        if (bike_anim_frames % (state == BIKE_STATE_ACCELERATING ? 5 : 10) == 0)
         {
             bike_frame ^= 1;
 

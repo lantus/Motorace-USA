@@ -72,7 +72,7 @@ extern WORD scroll_accumulator;  // Fractional scroll position (fixed point)
  
 void MotorBike_Initialize();
 void CleanupMotorbikeSprites();
-void UpdateMotorBikePosition(UWORD x, UWORD y, UBYTE state);
+void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state);
 void ResetMotorBikeAnimFrames();
 void AccelerateMotorBike();
 void BrakeMotorBike();
