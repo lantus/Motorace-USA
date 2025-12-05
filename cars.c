@@ -18,8 +18,10 @@
 #include "sprites.h"
 #include "memory.h"
 #include "blitter.h"
+#include "roadsystem.h"
 #include "cars.h"
 
+#define CAR_BG_SIZE 768
 extern volatile struct Custom *custom;
 
 BlitterObject car[MAX_CARS];
@@ -27,66 +29,64 @@ BlitterObject car[MAX_CARS];
 /* Restore pointers */
 APTR restore_ptrs[MAX_CARS * 4];
 APTR *restore_ptr;
-
+ 
 void Cars_LoadSprites()
 {
     car[0].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
     car[1].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
     car[2].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
     car[3].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
-   // car[4].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
+    car[4].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);   
 }
 
 void Cars_Initialize(void)
 {
-    car[0].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
-    car[0].background = Mem_AllocChip(512);
+    // Car 0 - Pole position (ahead, slightly left of center)
+   // car[0].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    car[0].background = Mem_AllocChip(CAR_BG_SIZE);
     car[0].visible = TRUE;
-    car[0].x =16;
-    car[0].y = 64;
+    car[0].x = 8;  // Slightly left of center
+    car[0].y = 20;         // Higher up
     car[0].off_screen = FALSE;
+    car[0].needs_restore = FALSE;
 
-  
-    // Car 1 - Right lane, ahead
-    car[1].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
-    car[1].background = Mem_AllocChip(512);
+    // Car 1 - Middle left (competitor with #1)
+  //  car[1].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    car[1].background = Mem_AllocChip(CAR_BG_SIZE);
     car[1].visible = TRUE;
-    car[1].x = 128;  // Right lane  
-    car[1].y = 60;   // Ahead of car 0
+    car[1].x = 12;   // Further left
+    car[1].y = 80;
     car[1].off_screen = FALSE;
     car[1].needs_restore = FALSE;
   
-    // Car 2 - Center lane, behind
-    car[2].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
-    car[2].background  = Mem_AllocChip(512);
+    // Car 2 - Middle right (competitor with #2)
+   // car[2].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    car[2].background = Mem_AllocChip(CAR_BG_SIZE);
     car[2].visible = TRUE;
-    car[2].x = 96;   // Center lane
-    car[2].y = 140;  // Behind car 0
+    car[2].x = 16;  // Further right
+    car[2].y = 100;
     car[2].off_screen = FALSE;
     car[2].needs_restore = FALSE;
     
-    // Car 3 - Left lane, far ahead
-    car[3].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
-    car[3].background  = Mem_AllocChip(512);
+    // Car 3 - Near left (beside/slightly behind player)
+   // car[3].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    car[3].background = Mem_AllocChip(CAR_BG_SIZE);
     car[3].visible = TRUE;
-    car[3].x = 48;   // Far left
-    car[3].y = 20;   // Far ahead
+    car[3].x = 20;
+    car[3].y = 140;
     car[3].off_screen = FALSE;
     car[3].needs_restore = FALSE;
       
-    /* 
-    // Car 4 - Right lane, far behind
-    car[4].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
-    car[4].background = NULL;
+    // Car 4 - Near right (beside/slightly behind player)
+   // car[4].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    car[4].background = Mem_AllocChip(CAR_BG_SIZE);
     car[4].visible = TRUE;
-    car[4].x = 144;  // Far right
-    car[4].y = 180;  // Far behind
+    car[4].x = 24;
+    car[4].y = 170;
     car[4].off_screen = FALSE;
-    car[4].needs_restore = FALSE; */
- 
-    Cars_LoadSprites();
+    car[4].needs_restore = FALSE;
 
-      
+    Cars_LoadSprites();
  
 }
  
@@ -155,35 +155,46 @@ void SaveCarBOB(BlitterObject *car)
  
 void DrawCarBOB(BlitterObject *car)
 {
-    if (!car->visible ) return;
+
+    /* 32x32
+    Barrel Shifting is a pain...
+    bitplanes = 4
+    words per scanline - 2 words (32/16)
+              - 3 words with -AW padding
+              
+    Bytes per scanline = (48/8) = 6 bytes + 6 bytes mask
+    Total scanline = 32
+
+    BlitSize (32x4) << 6 | 3
+ 
+    src mod = 3 words x 2 Bytes
+    dst mod = 40 - 6 = 34;
+    */
+
+    if (!car->visible) return;
     
     if (car->x < 0 || car->x > 160 || car->y < -32 || car->y > SCREENHEIGHT + 32) 
     {
         return;
     }
  
-    // PARAMETERS FOR 32x32 CAR BOB:
-
     // Position
     WORD x = car->x;
     WORD y = car->y;
 
-    UWORD source_mod = 4; 
-    UWORD dest_mod =  (320 - 32) / 8;
+    UWORD source_mod = 6;  // Tight-packed source
+    UWORD dest_mod = 34;  // Screen modulo
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
-    UWORD bltsize = (128 << 6) | 2;
+    UWORD bltsize = (128 << 6) | 3;   
     
-    // Source data
     UBYTE *source = (UBYTE*)&car->data[0];
-    
-    // Mask data
-    UBYTE *mask = source + 32 / 8  * 1;
-    
-    // Destination
+    UBYTE *mask = source + 6;  // Mask follows image data
     UBYTE *dest = draw_buffer;
  
-    //BlitBob2(160, x, y, admod, bltsize, restore_ptrs, source, mask, dest);
+    // Use cookie-cutter blitting with barrel shift (like logo)
+    APTR car_restore_ptrs[4];
+    BlitBob2(160, x, y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, dest);
    
     car->needs_restore = TRUE;
 }
@@ -219,6 +230,19 @@ void Cars_RestoreSaved()
   }
  
 }
+
+void Cars_PreDraw(void)
+{
+  // Draw static cars  
+  for (int i = 0; i < MAX_CARS; i++)
+  {
+      if (car[i].visible)
+      {
+          DrawCarBOB(&car[i]);
+      }
+  }
+}
+
 
 // Main BOB update function
 void Cars_Update(void)

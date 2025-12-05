@@ -113,7 +113,7 @@ void Game_NewGame(UBYTE difficulty)
     Game_SetMap(game_map);
 
     // Position bike near bottom of screen
-    bike_position_x = (ROAD_WIDTH / 2);
+    bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 64;  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
     
@@ -596,11 +596,13 @@ void Stage_Initialize(void)
 
 void Stage_Draw()
 {
- 
     if (stage_state == STAGE_COUNTDOWN)
     {
         Stage_ShowInfo();
         game_frame_count = 0;
+
+        Cars_PreDraw();
+
     }
     else if (stage_state == STAGE_PLAYING)
     {
