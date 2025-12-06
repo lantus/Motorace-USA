@@ -196,8 +196,7 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
             }
         }
     }
-
-    if (state == BIKE_STATE_LEFT)
+    else if (state == BIKE_STATE_LEFT)
     {
          if (bike_anim_lr_frames >= 6)
          {
@@ -210,8 +209,7 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 
          bike_anim_lr_frames++;
     }
-
-    if (state == BIKE_STATE_RIGHT)
+    else if (state == BIKE_STATE_RIGHT)
     {
          if (bike_anim_lr_frames >= 6)
          {
@@ -226,7 +224,6 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
     }
 
     Sprites_SetPointers(current_bike_sprite,2, SPRITEPTR_ZERO_AND_ONE);
-
     Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0],x,y,32);
     Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1],x,y,32);
    

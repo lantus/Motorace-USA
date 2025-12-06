@@ -279,9 +279,9 @@ void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset)
 
 void HUD_UpdateScore(ULONG score)
 {
-    if (counter % 120 == 0)
+    if (counter % 4 == 0)
     {
-        game_score += 500;
+        game_score = score;
         HUD_DrawScore(game_score, 0, 24);
     }
     counter++;

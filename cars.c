@@ -92,29 +92,32 @@ void Cars_Initialize(void)
  
 void Cars_UpdatePosition(BlitterObject *c)
 {
-    if (!c->visible) return;
-    
-    // Store old position for background restore
-    c->old_x = c->x;
-    c->old_y = c->y;
-    c->moved = TRUE;
-    
-    // Move car down the screen (towards player)
-    c->y += 2;  // Move 2 pixels down per frame
-    
-    // Wrap around when car goes off bottom of screen
-    if (c->y > SCREENHEIGHT ) 
-    {
-        c->y = 0;  // Start above screen
-        
-        // Randomize X position within road bounds (16-160 pixels)
-        // Simple pseudo-random using car's current position
-        //c->x =  ((c->x * 17 + c->y * 13) % 128);
-        
-        // Keep within road boundaries
-        if (c->x < 16) c->x = 16;
-        if (c->x > 160) c->x = 160;
-    }
+  if (!c->visible) return;
+
+  c->old_x = c->x;
+  c->old_y = c->y;
+  c->moved = TRUE;
+
+  WORD old_world_y = c->y;
+
+  // Car moves FORWARD in world space based on its own speed
+
+  WORD car_movement = -(GetScrollAmount(c->speed) << 8);
+
+  c->accumulator += car_movement;
+
+  // Apply movement (negative = move forward/up, positive = move backward/down)
+  while (c->accumulator <= -256)
+  {
+      c->y--;  // Move forward in world space
+      c->accumulator += 256;
+  }
+
+  while (c->accumulator >= 256)
+  {
+      c->y++;  // Move backward in world space
+      c->accumulator -= 256;
+  }
 }
 
 void SaveCarBOB(BlitterObject *car)

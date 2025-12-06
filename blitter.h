@@ -23,7 +23,6 @@ typedef struct {
 
 typedef struct 
 {
-    BitMapEx *bob;
     UBYTE *data;      
     UBYTE *background;      // Saved background data  
     UBYTE *background2;     // Saved background data   (for DblBuf)
@@ -35,5 +34,8 @@ typedef struct
     BOOL needs_restore;     // Only restore if we drew last frame
     BOOL off_screen;        // Skip blits entirely if off-screen
     ULONG size;
+    WORD speed;
+    WORD accumulator;  // Fixed-point accumulator for smooth movement
+    WORD saved_buffer_y;  // Track where background was saved
     RestorePtrs restore;
 } BlitterObject;
