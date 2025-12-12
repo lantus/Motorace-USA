@@ -63,8 +63,8 @@
 #define BPL8PTH     0xFC
 #define BPL8PTL     0xFE
 
-#define DIWSTARTVAL 0x2981
-#define DIWSTOPVAL  0x29C1
+#define DIWSTARTVAL 0x29A1  // V:$29 (41), H:$A1 (161) 
+#define DIWSTOPVAL  0x29E1  // V:$29 (297), H:$E1 (225)
 
 #define val 1
 

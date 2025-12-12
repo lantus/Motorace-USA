@@ -134,8 +134,8 @@ static void InitCopperlist(void)
 	
 	// display data fetch start/stop
 	
-	CopDDFSTART[VALUE] = 0x38;
-    CopDDFSTOP[VALUE] = 0x90;   // stop at 192 pixels
+	CopDDFSTART[VALUE] = 0x48;
+    CopDDFSTOP[VALUE] = 0xA0;   
 	
 	// plane pointers
 	 

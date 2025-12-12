@@ -45,7 +45,7 @@ void Cars_Initialize(void)
    // car[0].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
     car[0].background = Mem_AllocChip(CAR_BG_SIZE);
     car[0].visible = TRUE;
-    car[0].x = 8;  // Slightly left of center
+    car[0].x = FAR_LEFT_LANE;  // Slightly left of center
     car[0].y = 20;         // Higher up
     car[0].off_screen = FALSE;
     car[0].needs_restore = FALSE;
@@ -54,7 +54,7 @@ void Cars_Initialize(void)
   //  car[1].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
     car[1].background = Mem_AllocChip(CAR_BG_SIZE);
     car[1].visible = TRUE;
-    car[1].x = 12;   // Further left
+    car[1].x = LEFT_LANE;   // Further left
     car[1].y = 80;
     car[1].off_screen = FALSE;
     car[1].needs_restore = FALSE;
@@ -63,7 +63,7 @@ void Cars_Initialize(void)
    // car[2].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
     car[2].background = Mem_AllocChip(CAR_BG_SIZE);
     car[2].visible = TRUE;
-    car[2].x = 16;  // Further right
+    car[2].x = CENTER_LANE;  // Further right
     car[2].y = 100;
     car[2].off_screen = FALSE;
     car[2].needs_restore = FALSE;
@@ -72,7 +72,7 @@ void Cars_Initialize(void)
    // car[3].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
     car[3].background = Mem_AllocChip(CAR_BG_SIZE);
     car[3].visible = TRUE;
-    car[3].x = 20;
+    car[3].x = RIGHT_LANE;
     car[3].y = 140;
     car[3].off_screen = FALSE;
     car[3].needs_restore = FALSE;
@@ -81,7 +81,7 @@ void Cars_Initialize(void)
    // car[4].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
     car[4].background = Mem_AllocChip(CAR_BG_SIZE);
     car[4].visible = TRUE;
-    car[4].x = 24;
+    car[4].x = FAR_RIGHT_LANE;
     car[4].y = 170;
     car[4].off_screen = FALSE;
     car[4].needs_restore = FALSE;

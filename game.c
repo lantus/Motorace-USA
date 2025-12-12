@@ -598,7 +598,7 @@ void Stage_Draw()
 {
     if (stage_state == STAGE_COUNTDOWN)
     {
-        Stage_ShowInfo();
+      //  Stage_ShowInfo();
         game_frame_count = 0;
 
         Cars_PreDraw();

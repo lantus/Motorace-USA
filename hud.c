@@ -451,7 +451,7 @@ void HUD_SetSpritePositions(void)
 {
     for (int i = 0; i < 4; i++) 
     {
-        UWORD logical_x = 192 + (i * 16);  // Where you want it on screen
+        UWORD logical_x = 192 + 32 + (i * 16);  // Where you want it on screen
         UWORD sprite_x = logical_x + 128;  // Actual sprite coordinate
         
         Sprites_SetPosition(hud_sprites.sprite_data[i], sprite_x, 40, 40 + HUD_HEIGHT - 1);

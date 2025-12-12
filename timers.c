@@ -18,7 +18,7 @@ static UWORD timer_refresh_rate = 50;  // Hz (PAL or NTSC)
 
 // Global display offsets (set once at init)
 BOOL  g_is_pal = TRUE;
-UWORD g_sprite_hoffset = 129;  // Horizontal offset (usually same for both)
+UWORD g_sprite_hoffset = 129 + 32;  // Horizontal offset (usually same for both)
 UWORD g_sprite_voffset = 44;   // Vertical offset (differs PAL/NTSC)
 UWORD g_screen_height = 256;   // Screen height
 
