@@ -63,8 +63,12 @@
 #define BPL8PTH     0xFC
 #define BPL8PTL     0xFE
 
-#define DIWSTARTVAL 0x29A1  // V:$29 (41), H:$A1 (161) 
-#define DIWSTOPVAL  0x29E1  // V:$29 (297), H:$E1 (225)
+#define DIWSTARTVAL 0x29A1   
+#define DIWSTOPVAL  0x29E1   
+
+// NTSC values  
+#define DIWSTARTVAL_NTSC 0x2081   
+#define DIWSTOPVAL_NTSC  0x20E1   
 
 #define val 1
 

@@ -129,8 +129,16 @@ static void InitCopperlist(void)
 	
 	// display window start/stop
 	
-	CopDIWSTART[VALUE] = DIWSTARTVAL;
-	CopDIWSTOP[VALUE] = DIWSTOPVAL;
+	if (g_is_pal == TRUE)
+	{
+		CopDIWSTART[VALUE] = DIWSTARTVAL;
+		CopDIWSTOP[VALUE] = DIWSTOPVAL;
+	}
+	else
+	{
+      	CopDIWSTART[VALUE] = DIWSTARTVAL_NTSC;
+        CopDIWSTOP[VALUE] = DIWSTOPVAL_NTSC;
+	}
 	
 	// display data fetch start/stop
 	
