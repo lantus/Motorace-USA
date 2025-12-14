@@ -174,17 +174,19 @@ void HiScore_Draw(UBYTE *buffer, UWORD start_y, UBYTE color)
     char line_buffer[32];
     UWORD y = start_y;
     
+    WaitBlit();
     // Draw title
     Font_DrawStringCentered(buffer, " BEST 10 PLAYERS", y, color);
     y += 20;
     
+    WaitBlit();
     // Draw header
     Font_DrawString(buffer, "NO", 8, y, color);
     Font_DrawString(buffer, "SCORE", 32, y, color);
     Font_DrawString(buffer, "RANK", 88, y, color);
     Font_DrawString(buffer, "NAME", 144, y, color);
     y += 16;
-    
+    WaitBlit();
     // Draw each entry
     for (int i = 0; i < MAX_HISCORE_ENTRIES; i++)
     {

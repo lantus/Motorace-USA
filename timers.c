@@ -48,7 +48,20 @@ void Timer_Init(void)
             timer_refresh_rate == 60 ? "NTSC" : "PAL",
             timer_refresh_rate);
 
-    g_is_pal = timer_refresh_rate == 60 ? FALSE : TRUE;            
+    
+    
+    Write(Output(), (APTR)"Loading Zippy Race...\n", 23);
+
+    g_is_pal = timer_refresh_rate == 60 ? FALSE : TRUE;     
+    
+    if (g_is_pal == TRUE)
+    {
+        Write(Output(), (APTR)"50hz PAL Detected\n", 19);
+    }
+    else
+    {
+        Write(Output(), (APTR)"60hz NTSC Detected\n", 20);
+    }
 }
 
 // Call this in your VBlank interrupt handler

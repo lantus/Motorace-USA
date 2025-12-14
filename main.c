@@ -234,15 +234,16 @@ APTR GetInterruptHandler() {
 
 void WaitVbl() 
 {
-    while (1) {
-        volatile ULONG vpos = *(volatile ULONG*)0xdff004;
-        vpos &= 0x1ff00;
-        if (vpos != (311 << 8)) break;
+volatile UWORD *vposr = (volatile UWORD*)0xDFF004;
+    
+    // Wait for LOF bit to be SET (bit 0 = 1)
+    while ((*vposr & 1) == 0) {
+        // Loop until bit 0 goes high
     }
-    while (1) {
-        volatile ULONG vpos = *(volatile ULONG*)0xdff004;
-        vpos &= 0x1ff00;
-        if (vpos == (311 << 8)) break;
+    
+    // Wait for LOF bit to be CLEAR (bit 0 = 0)
+    while ((*vposr & 1) != 0) {
+        // Loop until bit 0 goes low
     }
 }
 
@@ -369,7 +370,8 @@ int main(void)
 	
 	WaitVbl();
     Delay(10);
-
+	Write(Output(), (APTR)"\n", 2);
+	Write(Output(), (APTR)"Starting up...\n", 16);
 	Game_Initialize();
 	OpenDisplay();
 	Cars_Initialize();
