@@ -25,10 +25,10 @@ UWORD g_screen_height = 256;   // Screen height
 // Detect PAL/NTSC by counting scanlines
 void Timer_Init(void)
 {
-    volatile UWORD *vposr = (UWORD *)0xDFF004;
-
-    UWORD vpos = *vposr;
-    if (vpos & 0x2000) {
+    struct ExecBase *SysBase = *(struct ExecBase **)4L;
+    
+    if (SysBase->VBlankFrequency == 50) 
+    {
         // PAL system
         g_sprite_voffset = 44;   // or 0x2C
         g_screen_height = 256;

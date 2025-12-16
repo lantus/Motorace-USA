@@ -174,6 +174,7 @@ void Title_Draw()
         }
         else
         {
+            Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
             Timer_Stop(&logo_flash_timer);
             Timer_Start(&hiscore_timer,10);     // 10 Seconds 
             title_state = TITLE_ATTRACT_INSERT_COIN;

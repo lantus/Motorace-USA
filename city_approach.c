@@ -139,7 +139,7 @@ void City_PreDrawRoad()
     // Enable DMA ONCE at start
     custom->dmacon = 0x8400;
  
-    for (b = 0; b < 10; b++)
+    for (b = 0; b < 11; b++)
     {
         for (a = 0; a < 12; a++)
         {

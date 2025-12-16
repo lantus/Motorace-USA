@@ -19,32 +19,6 @@
 
 extern volatile struct Custom *custom;
 
-/* 
- * BlitWait macro
- * Waits on the blitter, switching BLTPRI to reduce CPU usage of 
- * chipmemory during wait.
- */
-#define BLIT_WAIT() \
-    do { \
-        custom->dmacon = 0x8400; \
-        while (custom->dmaconr & (1 << 6)) ; \
-        custom->dmacon = 0x0400; \
-    } while(0)
-
- 
-/*
- * BlitWaitOpt2 macro
- * Waits on blitter with BLTPRI switching using separate dmacon pointer
- */
-#define BLIT_WAIT_OPT2(dmacon_ptr) \
-    do { \
-        *(dmacon_ptr) = 0x8400; \
-        while (custom->dmaconr & (1 << 6)) ; \
-        *(dmacon_ptr) = 0x0400; \
-    } while(0)
-
-#define BLIT_WAIT_OPT() while ((*dmaconr_ptr) & (1 << 6))
-
 /* BLTCON0/1 lookup tables for copy operations */
 static const ULONG bl_copy[16] = {
     0x09f00000, 0x19f01000, 0x29f02000, 0x39f03000,

@@ -41,50 +41,55 @@ void Cars_LoadSprites()
 
 void Cars_Initialize(void)
 {
-    // Car 0 - Pole position (ahead, slightly left of center)
-   // car[0].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+  // Car 0 - Pole position (fast car, pulling ahead)
     car[0].background = Mem_AllocChip(CAR_BG_SIZE);
     car[0].visible = TRUE;
-    car[0].x = FAR_LEFT_LANE;  // Slightly left of center
-    car[0].y = 20;         // Higher up
+    car[0].x = FAR_LEFT_LANE;
+    car[0].y = 20;
     car[0].off_screen = FALSE;
     car[0].needs_restore = FALSE;
+    car[0].speed = 42;  // Faster than cruising (42) - will pull ahead
+    car[0].accumulator = 0;
 
-    // Car 1 - Middle left (competitor with #1)
-  //  car[1].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    // Car 1 - Middle left (matching pace)
     car[1].background = Mem_AllocChip(CAR_BG_SIZE);
     car[1].visible = TRUE;
-    car[1].x = LEFT_LANE;   // Further left
+    car[1].x = LEFT_LANE;
     car[1].y = 80;
     car[1].off_screen = FALSE;
     car[1].needs_restore = FALSE;
+    car[1].speed = 42;  // Cruising speed - stays in place relative to bike
+    car[1].accumulator = 0;
   
-    // Car 2 - Middle right (competitor with #2)
-   // car[2].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    // Car 2 - Middle right (slower traffic)
     car[2].background = Mem_AllocChip(CAR_BG_SIZE);
     car[2].visible = TRUE;
-    car[2].x = CENTER_LANE;  // Further right
+    car[2].x = CENTER_LANE;
     car[2].y = 100;
     car[2].off_screen = FALSE;
     car[2].needs_restore = FALSE;
+    car[2].speed = 41;  // Slower - will fall behind
+    car[2].accumulator = 0;
     
-    // Car 3 - Near left (beside/slightly behind player)
-   // car[3].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    // Car 3 - Near left (fast competitor)
     car[3].background = Mem_AllocChip(CAR_BG_SIZE);
     car[3].visible = TRUE;
     car[3].x = RIGHT_LANE;
     car[3].y = 140;
     car[3].off_screen = FALSE;
     car[3].needs_restore = FALSE;
+    car[3].speed = 41;  // Faster - will overtake
+    car[3].accumulator = 0;
       
-    // Car 4 - Near right (beside/slightly behind player)
-   // car[4].bob = BitMapEx_Create(BLOCKSDEPTH, BOB_WIDTH, BOB_HEIGHT);
+    // Car 4 - Near right (slow traffic)
     car[4].background = Mem_AllocChip(CAR_BG_SIZE);
     car[4].visible = TRUE;
     car[4].x = FAR_RIGHT_LANE;
     car[4].y = 170;
     car[4].off_screen = FALSE;
     car[4].needs_restore = FALSE;
+    car[4].speed = 41;  // Much slower - obstacle to avoid
+    car[4].accumulator = 0;
 
     Cars_LoadSprites();
  
@@ -197,8 +202,14 @@ void DrawCarBOB(BlitterObject *car)
  
     // Use cookie-cutter blitting with barrel shift (like logo)
     APTR car_restore_ptrs[4];
-    BlitBob2(160, x, y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, dest);
+    //BlitBob2(160, x, y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, dest);
    
+    // Draw to BOTH buffers to avoid tearing during buffer swap
+    // Draw to first buffer - both halves
+    BlitBob2(160, x, y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, screen.bitplanes);
+    BlitBob2(160, x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, screen.bitplanes);
+    
+  
     car->needs_restore = TRUE;
 }
 
@@ -211,20 +222,25 @@ void Cars_RestoreSaved()
       if (car[i].needs_restore && !car[i].off_screen)
       {
 
-        restore_ptr = &restore_ptrs[0];
-        UWORD source_mod = 0; 
-        UWORD dest_mod =  (320 - 32) / 8;
-        ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
-        UWORD bltsize = (128 << 6) | 2;
+            restore_ptr = &restore_ptrs[0];
+            UWORD source_mod = 0; 
+            UWORD dest_mod = (320 - 32) / 8;
+            ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+            UWORD bltsize = (128 << 6) | 2;
  
-        ULONG y_offset =  car[i].y * 160;
-        WORD x_byte_offset = car[i].x >> 3;  // Divide by 8 for byte offset
-        ULONG total_offset = y_offset + x_byte_offset;
+            ULONG y_offset = car[i].y * 160;
+            WORD x_byte_offset = car[i].x >> 3;
+            ULONG total_offset = y_offset + x_byte_offset;
 
-        restore_ptr[1] = car[i].background;
-        restore_ptr[0] = draw_buffer + total_offset ;
-        
-        BlitRestoreBobs(admod,bltsize,1,restore_ptr);
+            restore_ptr[1] = car[i].background;
+            
+            // Restore to BOTH buffers
+            restore_ptr[0] = screen.bitplanes + total_offset;
+            BlitRestoreBobs(admod, bltsize, 1, restore_ptr);
+            
+            restore_ptr[0] = screen.bitplanes + total_offset + (HALFBITMAPHEIGHT * BLOCKSDEPTH * 160);
+            BlitRestoreBobs(admod, bltsize, 1, restore_ptr);
+ 
        
       }
 
@@ -250,14 +266,32 @@ void Cars_PreDraw(void)
 // Main BOB update function
 void Cars_Update(void)
 {
+  
   // Second pass: Update positions for all cars
   for (int i = 0; i < MAX_CARS; i++) 
   {
-    if (car[i].visible) 
-    {
-      Cars_UpdatePosition(&car[i]);
-      SaveCarBOB(&car[i]);
-    }
+        if (car[i].visible) 
+        {
+            Cars_UpdatePosition(&car[i]);
+            
+            // Check if car went off screen (top)
+            if (car[i].y < -32)
+            {
+                car[i].off_screen = TRUE;
+                car[i].visible = FALSE;  // Could respawn later
+            }
+            // Check if car went off screen (bottom)
+            else if (car[i].y > SCREENHEIGHT + 32)
+            {
+                car[i].off_screen = TRUE;
+                car[i].visible = FALSE;
+            }
+            else
+            {
+                car[i].off_screen = FALSE;
+                SaveCarBOB(&car[i]);
+            }
+        }
   }
 
   // Third pass: Draw all cars (BlitBob handles background saving automatically)

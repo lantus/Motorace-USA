@@ -21,6 +21,7 @@
 #include "hud.h"
 #include "cars.h"
 #include "timers.h"
+#include "audio.h"
 
 volatile struct Custom *custom;
 
@@ -62,7 +63,7 @@ struct View *ActiView;
 #define DMAF_ALL     0x01FF   /* all dma channels */
 
 #define BPLCON3_BRDNBLNK (1<<5)
- 
+
 const UBYTE* planes[BLOCKSDEPTH];
  
 WORD	bitmapheight;
@@ -92,7 +93,6 @@ struct FetchInfo
  
 struct Interrupt vblankInt;
 BOOL running = TRUE;
-
  
 __attribute__((always_inline)) inline short MouseLeft() { return !((*(volatile UBYTE*)0xbfe001) & 64); }
 __attribute__((always_inline)) inline short MouseRight() { return !((*(volatile UWORD*)0xdff016) & (1 << 10)); }
@@ -106,8 +106,7 @@ static void InitCopperlist(void)
 	WaitVBL();
 
 	custom->dmacon = 0x7FFF;
-	custom->beamcon0 = 0;
-
+ 
 	// plane pointers
  
 	for(int i=0; i < 16; i++)
@@ -153,8 +152,10 @@ static void InitCopperlist(void)
 		planes[a]=(UBYTE*)screen.bitplanes + lineSize * a;
 
 	Copper_SetBitplanePointer(BLOCKSDEPTH,planes , 0);
+
 	custom->intena = 0x7FFF;
-	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE;
+	custom->dmacon = DMAF_AUD2 | DMAF_AUD3;
+	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1;
 	custom->cop2lc = (ULONG)CopperList;	
  
 };
@@ -234,7 +235,7 @@ APTR GetInterruptHandler() {
 
 void WaitVbl() 
 {
-volatile UWORD *vposr = (volatile UWORD*)0xDFF004;
+	volatile UWORD *vposr = (volatile UWORD*)0xDFF004;
     
     // Wait for LOF bit to be SET (bit 0 = 1)
     while ((*vposr & 1) == 0) {
@@ -317,16 +318,10 @@ void FreeSystem()
 	Permit();
 } 
  
-static __attribute__((interrupt)) void InterruptHandler() 
-{
-	custom->intreq=(1<<INTB_VERTB);  
-}
-
 // Add these constants at the top with your other defines
 #define GAMEAREA_WIDTH 64          // 24 blocks × 8 pixels
 #define GAMEAREA_BLOCKS 28          // blocks across the game area
  
-
 __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 {
 	LONG planeadd;
@@ -341,10 +336,12 @@ __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 
 static __attribute__((interrupt)) void interruptHandler() 
 {
-	Timer_VBlankUpdate();
 
 	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
- 
+
+	Timer_VBlankUpdate();
+
+	Music_Play();
 }
 
 int main(void)
@@ -370,33 +367,32 @@ int main(void)
 	
 	WaitVbl();
     Delay(10);
+
 	Write(Output(), (APTR)"\n", 2);
 	Write(Output(), (APTR)"Starting up...\n", 16);
+
 	Game_Initialize();
 	OpenDisplay();
 	Cars_Initialize();
-	
+		
 	KillSystem();
-
 	InitCopperlist();
+
 	Copper_SetPalette(0, 0x003);
- 
-	custom->copjmp2 = 0;
- 
-	SetInterruptHandler((APTR)interruptHandler);
+
+	// Enable VBlank first
 	custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB;
-
+	custom->intreq = (1<<INTB_VERTB);  // Clear pending
+	SetInterruptHandler((APTR)interruptHandler);
+	
 	HUD_DrawAll();
-
+ 
 	while(!MouseLeft()) 
     {		 
 		WaitVBeam(10);
  
 		Game_Update();
 		Game_Draw();
-		
-		WaitVBL();
-	
 	}
 
     ActivateSystem();

@@ -23,9 +23,9 @@
 #include "title.h"
 #include "hiscore.h"
 #include "city_approach.h"
+#include "audio.h"
 
 extern volatile struct Custom *custom;
-
 
 UBYTE stage_state = STAGE_COUNTDOWN;
 GameTimer countdown_timer;
@@ -354,8 +354,7 @@ static void ScrollUp(void)
         
         DrawBlock(x, y, mapx, mapy, screen.bitplanes);
         DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.bitplanes);
-        DrawBlock(x, y, mapx, mapy, screen.offscreen_bitplanes);
-        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.offscreen_bitplanes);
+ 
     }
    	
 }
@@ -378,8 +377,7 @@ void Game_FillScreen(void)
 			y = b * BLOCKPLANELINES;
 			DrawBlock(x, y, a, start_tile_y + b, screen.bitplanes);
 			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.bitplanes);
-			DrawBlock(x, y, a, start_tile_y + b, screen.offscreen_bitplanes);
-			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.offscreen_bitplanes);            
+         
 		}
 	} 
  
@@ -388,7 +386,7 @@ void Game_FillScreen(void)
 void Game_SwapBuffers(void)
 {
     // Toggle current buffer
-    current_buffer ^= 1;
+    current_buffer = 0;
  
     // Update pointers
     draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
@@ -607,6 +605,7 @@ void Stage_Draw()
     else if (stage_state == STAGE_PLAYING)
     {
         Game_SwapBuffers();
+        Cars_RestoreSaved();  // Restore backgrounds before new frame
     }
     
      // === PERIODIC HUD UPDATE ===
@@ -620,7 +619,11 @@ void Stage_Draw()
     }
 
     MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
-   // Cars_Update(); 
+
+    if (stage_state == STAGE_PLAYING)
+    {
+        Cars_Update();   
+    }
 }
 
 void Stage_Update()
@@ -648,6 +651,9 @@ void Stage_Update()
                 Timer_Stop(&countdown_timer);
 
                 Sprites_ClearHigher();
+
+                Music_LoadModule(MUSIC_ONROAD);
+
             }
         }
     }
