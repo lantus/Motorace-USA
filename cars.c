@@ -185,7 +185,7 @@ void DrawCarBOB(BlitterObject *car)
     
     WORD screen_y = car->y - mapposy;
     
-    if (screen_y < -100 || screen_y > SCREENHEIGHT + 100) 
+    if (screen_y < -8 || screen_y > SCREENHEIGHT + 8) 
     {
         car->off_screen = TRUE;
         return;
