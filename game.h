@@ -129,6 +129,8 @@ extern UWORD *mapdata;
 extern ULONG game_score;
 extern UBYTE game_rank;
 
+extern ULONG game_frame_count;
+
 // Palettes
 extern UWORD	intro_colors[BLOCKSCOLORS];
 extern UWORD	city_colors[BLOCKSCOLORS];

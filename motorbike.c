@@ -174,7 +174,7 @@ void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
     }
 }
 
-__attribute__((always_inline)) inline void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
+void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 {
     if (state == BIKE_STATE_MOVING || 
         state == BIKE_STATE_ACCELERATING  || 

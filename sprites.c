@@ -148,7 +148,7 @@ void Sprites_SetScreenPosition(UWORD *sprite_data, WORD x, UWORD y, UWORD height
     Sprites_SetPosition(sprite_data, hstart, vstart, vstop);
 }
 
-void Sprites_SetPosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop)
+__attribute__((always_inline)) inline void Sprites_SetPosition(UWORD *sprite_data, UWORD hstart, UWORD vstart, UWORD vstop)
 {
     sprite_data[0] = ((vstart & 0xff) << 8) | ((hstart >> 1) & 0xff);
     // vstop + high bit of vstart + low bit of hstart

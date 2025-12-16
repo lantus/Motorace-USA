@@ -23,6 +23,8 @@
 #include "title.h"
 #include "hiscore.h"
 #include "city_approach.h"
+#include "blitter.h"
+#include "cars.h"
 #include "audio.h"
 
 extern volatile struct Custom *custom;
@@ -119,6 +121,8 @@ void Game_NewGame(UBYTE difficulty)
     
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     videoposy = mapposy % HALFBITMAPHEIGHT;
+
+    Cars_ResetPositions();
 }
 
 void Game_Draw()
@@ -334,29 +338,40 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
  
 static void ScrollUp(void)
 {
-	 WORD mapx, mapy, x, y;
+	WORD mapx,mapy,x,y;
 
-    if (mapposy < 1) return;  // Stop at top of map
+	if (mapposy < 1) return;
 
-    mapposy--;
-    videoposy = mapposy % HALFBITMAPHEIGHT;
+	mapposy--;
+	videoposy = mapposy % HALFBITMAPHEIGHT;
 
 	mapx = mapposy & (NUMSTEPS - 1);
 	mapy = mapposy / BLOCKHEIGHT;
 	
 	y = ROUND2BLOCKHEIGHT(videoposy) * BLOCKSDEPTH;
 
-   // Only draw if within the 12-tile display width
-    if (mapx < 12) 
-    {  
-        // Limit to 192 pixels (12 tiles)
-        x = mapx * BLOCKWIDTH;
-        
-        DrawBlock(x, y, mapx, mapy, screen.bitplanes);
-        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.bitplanes);
- 
-    }
+   if (mapx < TWOBLOCKSTEP)
+   {
+   	// blit only one block per half bitmap
    	
+   	x = mapx * BLOCKWIDTH;
+   	
+   	DrawBlock(x,y,mapx,mapy, screen.bitplanes);
+   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy,screen.bitplanes);
+   	
+   } else {
+   	// blit two blocks per half bitmap
+   	
+   	mapx = TWOBLOCKSTEP + (mapx - TWOBLOCKSTEP) * 2;
+   	x = mapx * BLOCKWIDTH;
+   	
+   	DrawBlock(x,y,mapx,mapy,screen.bitplanes);
+   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy,screen.bitplanes);
+
+   	DrawBlock(x + BLOCKWIDTH,y,mapx + 1,mapy,screen.bitplanes);
+   	DrawBlock(x + BLOCKWIDTH,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx + 1,mapy,screen.bitplanes);
+   	
+   }
 }
 
 void Game_RenderBackgroundToDrawBuffer(void)
@@ -400,7 +415,7 @@ void Game_SwapBuffers(void)
         planes_temp[a] = display_buffer + lineSize * a;
     
     LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * BITMAPBYTESPERROW * BLOCKSDEPTH;
-
+ 
     Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
 }
 
@@ -596,16 +611,21 @@ void Stage_Draw()
 {
     if (stage_state == STAGE_COUNTDOWN)
     {
-      //  Stage_ShowInfo();
-        game_frame_count = 0;
+        if (game_frame_count == 0)
+        {
+            Stage_ShowInfo();
+            
+            //Cars_PreDraw();
+        }
 
-        Cars_PreDraw();
-
+       Game_SwapBuffers();  // Add this
     }
     else if (stage_state == STAGE_PLAYING)
     {
-        Game_SwapBuffers();
+      
         Cars_RestoreSaved();  // Restore backgrounds before new frame
+        Cars_Update();
+        Game_SwapBuffers();
     }
     
      // === PERIODIC HUD UPDATE ===
@@ -619,11 +639,7 @@ void Stage_Draw()
     }
 
     MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
-
-    if (stage_state == STAGE_PLAYING)
-    {
-        Cars_Update();   
-    }
+ 
 }
 
 void Stage_Update()
@@ -653,7 +669,6 @@ void Stage_Update()
                 Sprites_ClearHigher();
 
                 Music_LoadModule(MUSIC_ONROAD);
-
             }
         }
     }

@@ -37,5 +37,6 @@ typedef struct
     WORD speed;
     WORD accumulator;  // Fixed-point accumulator for smooth movement
     WORD saved_buffer_y;  // Track where background was saved
+    
     RestorePtrs restore;
 } BlitterObject;

@@ -32,7 +32,7 @@ BOOL g_is_music_ready = FALSE;
 
 // Demo - Module Player - ThePlayer 6.1a: https://www.pouet.net/prod.php?which=19922
 // The Player® 6.1A: Copyright © 1992-95 Jarno Paananen
-// P61.testmod - Module by Skylord/Sector 7 
+
 INCBIN(player, "mus/player610.6.no_cia.bin")
 
 //INCBIN_CHIP(mod_start, "mus/P61.onroadstag")
