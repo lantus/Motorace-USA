@@ -43,23 +43,19 @@ void Cars_Initialize(void)
 {
   // Car 0 - Pole position (fast car, pulling ahead)
     car[0].background = Mem_AllocChip(CAR_BG_SIZE);
-    car[0].background2 = Mem_AllocChip(CAR_BG_SIZE);
+ 
     // Car 1 - Middle left (matching pace)
     car[1].background = Mem_AllocChip(CAR_BG_SIZE);
-       car[1].background2 = Mem_AllocChip(CAR_BG_SIZE);
-  
+     
     // Car 2 - Middle right (slower traffic)
     car[2].background = Mem_AllocChip(CAR_BG_SIZE);
-        car[2].background2 = Mem_AllocChip(CAR_BG_SIZE);
-    
+     
     // Car 3 - Near left (fast competitor)
     car[3].background = Mem_AllocChip(CAR_BG_SIZE);
-       car[3].background2 = Mem_AllocChip(CAR_BG_SIZE);
-      
+    
     // Car 4 - Near right (slow traffic)
     car[4].background = Mem_AllocChip(CAR_BG_SIZE);
-      car[4].background2 = Mem_AllocChip(CAR_BG_SIZE);
-
+  
     Cars_LoadSprites();
  
 }
@@ -69,7 +65,7 @@ void Cars_ResetPositions(void)
     car[0].visible = TRUE;
     car[0].x = LEFT_LANE;
     car[0].y = mapposy + 200;  // Start at screen Y=100
-    car[0].speed = 45;  // Same as cruising speed!
+    car[0].speed = 70;  // Same as cruising speed!
     car[0].accumulator = 0;
     car[0].off_screen = FALSE;
     car[0].needs_restore = FALSE;
@@ -83,32 +79,28 @@ void Cars_ResetPositions(void)
 
 void Cars_UpdatePosition(BlitterObject *c)
 {
-  if (!c->visible) return;
+ if (!c->visible) return;
 
-  c->old_x = c->x;
-  c->old_y = c->y;
-  c->moved = TRUE;
+    c->old_x = c->x;
+    c->old_y = c->y;
+    c->moved = TRUE;
 
-  WORD old_world_y = c->y;
+    // GetScrollAmount now returns fixed-point directly, no need to << 8
+    WORD car_movement = -GetScrollAmount(c->speed);
 
-  // Car moves FORWARD in world space based on its own speed
+    c->accumulator += car_movement;
 
-  WORD car_movement = -(GetScrollAmount(c->speed) << 8);
+    while (c->accumulator <= -256)
+    {
+        c->y--;  // Move forward in world space
+        c->accumulator += 256;
+    }
 
-  c->accumulator += car_movement;
-
-  // Apply movement (negative = move forward/up, positive = move backward/down)
-  while (c->accumulator <= -256)
-  {
-      c->y--;  // Move forward in world space
-      c->accumulator += 256;
-  }
-
-  while (c->accumulator >= 256)
-  {
-      c->y++;  // Move backward in world space
-      c->accumulator -= 256;
-  }
+    while (c->accumulator >= 256)
+    {
+        c->y++;  // Move backward in world space
+        c->accumulator -= 256;
+    }
 }
 
 void SaveCarBOB(BlitterObject *car)
@@ -142,7 +134,7 @@ void SaveCarBOB(BlitterObject *car)
         // If jumped > 200 lines, videoposy wrapped - skip restore this frame
         if (y_diff > 200 || y_diff < -200)
         {
-            KPrintF("WRAP DETECTED: last=%ld current=%ld, skipping restore\n", last_buffer_y, buffer_y);
+            //KPrintF("WRAP DETECTED: last=%ld current=%ld, skipping restore\n", last_buffer_y, buffer_y);
             car->needs_restore = FALSE;
         }
     }
@@ -167,7 +159,7 @@ void SaveCarBOB(BlitterObject *car)
     custom->bltdpt = car->background;
     custom->bltsize = bltsize;
 
-     car->needs_restore = TRUE;  // Only set flag AFTER successful save
+    car->needs_restore = TRUE;  // Only set flag AFTER successful save
 }
  
 void DrawCarBOB(BlitterObject *car)
@@ -189,7 +181,7 @@ void DrawCarBOB(BlitterObject *car)
     */
 
  
- if (!car->visible) return;
+    if (!car->visible) return;
     
     WORD screen_y = car->y - mapposy;
     
@@ -251,21 +243,20 @@ void Cars_RestoreSaved()
 }
 void Cars_PreDraw(void)
 {
-  // Draw static cars  
-  for (int i = 0; i < MAX_CARS; i++)
-  {
-      if (car[i].visible)
-      {
-          DrawCarBOB(&car[i]);
-      }
-  }
+    // Draw static cars  
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (car[i].visible)
+        {
+            DrawCarBOB(&car[i]);
+        }
+    }
 }
 
 
 // Main BOB update function
 void Cars_Update(void)
 {
-  
   // Second pass: Update positions for all cars
   for (int i = 0; i < MAX_CARS; i++) 
   {
@@ -276,15 +267,13 @@ void Cars_Update(void)
         }
   }
 
-  // Third pass: Draw all cars (BlitBob handles background saving automatically)
-  for (int i = 0; i < MAX_CARS; i++)
-  {
-    if (car[i].visible && !car[i].off_screen) 
+    // Third pass: Draw all cars (BlitBob handles background saving automatically)
+    for (int i = 0; i < MAX_CARS; i++)
     {
-      
-      DrawCarBOB(&car[i]);   
+        if (car[i].visible && !car[i].off_screen) 
+        {
+            DrawCarBOB(&car[i]);   
+        }
     }
-
-  }
 }
  

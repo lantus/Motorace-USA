@@ -205,56 +205,50 @@ void Game_SetMap(UBYTE maptype)
 }
  
 
-// Convert speed to scroll calls
+// Returns scroll amount in 8.8 fixed-point format (value * 256)
+// So 1.5 pixels/frame = 384 (1.5 * 256)
 WORD GetScrollAmount(WORD speed)
 {
     if (speed == 0)
     {
         return 0;
     }
-    else if (speed <= 10)
-    {
-        // Very slow start (0 to 0.5 pixels/frame)
-        return speed / 20;  // Returns 0-0.5
-    }
     else if (speed <= 21)
     {
-        // Picking up speed (0.5 to 1 pixel/frame)
-        return ((speed - 10) / 11) + 0;  // Returns 0.5-1
+        // 0 to 1.0 pixels/frame
+        // Linear: speed/21 pixels
+        return (speed * 256) / 21;  // Returns 0-256 (0.0-1.0)
     }
     else if (speed <= 42)
     {
-        // Reaching cruising speed (1 to 2 pixels/frame)
-        return ((speed - 21) / 21) + 1;  // Returns 1-2
+        // 1.0 to 2.0 pixels/frame
+        return 256 + ((speed - 21) * 256) / 21;  // Returns 256-512 (1.0-2.0)
     }
     else if (speed <= 105)
     {
-        // Accelerating beyond cruise (2 to 4 pixels/frame)
-        return 2 + ((speed - 42) * 2) / 63;  // Returns 2-4
+        // 2.0 to 4.0 pixels/frame
+        return 512 + ((speed - 42) * 512) / 63;  // Returns 512-1024 (2.0-4.0)
     }
     else if (speed <= 210)
     {
-        // High speed (4 to 6 pixels/frame)
-        return 4 + ((speed - 105) * 2) / 105;  // Returns 4-6
+        // 4.0 to 6.0 pixels/frame
+        return 1024 + ((speed - 105) * 512) / 105;  // Returns 1024-1536 (4.0-6.0)
     }
     else
     {
-        return 6;  // Max
+        return 1536;  // 6.0 pixels/frame max
     }
 }
 
 static void SmoothScroll(void)
 {
-    // Calculate scroll speed in fixed-point (8.8 format: 8 bits integer, 8 bits fraction)
-    // 2 scrolls = 512 (2 << 8), 6 scrolls = 1536 (6 << 8)
-    WORD scroll_speed = GetScrollAmount(bike_speed) << 8;
     
-    // Add to accumulator
+    WORD scroll_speed = GetScrollAmount(bike_speed);
+    
     scroll_accumulator += scroll_speed;
     
-    // Extract whole pixels and scroll
     while (scroll_accumulator >= 256) 
-	{
+    {
         ScrollUp();
         scroll_accumulator -= 256;
     }
