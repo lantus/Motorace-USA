@@ -222,8 +222,7 @@ void DrawCarBOB(BlitterObject *car)
     
     WaitBlit();
     BlitBob2(160, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, screen.bitplanes);
-   
-    //car->needs_restore = TRUE;
+
 }
 
 void Cars_RestoreSaved()

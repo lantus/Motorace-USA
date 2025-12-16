@@ -625,6 +625,7 @@ void Stage_Draw()
       
         Cars_RestoreSaved();  // Restore backgrounds before new frame
         Cars_Update();
+        SmoothScroll();
         Game_SwapBuffers();
     }
     
@@ -716,9 +717,7 @@ void Stage_Update()
                 bike_state = BIKE_STATE_MOVING;
             }
         }        
-        // === SCROLLING LOGIC  
-        SmoothScroll();   
-        
+ 
         // === LEFT/RIGHT MOVEMENT ===
         if (JoyLeft())
         {
