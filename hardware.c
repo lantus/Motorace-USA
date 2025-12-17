@@ -41,6 +41,15 @@ BOOL os_disabled = FALSE;
 // Track previous fire button state for edge detection
 static BOOL prev_fire_state = FALSE;
 
+// VERY SLOW but seems to be working RNG (good old xorshift)
+ULONG rand() {
+    static ULONG seed = 0xAA532051;
+    seed ^= seed >> 6;
+    seed ^= seed << 12;
+    seed ^= seed >> 15;
+    return seed;
+}
+
 static LONG NullInputHandler(void)
 {
 	// kills all input

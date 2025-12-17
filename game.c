@@ -119,8 +119,8 @@ void Game_NewGame(UBYTE difficulty)
     bike_position_y = SCREENHEIGHT - 64;  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
     
-    mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
-    videoposy = mapposy % HALFBITMAPHEIGHT;
+    mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT - 1;
+    videoposy = mapposy % HALFBITMAPHEIGHT ;
 
     Cars_ResetPositions();
 }
@@ -266,7 +266,7 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	mapx = (block % BLOCKSPERROW) * (BLOCKWIDTH / 8);
 	mapy = (block / BLOCKSPERROW) * (BLOCKPLANELINES * BLOCKSBYTESPERROW);
  
-	HardWaitBlit();
+	WaitBlit();
 	
 	custom->bltcon0 = 0x9F0;	// use A and D. Op: D = A
 	custom->bltcon1 = 0;
@@ -292,7 +292,7 @@ __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LO
 	mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
 	mapy = (block / blocksperrow) * (blockplanelines * blockbytessperrow);
  
-    HardWaitBlit();
+    WaitBlit();
 	
 	custom->bltcon0 = 0x9F0;	// use A and D. Op: D = A
 	custom->bltcon1 = 0;
@@ -315,7 +315,7 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
     UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
     UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
     
-    HardWaitBlit();
+    WaitBlit();
     
     custom->bltcon0 = 0x9F0;
     custom->bltcon1 = 0;
@@ -332,47 +332,31 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
  
 static void ScrollUp(void)
 {
-	WORD mapx,mapy,x,y;
+ WORD mapx, mapy, x, y;
 
-	if (mapposy < 1) return;
+    if (mapposy < 1) return;  // Stop at top of map
 
-	mapposy--;
-	videoposy = mapposy % HALFBITMAPHEIGHT;
+    mapposy--;
+    videoposy = mapposy % HALFBITMAPHEIGHT;
 
 	mapx = mapposy & (NUMSTEPS - 1);
 	mapy = mapposy / BLOCKHEIGHT;
 	
 	y = ROUND2BLOCKHEIGHT(videoposy) * BLOCKSDEPTH;
 
-   if (mapx < TWOBLOCKSTEP)
-   {
-   	// blit only one block per half bitmap
-   	
-   	x = mapx * BLOCKWIDTH;
-   	
-   	DrawBlock(x,y,mapx,mapy, screen.bitplanes);
-   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy,screen.bitplanes);
-   	
-   } else {
-   	// blit two blocks per half bitmap
-   	
-   	mapx = TWOBLOCKSTEP + (mapx - TWOBLOCKSTEP) * 2;
-   	x = mapx * BLOCKWIDTH;
-   	
-   	DrawBlock(x,y,mapx,mapy,screen.bitplanes);
-   	DrawBlock(x,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx,mapy,screen.bitplanes);
-
-   	DrawBlock(x + BLOCKWIDTH,y,mapx + 1,mapy,screen.bitplanes);
-   	DrawBlock(x + BLOCKWIDTH,y + HALFBITMAPHEIGHT * BLOCKSDEPTH,mapx + 1,mapy,screen.bitplanes);
-   	
-   }
+   // Only draw if within the 12-tile display width
+    if (mapx < 12) 
+    {  
+        // Limit to 192 pixels (12 tiles)
+        x = mapx * BLOCKWIDTH;
+        
+        DrawBlock(x, y, mapx, mapy, screen.bitplanes);
+        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.bitplanes);
+ 
+        WaitBlit();
+    }
 }
 
-void Game_RenderBackgroundToDrawBuffer(void)
-{
- 
-}
- 
 void Game_FillScreen(void)
 {
 	WORD a, b, x, y;
@@ -386,7 +370,7 @@ void Game_FillScreen(void)
 			y = b * BLOCKPLANELINES;
 			DrawBlock(x, y, a, start_tile_y + b, screen.bitplanes);
 			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.bitplanes);
-         
+            WaitBlit();
 		}
 	} 
  
@@ -566,6 +550,8 @@ void GameReady_Update(void)
         
         Game_FillScreen();
 
+        Stage_ShowInfo();
+
     }    
  
 }
@@ -608,18 +594,20 @@ void Stage_Draw()
         if (game_frame_count == 0)
         {
             Stage_ShowInfo();
-            
-            //Cars_PreDraw();
+            Cars_PreDraw();
         }
 
-       Game_SwapBuffers();  // Add this
+        Game_SwapBuffers();  // Add this
+        
     }
     else if (stage_state == STAGE_PLAYING)
     {
       
         Cars_RestoreSaved();  // Restore backgrounds before new frame
+
         Cars_Update();
         SmoothScroll();
+        
         Game_SwapBuffers();
     }
     
@@ -634,7 +622,7 @@ void Stage_Draw()
     }
 
     MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
- 
+   
 }
 
 void Stage_Update()

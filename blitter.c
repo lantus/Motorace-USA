@@ -61,7 +61,7 @@ void BlitBobNoRestore(UWORD y_modulo, WORD x, WORD y, ULONG admod,
     ULONG offset = y_offset + x_offset;
     APTR dest_ptr = (UBYTE *)dest + offset;
     
-    HardWaitBlit();
+    WaitBlit();
     custom->bltcon0 = (UWORD)(bltcon >> 16);
     custom->bltcon1 = (UWORD)bltcon;
     custom->bltamod = (UWORD)(admod >> 16);
@@ -91,7 +91,7 @@ void BlitBobSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     ULONG restore_admod = (admod & 0xFFFF0000);
  
     /* Save background */
-    HardWaitBlit();
+    WaitBlit();
     custom->bltalwm = 0xFFFF;
     custom->bltcon0 = (UWORD)(bl_copy[0] >> 16);
     custom->bltcon1 = (UWORD)(bl_copy[0]);
@@ -114,7 +114,7 @@ void BlitBobSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
 
 void BlitClearScreen(APTR buffer, UWORD bltsize)
 {
-    HardWaitBlit();
+    WaitBlit();
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
     custom->bltcon0 = (UWORD)(bl_clear[0] >> 16);
@@ -141,7 +141,7 @@ void BlitRestoreBobs(ULONG admod, UWORD bltsize, WORD count, APTR *restore_array
     dmaconr_ptr = &custom->dmaconr;
     
     custom->dmacon = 0x8400;
-    HardWaitBlit();
+    WaitBlit();
     
     /* One-time setup */
     custom->bltalwm = 0xFFFF;
@@ -153,7 +153,7 @@ void BlitRestoreBobs(ULONG admod, UWORD bltsize, WORD count, APTR *restore_array
     
     /* Restore loop */
     for (i = 0; i < count; i++) {
-        HardWaitBlit();
+        WaitBlit();
         custom->bltapt = restore_array[1];
         custom->bltdpt = restore_array[0];
         custom->bltsize = bltsize;
@@ -187,7 +187,7 @@ void BlitBob(WORD x, WORD y, ULONG admod, UWORD bltsize,
     restore_ptrs[1] = restore_ptr2;
     
     // Wait for blitter and set up blit operation
-    HardWaitBlit();
+    WaitBlit();
     
     custom->bltcon0 = (UWORD)(bltcon >> 16);
     custom->bltcon1 = (UWORD)(bltcon & 0xFFFF);
@@ -212,7 +212,7 @@ void BlitClearBob(UBYTE *restore_ptr, UBYTE *screen_ptr, UWORD modulo, UWORD blt
 {
     if (!restore_ptr) return;
     
-    HardWaitBlit();
+    WaitBlit();
     
     custom->bltcon0 = 0x09F0; // Copy A to D (simple copy)
     custom->bltcon1 = 0;
@@ -236,7 +236,7 @@ void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     APTR dest_ptr = (UBYTE *)dest + offset;
  
    
-    HardWaitBlit();
+    WaitBlit();
     custom->bltcon0 = (UWORD)(bltcon >> 16);
     custom->bltcon1 = (UWORD)bltcon;
     
@@ -266,7 +266,7 @@ void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     
     APTR dest_ptr = (UBYTE *)dest + offset;
     
-    HardWaitBlit();
+    WaitBlit();
     custom->bltcon0 = 0x09F0;  // Simple copy: D = A
     custom->bltcon1 = 0x0000;  // No shift
     
@@ -292,7 +292,7 @@ void BlitBobSimpleSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsiz
     
     APTR src_ptr = (UBYTE *)src + offset;
     
-    HardWaitBlit();
+    WaitBlit();
     custom->bltcon0 = 0x09F0;  // Simple copy: D = A
     custom->bltcon1 = 0x0000;  // No shift
     

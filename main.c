@@ -389,10 +389,12 @@ int main(void)
  
 	while(!MouseLeft()) 
     {		 
-		WaitVBeam(10);
+
+		WaitLine(0x10);
  
 		Game_Update();
 		Game_Draw();
+
 	}
 
     ActivateSystem();

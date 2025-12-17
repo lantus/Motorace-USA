@@ -23,7 +23,10 @@ typedef struct {
 
 typedef struct 
 {
-    UBYTE *data;      
+    UBYTE *data;
+    UBYTE *data_frame2;     // Second animation frame
+    WORD anim_frame;        // Current frame (0 or 1)
+    WORD anim_counter;      // Counter for frame switching      
     UBYTE *background;      // Saved background data  
     UBYTE *background2;     // Saved background data   (for DblBuf)
     UBYTE *mask;            // Add this
@@ -35,8 +38,9 @@ typedef struct
     BOOL off_screen;        // Skip blits entirely if off-screen
     ULONG size;
     WORD speed;
-    WORD accumulator;  // Fixed-point accumulator for smooth movement
-    WORD saved_buffer_y;  // Track where background was saved
+    WORD accumulator;       // Fixed-point accumulator for smooth movement
+    WORD saved_buffer_y;    // Track where background was saved
     
     RestorePtrs restore;
+
 } BlitterObject;

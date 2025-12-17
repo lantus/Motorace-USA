@@ -32,48 +32,88 @@ APTR *restore_ptr;
  
 void Cars_LoadSprites()
 {
-    car[0].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
-    car[1].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
-    car[2].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
-    car[3].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);
-    car[4].data = Disk_AllocAndLoadAsset(CAR1_FILE, MEMF_CHIP);   
+    car[0].data = Disk_AllocAndLoadAsset(CAR0_FRAME0, MEMF_CHIP);
+    car[0].data_frame2 = Disk_AllocAndLoadAsset(CAR0_FRAME1, MEMF_CHIP);
+
+    car[1].data = Disk_AllocAndLoadAsset(CAR1_FRAME0, MEMF_CHIP);
+    car[1].data_frame2 = Disk_AllocAndLoadAsset(CAR1_FRAME1, MEMF_CHIP);
+
+    car[2].data = Disk_AllocAndLoadAsset(CAR2_FRAME0, MEMF_CHIP);
+    car[2].data_frame2 = Disk_AllocAndLoadAsset(CAR2_FRAME1, MEMF_CHIP);
+
+    car[3].data = Disk_AllocAndLoadAsset(CAR3_FRAME0, MEMF_CHIP);
+    car[3].data_frame2 = Disk_AllocAndLoadAsset(CAR3_FRAME1, MEMF_CHIP);
+
+    car[4].data = Disk_AllocAndLoadAsset(CAR4_FRAME0, MEMF_CHIP);
+    car[4].data_frame2 = Disk_AllocAndLoadAsset(CAR4_FRAME1, MEMF_CHIP);   
 }
 
 void Cars_Initialize(void)
 {
-  // Car 0 - Pole position (fast car, pulling ahead)
     car[0].background = Mem_AllocChip(CAR_BG_SIZE);
- 
-    // Car 1 - Middle left (matching pace)
     car[1].background = Mem_AllocChip(CAR_BG_SIZE);
-     
-    // Car 2 - Middle right (slower traffic)
     car[2].background = Mem_AllocChip(CAR_BG_SIZE);
-     
-    // Car 3 - Near left (fast competitor)
     car[3].background = Mem_AllocChip(CAR_BG_SIZE);
-    
-    // Car 4 - Near right (slow traffic)
     car[4].background = Mem_AllocChip(CAR_BG_SIZE);
   
     Cars_LoadSprites();
- 
 }
  
 void Cars_ResetPositions(void)
 {
     car[0].visible = TRUE;
-    car[0].x = LEFT_LANE;
-    car[0].y = mapposy + 200;  // Start at screen Y=100
-    car[0].speed = 70;  // Same as cruising speed!
+    car[0].x = FAR_LEFT_LANE;
+    car[0].y = mapposy + 180;   
+    car[0].speed = 60;
     car[0].accumulator = 0;
     car[0].off_screen = FALSE;
     car[0].needs_restore = FALSE;
+    car[0].anim_frame = 0;
+    car[0].anim_counter = 0;
 
-    car[1].visible = FALSE;
-    car[2].visible = FALSE;
-    car[3].visible = FALSE;
-    car[4].visible = FALSE;
+  
+    car[1].visible = TRUE;
+    car[1].x = CENTER_LANE;
+    car[1].y = mapposy + 160;
+    car[1].speed = 63;
+    car[1].accumulator = 0;
+    car[1].off_screen = FALSE;
+    car[1].needs_restore = FALSE;
+    car[1].anim_frame = 0;
+    car[1].anim_counter = 0;
+    
+   
+    car[2].visible = TRUE;
+    car[2].x = FAR_RIGHT_LANE;
+    car[2].y = mapposy + 140;
+    car[2].speed = 61;
+    car[2].accumulator = 0;
+    car[2].off_screen = FALSE;
+    car[2].needs_restore = FALSE;
+    car[2].anim_frame = 0;
+    car[2].anim_counter = 0;
+    
+   
+    car[3].visible = TRUE;
+    car[3].x = FAR_LEFT_LANE;
+    car[3].y = mapposy + 80;  // Behind bike
+    car[3].speed = 64;
+    car[3].accumulator = 0;
+    car[3].off_screen = FALSE;
+    car[3].needs_restore = FALSE;
+    car[3].anim_frame = 0;
+    car[3].anim_counter = 0;
+    
+   
+    car[4].visible = TRUE;
+    car[4].x = FAR_RIGHT_LANE;
+    car[4].y = mapposy + 100;
+    car[4].speed = 68;
+    car[4].accumulator = 0;
+    car[4].off_screen = FALSE;
+    car[4].needs_restore = FALSE;
+    car[4].anim_frame = 0;
+    car[4].anim_counter = 0;
  
 }
 
@@ -101,6 +141,19 @@ void Cars_UpdatePosition(BlitterObject *c)
         c->y++;  // Move backward in world space
         c->accumulator -= 256;
     }
+
+    // Animate wheels based on speed
+    c->anim_counter++;
+    
+    // Switch frames every N frames (faster at higher speeds)
+    WORD frame_delay = (c->speed > 0) ? (100 / c->speed) : 10;
+    if (frame_delay < 2) frame_delay = 2;  // Minimum 2 frames
+    
+    if (c->anim_counter >= frame_delay)
+    {
+        c->anim_counter = 0;
+        c->anim_frame = (c->anim_frame == 0) ? 1 : 0;  // Toggle between 0 and 1
+    }
 }
 
 void SaveCarBOB(BlitterObject *car)
@@ -109,9 +162,10 @@ void SaveCarBOB(BlitterObject *car)
     if (!car->visible) return;
     
     WORD screen_y = car->y - mapposy;
-    if (screen_y < -100 || screen_y > SCREENHEIGHT + 100) 
+    if (screen_y < -8|| screen_y > SCREENHEIGHT + 8  ) 
     {
-        car->off_screen = TRUE;
+     //   car->off_screen = TRUE;
+           
         return;
     }
     
@@ -120,7 +174,7 @@ void SaveCarBOB(BlitterObject *car)
     WORD x = car->x;
     WORD buffer_y = (videoposy + BLOCKHEIGHT + screen_y);
     
-    if (buffer_y < 0 || buffer_y > (BITMAPHEIGHT - 32))
+    if (buffer_y < 0 || buffer_y > (BITMAPHEIGHT ))
     {
         car->off_screen = TRUE;
         return;
@@ -158,7 +212,7 @@ void SaveCarBOB(BlitterObject *car)
     custom->bltapt = bitmap_ptr;
     custom->bltdpt = car->background;
     custom->bltsize = bltsize;
-
+    WaitBlit();  // Wait BEFORE starting
     car->needs_restore = TRUE;  // Only set flag AFTER successful save
 }
  
@@ -207,20 +261,23 @@ void DrawCarBOB(BlitterObject *car)
     UWORD dest_mod = 34;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     UWORD bltsize = (128 << 6) | 3;
-    
-    UBYTE *source = (UBYTE*)&car->data[0];
+
+ // Select animation frame
+    UBYTE *source = (car->anim_frame == 0) ? 
+                    (UBYTE*)&car->data[0] : 
+                    (UBYTE*)&car->data_frame2[0];
+
     UBYTE *mask = source + 6;
     APTR car_restore_ptrs[4];
-    
-    WaitBlit();
+ 
     BlitBob2(160, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, screen.bitplanes);
-
+    
 }
 
 void Cars_RestoreSaved()
 {
-     
-    for (int i = 0; i < MAX_CARS; i++) 
+   //Restore in reverse order  
+    for (int i = MAX_CARS - 1; i >= 0; i--) 
     {
         if (car[i].needs_restore && !car[i].off_screen && car[i].restore.screen_ptr)
         {    
@@ -237,37 +294,50 @@ void Cars_RestoreSaved()
 
             car[i].needs_restore = FALSE;
         }
-
-        
     }
 }
+
 void Cars_PreDraw(void)
 {
-    // Draw static cars  
+     // Save backgrounds for when gameplay starts
     for (int i = 0; i < MAX_CARS; i++)
     {
         if (car[i].visible)
         {
+            SaveCarBOB(&car[i]);
+        }
+    }
+    
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (car[i].visible && !car[i].off_screen)
+        {
             DrawCarBOB(&car[i]);
         }
     }
+
 }
 
 
 // Main BOB update function
 void Cars_Update(void)
 {
-  // Second pass: Update positions for all cars
-  for (int i = 0; i < MAX_CARS; i++) 
-  {
+  static int frame = 0;
+ 
+    // Update positions
+    for (int i = 0; i < MAX_CARS; i++) 
+    {
         if (car[i].visible) 
         {
+           
             Cars_UpdatePosition(&car[i]);
+ 
             SaveCarBOB(&car[i]);
         }
-  }
-
-    // Third pass: Draw all cars (BlitBob handles background saving automatically)
+    }
+ 
+    
+    // Draw
     for (int i = 0; i < MAX_CARS; i++)
     {
         if (car[i].visible && !car[i].off_screen) 
@@ -275,5 +345,7 @@ void Cars_Update(void)
             DrawCarBOB(&car[i]);   
         }
     }
+ 
+     
 }
  
