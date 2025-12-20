@@ -310,6 +310,26 @@ void Cars_PreDraw(void)
     {
         if (car[i].visible && !car[i].off_screen)
         {
+            // Use prev_old position (2 frames back)
+            WORD temp_x = car[i].old_x;
+            WORD temp_y = car[i].old_y;
+            
+            car[i].old_x = car[i].prev_old_x;
+            car[i].old_y = car[i].prev_old_y;
+            
+            Cars_CopyPristineBackground(&car[i]);
+            
+            car[i].old_x = temp_x;
+            car[i].old_y = temp_y;
+
+            // Save position history
+            car[i].prev_old_x = car[i].old_x;
+            car[i].prev_old_y = car[i].old_y;
+            
+            car[i].old_x = car[i].x;
+            car[i].old_y = car[i].y;
+            
+    
             DrawCarBOB(&car[i]);
         }
     }
@@ -380,6 +400,6 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     custom->bltdmod = 34;   
     custom->bltapt = pristine_ptr;
     custom->bltdpt = screen_ptr;
-    custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words
+    custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words    
 }
  
