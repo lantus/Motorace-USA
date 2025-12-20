@@ -352,7 +352,13 @@ static void ScrollUp(void)
         
         DrawBlock(x, y, mapx, mapy, screen.bitplanes);
         DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.bitplanes);
+
+        DrawBlock(x, y, mapx, mapy, screen.offscreen_bitplanes);
+        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.offscreen_bitplanes);    
  
+        DrawBlock(x, y, mapx, mapy, screen.pristine);
+        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.pristine);    
+
         WaitBlit();
     }
 }
@@ -370,6 +376,13 @@ void Game_FillScreen(void)
 			y = b * BLOCKPLANELINES;
 			DrawBlock(x, y, a, start_tile_y + b, screen.bitplanes);
 			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.bitplanes);
+
+           	DrawBlock(x, y, a, start_tile_y + b, screen.offscreen_bitplanes);
+			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.offscreen_bitplanes); 
+
+            DrawBlock(x, y, a, start_tile_y + b, screen.pristine);
+			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.pristine);       
+
             WaitBlit();
 		}
 	} 
@@ -379,18 +392,13 @@ void Game_FillScreen(void)
 void Game_SwapBuffers(void)
 {
     // Toggle current buffer
-    current_buffer = 0;
  
-    // Update pointers
-    draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
-    display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
-    
     // Update copper bitplane pointers to show the new display buffer
     const USHORT lineSize = 320/8;
     const UBYTE* planes_temp[BLOCKSDEPTH];
     
     for(int a = 0; a < BLOCKSDEPTH; a++)
-        planes_temp[a] = display_buffer + lineSize * a;
+        planes_temp[a] = draw_buffer + lineSize * a;
     
     LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * BITMAPBYTESPERROW * BLOCKSDEPTH;
  
@@ -594,20 +602,18 @@ void Stage_Draw()
         if (game_frame_count == 0)
         {
             Stage_ShowInfo();
-            Cars_PreDraw();
+           
         }
-
+        
+        Cars_PreDraw();
         Game_SwapBuffers();  // Add this
         
     }
     else if (stage_state == STAGE_PLAYING)
     {
-      
-        Cars_RestoreSaved();  // Restore backgrounds before new frame
-
-        Cars_Update();
         SmoothScroll();
-        
+        Cars_Update();
+      
         Game_SwapBuffers();
     }
     

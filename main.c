@@ -336,12 +336,17 @@ __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 
 static __attribute__((interrupt)) void interruptHandler() 
 {
-
 	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
 
 	Timer_VBlankUpdate();
 
 	Music_Play();
+
+    current_buffer = 1 - current_buffer;
+ 
+    // Swap pointers
+    draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
+    display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
 }
 
 int main(void)

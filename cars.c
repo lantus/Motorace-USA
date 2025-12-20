@@ -269,8 +269,14 @@ void DrawCarBOB(BlitterObject *car)
 
     UBYTE *mask = source + 6;
     APTR car_restore_ptrs[4];
+
+        // Calculate and STORE pointer
+    ULONG y_offset = (ULONG)buffer_y * 160;
+    WORD x_byte_offset = x >> 3;
+    UBYTE *bitmap_ptr = draw_buffer + y_offset + x_byte_offset;
  
-    BlitBob2(160, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, screen.bitplanes);
+ 
+    BlitBob2(160, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
     
 }
 
@@ -299,14 +305,6 @@ void Cars_RestoreSaved()
 
 void Cars_PreDraw(void)
 {
-     // Save backgrounds for when gameplay starts
-    for (int i = 0; i < MAX_CARS; i++)
-    {
-        if (car[i].visible)
-        {
-            SaveCarBOB(&car[i]);
-        }
-    }
     
     for (int i = 0; i < MAX_CARS; i++)
     {
@@ -319,33 +317,69 @@ void Cars_PreDraw(void)
 }
 
 
-// Main BOB update function
 void Cars_Update(void)
 {
-  static int frame = 0;
- 
-    // Update positions
-    for (int i = 0; i < MAX_CARS; i++) 
-    {
-        if (car[i].visible) 
-        {
-           
-            Cars_UpdatePosition(&car[i]);
- 
-            SaveCarBOB(&car[i]);
-        }
-    }
- 
-    
-    // Draw
+    // 1. Erase positions from 2 FRAMES ago (what's in the current draw buffer)
     for (int i = 0; i < MAX_CARS; i++)
     {
-        if (car[i].visible && !car[i].off_screen) 
+        if (car[i].visible )
         {
-            DrawCarBOB(&car[i]);   
+            // Use prev_old position (2 frames back)
+            WORD temp_x = car[i].old_x;
+            WORD temp_y = car[i].old_y;
+            
+            car[i].old_x = car[i].prev_old_x;
+            car[i].old_y = car[i].prev_old_y;
+            
+            Cars_CopyPristineBackground(&car[i]);
+            
+            car[i].old_x = temp_x;
+            car[i].old_y = temp_y;
+
+            // Save position history
+            car[i].prev_old_x = car[i].old_x;
+            car[i].prev_old_y = car[i].old_y;
+            
+            car[i].old_x = car[i].x;
+            car[i].old_y = car[i].y;
+            
+            Cars_UpdatePosition(&car[i]);
+
+            DrawCarBOB(&car[i]);
+            car[i].needs_restore = TRUE;
         }
     }
  
-     
+}
+
+void Cars_CopyPristineBackground(BlitterObject *car)
+{
+    if (!car->needs_restore) return;
+    
+    WORD old_screen_y = car->old_y - mapposy;
+    WORD buffer_y = (videoposy + BLOCKHEIGHT + old_screen_y);
+    
+    if (buffer_y < 0 || buffer_y > (BITMAPHEIGHT - 32))
+        return;
+    
+    ULONG y_offset = (ULONG)buffer_y * 160;
+    WORD x_byte_offset = car->old_x >> 3;
+    
+    // Calculate X but aligned to word boundary for full coverage
+    WORD x_word_aligned = (car->old_x >> 4) << 1;  // Align to 16-pixel boundary
+    
+    UBYTE *pristine_ptr = screen.pristine + y_offset + x_word_aligned;
+    UBYTE *screen_ptr = draw_buffer + y_offset + x_word_aligned;
+    
+    WaitBlit();
+    custom->bltcon0 = 0x9F0;
+    custom->bltcon1 = 0;
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+    custom->bltamod = 34;   
+    custom->bltdmod = 34;   
+    custom->bltapt = pristine_ptr;
+    custom->bltdpt = screen_ptr;
+    custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words
 }
  

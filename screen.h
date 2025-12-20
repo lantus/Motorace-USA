@@ -34,6 +34,7 @@ struct AmigaScreen {
     BOOL    dual_playfield;
     UBYTE*  bitplanes;
     UBYTE*  offscreen_bitplanes;
+    UBYTE*  pristine;
     ULONG   framebuffer_size;
     UWORD   row_size;
     ULONG   offset;

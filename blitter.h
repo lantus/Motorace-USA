@@ -31,7 +31,10 @@ typedef struct
     UBYTE *background2;     // Saved background data   (for DblBuf)
     UBYTE *mask;            // Add this
     WORD x, y;              // Current screen position
-    WORD old_x, old_y;      // Previous position for restore
+    WORD old_x;             // Position 1 frame ago
+    WORD old_y;
+    WORD prev_old_x;        // Position 2 frames ago (what's in the back buffer)
+    WORD prev_old_y;
     BOOL visible;           // Is BOB active
     BOOL moved;             // Position changed this frame
     BOOL needs_restore;     // Only restore if we drew last frame
