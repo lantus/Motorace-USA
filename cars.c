@@ -19,6 +19,7 @@
 #include "memory.h"
 #include "blitter.h"
 #include "roadsystem.h"
+#include "motorbike.h"
 #include "cars.h"
 
 #define CAR_BG_SIZE 768
@@ -403,3 +404,34 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words    
 }
  
+// In cars.c, add this function
+BOOL Cars_CheckCollision(void)
+{
+    WORD bike_screen_x = bike_position_x;
+    WORD bike_screen_y = bike_position_y - g_sprite_voffset;   
+    WORD bike_width = 24;
+    WORD bike_height = 32;
+    
+    static int debug_frame = 0;
+    
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (!car[i].visible || car[i].off_screen) continue;
+
+        WORD car_screen_y = car[i].y - mapposy;
+        WORD car_screen_x = car[i].x;
+        WORD car_width = 32;
+        WORD car_height = 32;
+ 
+        if (bike_screen_x < car_screen_x + car_width &&
+            bike_screen_x + bike_width > car_screen_x &&
+            bike_screen_y < car_screen_y + car_height &&
+            bike_screen_y + bike_height > car_screen_y)
+        {
+            
+            return TRUE;
+        }
+    }
+    
+    return FALSE;
+}

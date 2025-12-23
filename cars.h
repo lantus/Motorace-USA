@@ -28,3 +28,4 @@ void Cars_RestoreSaved(void);
 void Cars_PreDraw(void);
 void Cars_ResetPositions(void);
 void Cars_CopyPristineBackground(BlitterObject *car);
+BOOL Cars_CheckCollision(void);

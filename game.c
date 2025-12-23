@@ -594,6 +594,7 @@ void Stage_Initialize(void)
 	mapheight = la_map->mapheight;   
 
 }
+ 
 
 void Stage_Draw()
 {
@@ -611,9 +612,10 @@ void Stage_Draw()
     }
     else if (stage_state == STAGE_PLAYING)
     {
+ 
         SmoothScroll();
         Cars_Update();
-      
+ 
         Game_SwapBuffers();
     }
     
@@ -629,6 +631,13 @@ void Stage_Draw()
 
     MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
    
+    Copper_SetPalette(0, 0x00);
+    // Check for collision
+    if (Cars_CheckCollision())
+    {
+        Copper_SetPalette(0, 0xF00);
+
+    }
 }
 
 void Stage_Update()
