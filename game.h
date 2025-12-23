@@ -112,6 +112,12 @@ enum StageState
     STAGE_COMPLETE = 2
 };
 
+typedef enum {
+    COLLISION_NONE = 0,
+    COLLISION_TRAFFIC = 1,
+    COLLISION_OFFROAD = 2
+} CollisionState;
+
 
 extern UBYTE game_stage;
 extern UBYTE game_state;
@@ -130,6 +136,9 @@ extern ULONG game_score;
 extern UBYTE game_rank;
 
 extern ULONG game_frame_count;
+
+extern CollisionState collision_state;
+extern int collision_car_index;  
 
 // Palettes
 extern UWORD	intro_colors[BLOCKSCOLORS];
@@ -159,6 +168,7 @@ void Game_Draw(void);
 void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors);
 void Game_ApplyPalette(UWORD *palette, int num_colors);
 void Game_SetMap(UBYTE maptype);
+void Game_HandleCollisions(void);
 
 void GameReady_Initialize(void);
 void GameReady_Draw(void);

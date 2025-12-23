@@ -83,3 +83,4 @@ void MotorBike_UpdateApproachFrame(UWORD y);
 WORD MotorBike_GetVibrationOffset(void);
 void MotorBike_AutoAccelerate(void);
 void MotorBike_DecelerateToCruising(void);
+CollisionState MotorBike_CheckCollision(int *hit_car_index);

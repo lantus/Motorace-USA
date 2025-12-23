@@ -31,7 +31,11 @@ extern volatile struct Custom *custom;
 
 UBYTE stage_state = STAGE_COUNTDOWN;
 GameTimer countdown_timer;
-GameTimer hud_update_timer;   
+GameTimer hud_update_timer;
+GameTimer collision_recovery_timer;
+
+CollisionState collision_state = COLLISION_NONE;
+int collision_car_index = -1;
 UBYTE countdown_value = 5;
 
 UBYTE game_stage = STAGE_LASANGELES;
@@ -107,6 +111,7 @@ void Game_NewGame(UBYTE difficulty)
     game_stage = STAGE_LASANGELES;
     game_state = STAGE_START;
     game_map = MAP_OVERHEAD_LASANGELES;
+    collision_state = COLLISION_NONE;
     game_difficulty = difficulty;
     game_score = 0;
     bike_speed = 0;
@@ -630,14 +635,8 @@ void Stage_Draw()
     }
 
     MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
-   
-    Copper_SetPalette(0, 0x00);
-    // Check for collision
-    if (Cars_CheckCollision())
-    {
-        Copper_SetPalette(0, 0xF00);
-
-    }
+ 
+    Game_HandleCollisions();
 }
 
 void Stage_Update()
@@ -790,4 +789,68 @@ void Stage_ShowInfo(void)
  
     // Draw stage name at bottom  
     Font_DrawStringCentered(draw_buffer, stage_text, 120, 12);   
+}
+
+void Game_HandleCollisions(void)
+{
+    // Handle NEW collisions only if not already in collision
+    if (collision_state == COLLISION_NONE)
+    {
+        int hit_car = -1;
+        collision_state = MotorBike_CheckCollision(&hit_car);
+        
+        if (collision_state == COLLISION_TRAFFIC)
+        {
+            collision_car_index = hit_car;
+            Timer_Start(&collision_recovery_timer, 2);  // 2 seconds recovery
+            Cars_HandleSpinout(hit_car);
+
+            Music_Stop();
+        }
+        else if (collision_state == COLLISION_OFFROAD)
+        {
+            Timer_Start(&collision_recovery_timer, 2);  // 2 seconds recovery
+        }
+    }
+    
+    // Handle ONGOING collision state
+    if (collision_state != COLLISION_NONE)
+    {
+        // Decelerate bike
+        if (collision_state == COLLISION_TRAFFIC)
+        {
+            if (bike_speed > 0)
+            {
+                bike_speed -= 10;  // Rapid deceleration
+                if (bike_speed < 0) bike_speed = 0;
+                
+            }
+        }
+        else if (collision_state == COLLISION_OFFROAD)
+        {
+            if (bike_speed > 20)
+            {
+                bike_speed -= 3;  // Slower deceleration
+            }
+        }
+        
+        // Check if 2 seconds have elapsed
+        if (Timer_HasElapsed(&collision_recovery_timer))
+        {
+            // Resume play
+            collision_state = COLLISION_NONE;
+            collision_car_index = -1;
+            Timer_Stop(&collision_recovery_timer);
+          
+            Music_LoadModule(MUSIC_ONROAD);
+        }
+    }
+
+    if (collision_state == COLLISION_TRAFFIC)
+        Copper_SetPalette(0,0xF00);
+    else if (collision_state == COLLISION_OFFROAD)
+        Copper_SetPalette(0,0xFF0);
+    else
+        Copper_SetPalette(0,0x00);
+ 
 }

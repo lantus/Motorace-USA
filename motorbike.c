@@ -11,6 +11,9 @@
 #include <proto/dos.h>
 #include "game.h"
 #include "sprites.h"
+#include "blitter.h"
+#include "timers.h"
+#include "cars.h"
 #include "memory.h"
 #include "motorbike.h"
 
@@ -441,4 +444,45 @@ void MotorBike_DecelerateToCruising(void)
         }
         bike_state = BIKE_STATE_BRAKING;
     }
+}
+
+CollisionState MotorBike_CheckCollision(int *hit_car_index)
+{
+    // Convert bike sprite coords to playfield coords
+    WORD bike_screen_x = bike_position_x;
+    WORD bike_screen_y = bike_position_y - g_sprite_voffset;
+    WORD bike_width = 32;
+    WORD bike_height = 32;
+    
+    // Check car collisions
+    extern BlitterObject car[MAX_CARS];  // Access car array
+    
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (!car[i].visible || car[i].off_screen) continue;
+        
+        WORD car_screen_y = car[i].y - mapposy;
+        WORD car_screen_x = car[i].x;
+        WORD car_width = 32;
+        WORD car_height = 32;
+        
+        if (bike_screen_x < car_screen_x + car_width &&
+            bike_screen_x + bike_width > car_screen_x &&
+            bike_screen_y < car_screen_y + car_height &&
+            bike_screen_y + bike_height > car_screen_y)
+        {
+            *hit_car_index = i;
+            return COLLISION_TRAFFIC;
+        }
+    }
+    
+    // Check offroad collisions (edge of road or medians)
+    if (bike_position_x < 32 || bike_position_x > 288)
+    {
+        *hit_car_index = -1;
+        return COLLISION_OFFROAD;
+    }
+    
+    *hit_car_index = -1;
+    return COLLISION_NONE;
 }

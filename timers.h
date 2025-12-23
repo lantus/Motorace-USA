@@ -4,6 +4,7 @@
 #include <exec/types.h>
 
 extern BOOL  g_is_pal;
+extern UWORD g_sprite_voffset;
 
 // Timer structure - you can create as many as you need
 typedef struct {

@@ -120,40 +120,54 @@ void Cars_ResetPositions(void)
 
 void Cars_UpdatePosition(BlitterObject *c)
 {
- if (!c->visible) return;
-
+if (!c->visible) return;
+    
+    // If crashed, countdown timer and stay stopped
+    if (c->crashed)
+    {
+        if (c->crash_timer > 0)
+        {
+            c->crash_timer--;
+            c->speed = 0;
+            return;  // Don't move
+        }
+        else
+        {
+            // Crash over, resume slowly
+            c->crashed = FALSE;
+            c->speed = 20;  // Resume at slow speed
+        }
+    }
+    
+    // Normal movement code
     c->old_x = c->x;
     c->old_y = c->y;
     c->moved = TRUE;
 
-    // GetScrollAmount now returns fixed-point directly, no need to << 8
     WORD car_movement = -GetScrollAmount(c->speed);
-
     c->accumulator += car_movement;
 
     while (c->accumulator <= -256)
     {
-        c->y--;  // Move forward in world space
+        c->y--;
         c->accumulator += 256;
     }
 
     while (c->accumulator >= 256)
     {
-        c->y++;  // Move backward in world space
+        c->y++;
         c->accumulator -= 256;
     }
 
-    // Animate wheels based on speed
+    // Animation code...
     c->anim_counter++;
-    
-    // Switch frames every N frames (faster at higher speeds)
     WORD frame_delay = (c->speed > 0) ? (100 / c->speed) : 10;
-    if (frame_delay < 2) frame_delay = 2;  // Minimum 2 frames
+    if (frame_delay < 2) frame_delay = 2;
     
     if (c->anim_counter >= frame_delay)
     {
         c->anim_counter = 0;
-        c->anim_frame = (c->anim_frame == 0) ? 1 : 0;  // Toggle between 0 and 1
+        c->anim_frame = (c->anim_frame == 0) ? 1 : 0;
     }
 }
 
@@ -404,34 +418,18 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words    
 }
  
-// In cars.c, add this function
-BOOL Cars_CheckCollision(void)
-{
-    WORD bike_screen_x = bike_position_x;
-    WORD bike_screen_y = bike_position_y - g_sprite_voffset;   
-    WORD bike_width = 24;
-    WORD bike_height = 32;
-    
-    static int debug_frame = 0;
-    
-    for (int i = 0; i < MAX_CARS; i++)
-    {
-        if (!car[i].visible || car[i].off_screen) continue;
 
-        WORD car_screen_y = car[i].y - mapposy;
-        WORD car_screen_x = car[i].x;
-        WORD car_width = 32;
-        WORD car_height = 32;
- 
-        if (bike_screen_x < car_screen_x + car_width &&
-            bike_screen_x + bike_width > car_screen_x &&
-            bike_screen_y < car_screen_y + car_height &&
-            bike_screen_y + bike_height > car_screen_y)
-        {
-            
-            return TRUE;
-        }
-    }
+void Cars_HandleSpinout(UBYTE car_index)
+{
+    if (car_index < 0 || car_index >= MAX_CARS) return;
     
-    return FALSE;
+    BlitterObject *crashed_car = &car[car_index];
+    
+    // Mark car as crashed
+    crashed_car->crashed = TRUE;
+    crashed_car->crash_timer = 120;  // Stopped for 60 frames (1 second)
+    
+    // Decelerate car extremely quickly
+    crashed_car->speed = 0;
+    crashed_car->accumulator = 0;
 }
