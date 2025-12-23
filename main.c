@@ -342,8 +342,11 @@ static __attribute__((interrupt)) void interruptHandler()
 
 	Music_Play();
 
-    current_buffer = 1 - current_buffer;
- 
+	if (stage_state == STAGE_PLAYING)
+	{
+    	current_buffer = 1 - current_buffer;
+	}
+	
     // Swap pointers
     draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
     display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;

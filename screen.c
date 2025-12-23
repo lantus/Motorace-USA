@@ -59,7 +59,7 @@ void Screen_Initialize_DoubleBuff(UWORD width,
     BlitClearScreen(screen.offscreen_bitplanes, 320 << 6 | 16 );
 
     draw_buffer = screen.bitplanes;
-    display_buffer = screen.bitplanes;
+    display_buffer = screen.offscreen_bitplanes;
   
     debug_register_bitmap(screen.bitplanes, "screen.bitplanes", 320, height, 4, 1 << 0);
     debug_register_bitmap(screen.offscreen_bitplanes, "screen.offscreen_bitplanes", 320, height, 4, 1 << 0);
