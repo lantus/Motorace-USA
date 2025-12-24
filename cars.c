@@ -62,7 +62,7 @@ void Cars_Initialize(void)
  
 void Cars_ResetPositions(void)
 {
-    car[0].visible = TRUE;
+    car[0].visible = FALSE;
     car[0].x = FAR_LEFT_LANE;
     car[0].y = mapposy + 180;   
     car[0].speed = 60;
@@ -73,7 +73,7 @@ void Cars_ResetPositions(void)
     car[0].anim_counter = 0;
 
   
-    car[1].visible = TRUE;
+    car[1].visible = FALSE;
     car[1].x = CENTER_LANE;
     car[1].y = mapposy + 160;
     car[1].speed = 63;
@@ -84,7 +84,7 @@ void Cars_ResetPositions(void)
     car[1].anim_counter = 0;
     
    
-    car[2].visible = TRUE;
+    car[2].visible = FALSE;
     car[2].x = FAR_RIGHT_LANE;
     car[2].y = mapposy + 140;
     car[2].speed = 61;
@@ -96,7 +96,7 @@ void Cars_ResetPositions(void)
     
    
     car[3].visible = TRUE;
-    car[3].x = FAR_LEFT_LANE;
+    car[3].x = CENTER_LANE;
     car[3].y = mapposy + 80;  // Behind bike
     car[3].speed = 64;
     car[3].accumulator = 0;
@@ -106,7 +106,7 @@ void Cars_ResetPositions(void)
     car[3].anim_counter = 0;
     
    
-    car[4].visible = TRUE;
+    car[4].visible = FALSE;
     car[4].x = FAR_RIGHT_LANE;
     car[4].y = mapposy + 100;
     car[4].speed = 68;
@@ -118,58 +118,7 @@ void Cars_ResetPositions(void)
  
 }
 
-void Cars_UpdatePosition(BlitterObject *c)
-{
-if (!c->visible) return;
-    
-    // If crashed, countdown timer and stay stopped
-    if (c->crashed)
-    {
-        if (c->crash_timer > 0)
-        {
-            c->crash_timer--;
-            c->speed = 0;
-            return;  // Don't move
-        }
-        else
-        {
-            // Crash over, resume slowly
-            c->crashed = FALSE;
-            c->speed = 20;  // Resume at slow speed
-        }
-    }
-    
-    // Normal movement code
-    c->old_x = c->x;
-    c->old_y = c->y;
-    c->moved = TRUE;
-
-    WORD car_movement = -GetScrollAmount(c->speed);
-    c->accumulator += car_movement;
-
-    while (c->accumulator <= -256)
-    {
-        c->y--;
-        c->accumulator += 256;
-    }
-
-    while (c->accumulator >= 256)
-    {
-        c->y++;
-        c->accumulator -= 256;
-    }
-
-    // Animation code...
-    c->anim_counter++;
-    WORD frame_delay = (c->speed > 0) ? (100 / c->speed) : 10;
-    if (frame_delay < 2) frame_delay = 2;
-    
-    if (c->anim_counter >= frame_delay)
-    {
-        c->anim_counter = 0;
-        c->anim_frame = (c->anim_frame == 0) ? 1 : 0;
-    }
-}
+ 
 
 void SaveCarBOB(BlitterObject *car)
 {
@@ -432,4 +381,113 @@ void Cars_HandleSpinout(UBYTE car_index)
     // Decelerate car extremely quickly
     crashed_car->speed = 0;
     crashed_car->accumulator = 0;
+}
+
+void Cars_CheckLaneAndSteer(BlitterObject *car)
+{
+    if (!car->visible || car->crashed) return;
+ 
+    
+    // Debug counter - only output every 30 frames
+    static int debug_frame = 0;
+    debug_frame++;
+    
+    // Determine which car this is
+    int car_index = car - &car[0];
+    
+    // Look ahead distance in pixels
+    WORD lookahead = 32;  // Check 3 tiles ahead
+    WORD check_y = car->y - lookahead;
+    
+    // Use CENTER of car sprite (32x32 sprite, so center is +16 in both X and Y)
+    WORD center_x = car->x + 16;
+    WORD center_y = check_y + 16;
+   
+    // Check if current path is safe
+    BOOL current_safe = TileAttrib_IsDrivable(center_x, center_y);
+ 
+    if (!current_safe)
+    {
+        // Need to change lanes! Check left and right
+        BOOL left_safe = TileAttrib_IsDrivable(center_x - 32, center_y);
+        BOOL right_safe = TileAttrib_IsDrivable(center_x + 32, center_y);
+        
+        if (left_safe && !right_safe)
+        {
+            car->x -= 1;
+            if (car->x < FAR_LEFT_LANE) car->x = FAR_LEFT_LANE;
+   
+        }
+        else if (right_safe && !left_safe)
+        {
+            car->x += 1;
+            if (car->x > FAR_RIGHT_LANE) car->x = FAR_RIGHT_LANE;
+ 
+        }
+        else if (left_safe && right_safe)
+        {
+            if (car->x < CENTER_LANE)
+                car->x -= 1;
+            else
+                car->x += 1;
+ 
+        }
+        
+    }
+}
+
+void Cars_UpdatePosition(BlitterObject *c)
+{
+    if (!c->visible) return;
+    
+    // Handle crash state
+    if (c->crashed)
+    {
+        if (c->crash_timer > 0)
+        {
+            c->crash_timer--;
+            c->speed = 0;
+            return;
+        }
+        else
+        {
+            c->crashed = FALSE;
+            c->speed = 20;
+        }
+    }
+    
+    c->old_x = c->x;
+    c->old_y = c->y;
+    c->moved = TRUE;
+ 
+    // Normal movement
+    WORD car_movement = -GetScrollAmount(c->speed);
+    c->accumulator += car_movement;
+
+    while (c->accumulator <= -256)
+    {
+        c->y--;
+        c->accumulator += 256;
+    }
+
+    while (c->accumulator >= 256)
+    {
+        c->y++;
+        c->accumulator -= 256;
+    }
+
+    
+    // AI steering - check ahead and adjust lane
+    Cars_CheckLaneAndSteer(c);
+
+    // Animation
+    c->anim_counter++;
+    WORD frame_delay = (c->speed > 0) ? (100 / c->speed) : 10;
+    if (frame_delay < 2) frame_delay = 2;
+    
+    if (c->anim_counter >= frame_delay)
+    {
+        c->anim_counter = 0;
+        c->anim_frame = (c->anim_frame == 0) ? 1 : 0;
+    }
 }

@@ -225,8 +225,13 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 
          bike_anim_lr_frames++;
     }
+    else if (state == BIKE_STATE_CRASHED)
+    {
+         current_bike_sprite = spr_bike_moving1;
+         KPrintF("Bike Crashed\n");
+    }
 
-    Sprites_SetPointers(current_bike_sprite,2, SPRITEPTR_ZERO_AND_ONE);
+    Sprites_SetPointers(current_bike_sprite,2,SPRITEPTR_ZERO_AND_ONE);
     Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0],x,y,32);
     Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1],x,y,32);
    
@@ -451,7 +456,7 @@ CollisionState MotorBike_CheckCollision(int *hit_car_index)
     // Convert bike sprite coords to playfield coords
     WORD bike_screen_x = bike_position_x;
     WORD bike_screen_y = bike_position_y - g_sprite_voffset;
-    WORD bike_width = 32;
+    WORD bike_width = 16;
     WORD bike_height = 32;
     
     // Check car collisions

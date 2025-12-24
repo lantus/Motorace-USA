@@ -97,6 +97,7 @@ void Game_Initialize()
 
     // Stage Tiles and TileMaps
     Stage_Initialize();
+    TileAttrib_Load();
  
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
@@ -337,7 +338,7 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
  
 static void ScrollUp(void)
 {
- WORD mapx, mapy, x, y;
+    WORD mapx, mapy, x, y;
 
     if (mapposy < 1) return;  // Stop at top of map
 
@@ -819,6 +820,8 @@ void Game_HandleCollisions(void)
         // Decelerate bike
         if (collision_state == COLLISION_TRAFFIC)
         {
+            bike_state = BIKE_STATE_CRASHED;
+
             if (bike_speed > 0)
             {
                 bike_speed -= 10;  // Rapid deceleration
@@ -843,6 +846,8 @@ void Game_HandleCollisions(void)
             Timer_Stop(&collision_recovery_timer);
           
             Music_LoadModule(MUSIC_ONROAD);
+
+            bike_state = BIKE_STATE_MOVING;
         }
     }
 
