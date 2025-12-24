@@ -62,15 +62,17 @@ void Cars_Initialize(void)
  
 void Cars_ResetPositions(void)
 {
-    car[0].visible = FALSE;
+    car[0].visible = TRUE;
     car[0].x = FAR_LEFT_LANE;
     car[0].y = mapposy + 180;   
-    car[0].speed = 60;
+    car[0].speed = 81;
     car[0].accumulator = 0;
     car[0].off_screen = FALSE;
     car[0].needs_restore = FALSE;
     car[0].anim_frame = 0;
     car[0].anim_counter = 0;
+    car[0].has_blocked_bike = FALSE;
+    car[0].block_timer = 0;
 
   
     car[1].visible = FALSE;
@@ -82,7 +84,8 @@ void Cars_ResetPositions(void)
     car[1].needs_restore = FALSE;
     car[1].anim_frame = 0;
     car[1].anim_counter = 0;
-    
+    car[1].has_blocked_bike = FALSE;
+    car[1].block_timer = 0;
    
     car[2].visible = FALSE;
     car[2].x = FAR_RIGHT_LANE;
@@ -93,7 +96,8 @@ void Cars_ResetPositions(void)
     car[2].needs_restore = FALSE;
     car[2].anim_frame = 0;
     car[2].anim_counter = 0;
-    
+    car[2].has_blocked_bike = FALSE;
+    car[2].block_timer = 0;  
    
     car[3].visible = TRUE;
     car[3].x = CENTER_LANE;
@@ -104,7 +108,8 @@ void Cars_ResetPositions(void)
     car[3].needs_restore = FALSE;
     car[3].anim_frame = 0;
     car[3].anim_counter = 0;
-    
+    car[3].has_blocked_bike = FALSE;
+    car[3].block_timer = 0;  
    
     car[4].visible = FALSE;
     car[4].x = FAR_RIGHT_LANE;
@@ -115,7 +120,8 @@ void Cars_ResetPositions(void)
     car[4].needs_restore = FALSE;
     car[4].anim_frame = 0;
     car[4].anim_counter = 0;
- 
+    car[4].has_blocked_bike = FALSE;
+    car[4].block_timer = 0;
 }
 
  
@@ -303,36 +309,16 @@ void Cars_PreDraw(void)
 
 void Cars_Update(void)
 {
-    // 1. Erase positions from 2 FRAMES ago (what's in the current draw buffer)
     for (int i = 0; i < MAX_CARS; i++)
     {
-        if (car[i].visible )
-        {
-            // Use prev_old position (2 frames back)
-            WORD temp_x = car[i].old_x;
-            WORD temp_y = car[i].old_y;
-            
-            car[i].old_x = car[i].prev_old_x;
-            car[i].old_y = car[i].prev_old_y;
-            
-            Cars_CopyPristineBackground(&car[i]);
-            
-            car[i].old_x = temp_x;
-            car[i].old_y = temp_y;
-
-            // Save position history
-            car[i].prev_old_x = car[i].old_x;
-            car[i].prev_old_y = car[i].old_y;
-            
-            car[i].old_x = car[i].x;
-            car[i].old_y = car[i].y;
-            
-            Cars_UpdatePosition(&car[i]);
-
-            DrawCarBOB(&car[i]);
-            car[i].needs_restore = TRUE;
-        }
-    }
+        if (!car[i].visible) continue;
+        
+        // Check if car should block bike
+        Cars_CheckBikeOvertake(&car[i], bike_position_x);
+        
+        // Update and draw car
+        Cars_Tick(&car[i]);
+    }  
  
 }
 
@@ -401,7 +387,7 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
     
     // Use CENTER of car sprite (32x32 sprite, so center is +16 in both X and Y)
     WORD center_x = car->x + 16;
-    WORD center_y = check_y + 16;
+    WORD center_y = check_y;
    
     // Check if current path is safe
     BOOL current_safe = TileAttrib_IsDrivable(center_x, center_y);
@@ -490,4 +476,70 @@ void Cars_UpdatePosition(BlitterObject *c)
         c->anim_counter = 0;
         c->anim_frame = (c->anim_frame == 0) ? 1 : 0;
     }
+}
+
+void Cars_CheckBikeOvertake(BlitterObject *car, WORD bike_x)
+{
+    if (car->off_screen || car->crashed || car->has_blocked_bike) return;
+    
+    WORD car_screen_y = car->y - mapposy;
+    
+    // Only if car is ahead of bike (screen Y <= 192)
+    if (car_screen_y > 192) return;
+    
+    WORD x_diff = ABS(car->x - bike_x);
+    
+    if (x_diff <= game_car_block_x_threshold)
+    {
+        car->block_timer++;
+        
+        if (car->block_timer >= game_car_block_move_rate)
+        {
+            car->block_timer = 0;
+            
+            // Move toward bike's X
+            if (car->x < bike_x)
+            {
+                car->x += game_car_block_move_speed;
+                if (car->x > bike_x) car->x = bike_x;
+            }
+            else if (car->x > bike_x)
+            {
+                car->x -= game_car_block_move_speed;
+                if (car->x < bike_x) car->x = bike_x;
+            }
+            
+            if (car->x == bike_x)
+            {
+                car->has_blocked_bike = TRUE;
+                int car_index = car - &car[0];
+            }
+        }
+    }
+}
+
+void Cars_Tick(BlitterObject *car)
+{
+    // Erase old position
+    WORD temp_x = car->old_x;
+    WORD temp_y = car->old_y;
+    
+    car->old_x = car->prev_old_x;
+    car->old_y = car->prev_old_y;
+    
+    Cars_CopyPristineBackground(car);
+    
+    car->old_x = temp_x;
+    car->old_y = temp_y;
+
+    car->prev_old_x = car->old_x;
+    car->prev_old_y = car->old_y;
+    
+    car->old_x = car->x;
+    car->old_y = car->y;
+    
+    Cars_UpdatePosition(car);
+
+    DrawCarBOB(car);
+    car->needs_restore = TRUE;
 }

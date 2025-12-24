@@ -46,6 +46,10 @@ ULONG game_score = 0;
 UBYTE game_rank = 90;
 ULONG game_frame_count = 0;
 
+UBYTE game_car_block_move_rate = 5;   // Frames between movements (lower = faster)
+UBYTE game_car_block_move_speed = 1;  // Pixels per move (higher = faster)
+UBYTE game_car_block_x_threshold = 32; // How close bike needs to be horizontally
+
 WORD mapposy,videoposy;
 LONG mapwidth,mapheight;
 
@@ -747,6 +751,9 @@ void Stage_ShowInfo(void)
     {
         case FIVEHUNDREDCC:
             difficulty_text = "500CC    READY";
+            game_car_block_move_rate = 4;   // Slow (every 10 frames)
+            game_car_block_move_speed = 1;   // 1 pixel at a time
+            game_car_block_x_threshold = 48; // Wide threshold 
             break;
         case SEVENFIFTYCC:
             difficulty_text = "750CC    READY";

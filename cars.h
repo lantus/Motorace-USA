@@ -29,3 +29,6 @@ void Cars_PreDraw(void);
 void Cars_ResetPositions(void);
 void Cars_CopyPristineBackground(BlitterObject *car);
 void Cars_HandleSpinout(UBYTE car_index);
+void Cars_CheckBikeOvertake(BlitterObject *car, WORD bike_x);
+void Cars_Tick(BlitterObject *car);
+void Cars_Update(void);

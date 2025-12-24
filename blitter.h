@@ -45,6 +45,8 @@ typedef struct
     WORD saved_buffer_y;    // Track where background was saved
     BOOL crashed;
     UBYTE crash_timer;
+    BOOL has_blocked_bike;   // TRUE if this car has already moved to block bike
+    WORD block_timer;        // Timer for gradual movement   
     RestorePtrs restore;
 
 } BlitterObject;

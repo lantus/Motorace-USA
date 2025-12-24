@@ -134,7 +134,9 @@ extern UWORD *mapdata;
 
 extern ULONG game_score;
 extern UBYTE game_rank;
-
+extern UBYTE game_car_block_move_rate;   
+extern UBYTE game_car_block_move_speed;  
+extern UBYTE game_car_block_x_threshold;
 extern ULONG game_frame_count;
 
 extern CollisionState collision_state;
