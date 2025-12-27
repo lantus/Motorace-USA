@@ -63,8 +63,8 @@ void Cars_Initialize(void)
 void Cars_ResetPositions(void)
 {
     car[0].visible = TRUE;
-    car[0].x = FAR_LEFT_LANE;
-    car[0].y = mapposy + 180;   
+    car[0].x = FAR_RIGHT_LANE;
+    car[0].y = mapposy + 220;   
     car[0].speed = 81;
     car[0].accumulator = 0;
     car[0].off_screen = FALSE;
@@ -75,9 +75,9 @@ void Cars_ResetPositions(void)
     car[0].block_timer = 0;
 
   
-    car[1].visible = FALSE;
-    car[1].x = CENTER_LANE;
-    car[1].y = mapposy + 160;
+    car[1].visible = TRUE;
+    car[1].x = FAR_LEFT_LANE;
+    car[1].y = mapposy + 220;
     car[1].speed = 63;
     car[1].accumulator = 0;
     car[1].off_screen = FALSE;
@@ -87,10 +87,10 @@ void Cars_ResetPositions(void)
     car[1].has_blocked_bike = FALSE;
     car[1].block_timer = 0;
    
-    car[2].visible = FALSE;
-    car[2].x = FAR_RIGHT_LANE;
+    car[2].visible = TRUE;
+    car[2].x = FAR_LEFT_LANE;
     car[2].y = mapposy + 140;
-    car[2].speed = 61;
+    car[2].speed = 161;
     car[2].accumulator = 0;
     car[2].off_screen = FALSE;
     car[2].needs_restore = FALSE;
@@ -100,9 +100,9 @@ void Cars_ResetPositions(void)
     car[2].block_timer = 0;  
    
     car[3].visible = TRUE;
-    car[3].x = CENTER_LANE;
-    car[3].y = mapposy + 80;  // Behind bike
-    car[3].speed = 64;
+    car[3].x = FAR_RIGHT_LANE;
+    car[3].y = mapposy + 140;  
+    car[3].speed = 164;
     car[3].accumulator = 0;
     car[3].off_screen = FALSE;
     car[3].needs_restore = FALSE;
@@ -111,10 +111,10 @@ void Cars_ResetPositions(void)
     car[3].has_blocked_bike = FALSE;
     car[3].block_timer = 0;  
    
-    car[4].visible = FALSE;
-    car[4].x = FAR_RIGHT_LANE;
-    car[4].y = mapposy + 100;
-    car[4].speed = 68;
+    car[4].visible = TRUE;
+    car[4].x = CENTER_LANE;
+    car[4].y = mapposy + 40;
+    car[4].speed = 188;
     car[4].accumulator = 0;
     car[4].off_screen = FALSE;
     car[4].needs_restore = FALSE;
@@ -484,8 +484,7 @@ void Cars_CheckBikeOvertake(BlitterObject *car, WORD bike_x)
     
     WORD car_screen_y = car->y - mapposy;
     
-    // Only if car is ahead of bike (screen Y <= 192)
-    if (car_screen_y > 192) return;
+    if (car_screen_y > 64) return;
     
     WORD x_diff = ABS(car->x - bike_x);
     

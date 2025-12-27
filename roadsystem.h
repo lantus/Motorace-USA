@@ -13,9 +13,9 @@
 
 
 // Define lane positions with more separation
-#define FAR_LEFT_LANE 40     // Far left
+#define FAR_LEFT_LANE 46     // Far left
 #define LEFT_LANE 80         // Left lane
-#define CENTER_LANE 96       // Center (where bike is)
+#define CENTER_LANE 86       // Center 
 #define RIGHT_LANE 112       // Right lane
 #define FAR_RIGHT_LANE 128   // Far right
 

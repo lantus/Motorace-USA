@@ -119,17 +119,16 @@ BOOL TileAttrib_IsDrivable(WORD tile_x, WORD tile_y)
     }
     
     UWORD tile_number = mapdata[map_tile_y * mapwidth + map_tile_x];
-
-
+ 
  
     TileAttribute type = stage1_tile_attrib_map[tile_number];
     
          // Debug output for car 3 every 30 frames
-    if ( debug_frame % 30 == 0)
-    {
-        KPrintF("tile_number=%ld map_tile_x=%ld map_tile_y=%ld type=%ld\n",
-                tile_number,map_tile_x,map_tile_y,type);
-    }
+   // if ( debug_frame % 30 == 0)
+   // {
+   //     KPrintF("tile_number=%ld map_tile_x=%ld map_tile_y=%ld type=%ld\n",
+   //             tile_number,map_tile_x,map_tile_y,type);
+   // }
 
     // Drivable types
     return (type != TILEATTRIB_CRASH);

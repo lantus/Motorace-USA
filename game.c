@@ -126,7 +126,7 @@ void Game_NewGame(UBYTE difficulty)
 
     // Position bike near bottom of screen
     bike_position_x = 96;
-    bike_position_y = SCREENHEIGHT - 64;  // Near bottom
+    bike_position_y = SCREENHEIGHT - 24;  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
     
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT - 1;
