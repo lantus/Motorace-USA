@@ -29,6 +29,25 @@
 
 extern volatile struct Custom *custom;
 
+// Precomputed scroll amounts for speeds 0-255 (8.8 fixed point)
+#define MAX_SPEED_TABLE 256
+const UWORD scroll_speed_table[MAX_SPEED_TABLE] = {
+    0, 12, 24, 36, 48, 60, 73, 85, 97, 109, 121, 133, 146, 158, 170, 182, 194, 207, 219, 231, 243, 256,
+    268, 280, 292, 304, 317, 329, 341, 353, 365, 377, 390, 402, 414, 426, 438, 451, 463, 475, 487, 499, 512,
+    520, 528, 537, 545, 553, 561, 569, 577, 586, 594, 602, 610, 618, 626, 635, 643, 651, 659, 667, 675, 684,
+    692, 700, 708, 716, 724, 733, 741, 749, 757, 765, 773, 782, 790, 798, 806, 814, 822, 831, 839, 847, 855,
+    863, 871, 880, 888, 896, 904, 912, 920, 929, 937, 945, 953, 961, 969, 978, 986, 994, 1002, 1010, 1018, 1024,
+    1028, 1033, 1038, 1042, 1047, 1052, 1057, 1061, 1066, 1071, 1076, 1080, 1085, 1090, 1095, 1099, 1104, 1109,
+    1114, 1118, 1123, 1128, 1133, 1137, 1142, 1147, 1152, 1156, 1161, 1166, 1171, 1175, 1180, 1185, 1190, 1194,
+    1199, 1204, 1209, 1213, 1218, 1223, 1228, 1232, 1237, 1242, 1247, 1251, 1256, 1261, 1266, 1270, 1275, 1280,
+    1285, 1289, 1294, 1299, 1304, 1308, 1313, 1318, 1323, 1327, 1332, 1337, 1342, 1346, 1351, 1356, 1361, 1365,
+    1370, 1375, 1380, 1384, 1389, 1394, 1399, 1403, 1408, 1413, 1418, 1422, 1427, 1432, 1437, 1441, 1446, 1451,
+    1456, 1460, 1465, 1470, 1475, 1479, 1484, 1489, 1494, 1498, 1503, 1508, 1513, 1517, 1522, 1527, 1532, 1536,
+    1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536,
+    1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536, 1536,
+    1536, 1536, 1536, 1536, 1536, 1536
+};
+
 UBYTE stage_state = STAGE_COUNTDOWN;
 GameTimer countdown_timer;
 GameTimer hud_update_timer;
@@ -215,39 +234,13 @@ void Game_SetMap(UBYTE maptype)
 }
  
 
-// Returns scroll amount in 8.8 fixed-point format (value * 256)
-// So 1.5 pixels/frame = 384 (1.5 * 256)
-WORD GetScrollAmount(WORD speed)
+ 
+__attribute__((always_inline)) WORD GetScrollAmount(WORD speed)
 {
-    if (speed == 0)
-    {
-        return 0;
-    }
-    else if (speed <= 21)
-    {
-        // 0 to 1.0 pixels/frame
-        // Linear: speed/21 pixels
-        return (speed * 256) / 21;  // Returns 0-256 (0.0-1.0)
-    }
-    else if (speed <= 42)
-    {
-        // 1.0 to 2.0 pixels/frame
-        return 256 + ((speed - 21) * 256) / 21;  // Returns 256-512 (1.0-2.0)
-    }
-    else if (speed <= 105)
-    {
-        // 2.0 to 4.0 pixels/frame
-        return 512 + ((speed - 42) * 512) / 63;  // Returns 512-1024 (2.0-4.0)
-    }
-    else if (speed <= 210)
-    {
-        // 4.0 to 6.0 pixels/frame
-        return 1024 + ((speed - 105) * 512) / 105;  // Returns 1024-1536 (4.0-6.0)
-    }
-    else
-    {
-        return 1536;  // 6.0 pixels/frame max
-    }
+    if (speed >= MAX_SPEED_TABLE)
+        return scroll_speed_table[MAX_SPEED_TABLE - 1];
+    
+    return scroll_speed_table[speed];
 }
 
 static void SmoothScroll(void)
@@ -368,8 +361,7 @@ static void ScrollUp(void)
  
         DrawBlock(x, y, mapx, mapy, screen.pristine);
         DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.pristine);    
-
-        WaitBlit();
+ 
     }
 }
 
@@ -393,7 +385,7 @@ void Game_FillScreen(void)
             DrawBlock(x, y, a, start_tile_y + b, screen.pristine);
 			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.pristine);       
 
-            WaitBlit();
+   
 		}
 	} 
  

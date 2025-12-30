@@ -74,7 +74,6 @@ void Cars_ResetPositions(void)
     car[0].has_blocked_bike = FALSE;
     car[0].block_timer = 0;
 
-  
     car[1].visible = TRUE;
     car[1].x = FAR_LEFT_LANE;
     car[1].y = mapposy + 220;
@@ -114,7 +113,7 @@ void Cars_ResetPositions(void)
     car[4].visible = TRUE;
     car[4].x = CENTER_LANE;
     car[4].y = mapposy + 40;
-    car[4].speed = 188;
+    car[4].speed = 108;
     car[4].accumulator = 0;
     car[4].off_screen = FALSE;
     car[4].needs_restore = FALSE;
@@ -314,7 +313,7 @@ void Cars_Update(void)
         if (!car[i].visible) continue;
         
         // Check if car should block bike
-        Cars_CheckBikeOvertake(&car[i], bike_position_x);
+      //  Cars_CheckBikeOvertake(&car[i], bike_position_x);
         
         // Update and draw car
         Cars_Tick(&car[i]);
@@ -353,10 +352,29 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words    
 }
  
+// Sort cars in-place by Y position (lowest Y first = furthest ahead)
+void Cars_SortByY(void)
+{
+    // Simple insertion sort - very fast for 5 elements
+    for (int i = 1; i < MAX_CARS; i++)
+    {
+        BlitterObject temp = car[i];
+        int j = i - 1;
+        
+        // Shift elements right while they're greater than temp
+        while (j >= 0 && car[j].y > temp.y)
+        {
+            car[j + 1] = car[j];
+            j--;
+        }
+        
+        car[j + 1] = temp;
+    }
+}
 
 void Cars_HandleSpinout(UBYTE car_index)
 {
-    if (car_index < 0 || car_index >= MAX_CARS) return;
+    if (car_index >= MAX_CARS) return;
     
     BlitterObject *crashed_car = &car[car_index];
     
@@ -373,53 +391,39 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
 {
     if (!car->visible || car->crashed) return;
  
-    
-    // Debug counter - only output every 30 frames
-    static int debug_frame = 0;
-    debug_frame++;
-    
-    // Determine which car this is
-    int car_index = car - &car[0];
-    
     // Look ahead distance in pixels
     WORD lookahead = 32;  // Check 3 tiles ahead
     WORD check_y = car->y - lookahead;
     
-    // Use CENTER of car sprite (32x32 sprite, so center is +16 in both X and Y)
+    // sample left , center and right points of the bob
     WORD center_x = car->x + 16;
     WORD center_y = check_y;
    
-    // Check if current path is safe
-    BOOL current_safe = TileAttrib_IsDrivable(center_x, center_y);
- 
-    if (!current_safe)
+    TileAttribute leftside_tile = Tile_GetAttrib(center_x-16, center_y);
+    TileAttribute rightside_tile = Tile_GetAttrib(center_x+16, center_y);
+    TileAttribute center_tile = Tile_GetAttrib(center_x, center_y);
+
+    if (center_tile == TILEATTRIB_ROAD_RIGHT_HALF && leftside_tile == TILEATTRIB_CRASH)
     {
-        // Need to change lanes! Check left and right
-        BOOL left_safe = TileAttrib_IsDrivable(center_x - 32, center_y);
-        BOOL right_safe = TileAttrib_IsDrivable(center_x + 32, center_y);
-        
-        if (left_safe && !right_safe)
-        {
-            car->x -= 1;
-            if (car->x < FAR_LEFT_LANE) car->x = FAR_LEFT_LANE;
-   
-        }
-        else if (right_safe && !left_safe)
-        {
-            car->x += 1;
-            if (car->x > FAR_RIGHT_LANE) car->x = FAR_RIGHT_LANE;
- 
-        }
-        else if (left_safe && right_safe)
-        {
-            if (car->x < CENTER_LANE)
-                car->x -= 1;
-            else
-                car->x += 1;
- 
-        }
-        
+       // slide car left
+       car->x += 1;  
     }
+    else if (center_tile == TILEATTRIB_ROAD && leftside_tile == TILEATTRIB_ROAD_RIGHT_HALF)
+    {
+       // slide car left
+       car->x += 1;  
+    }
+    else if (center_tile == TILEATTRIB_ROAD_LEFT_HALF && rightside_tile == TILEATTRIB_CRASH)
+    {
+       // slide right left
+       car->x -= 1;  
+    }
+    else if (center_tile == TILEATTRIB_ROAD && rightside_tile == TILEATTRIB_ROAD_LEFT_HALF)
+    {
+       // slide right left
+       car->x -= 1;  
+    }
+ 
 }
 
 void Cars_UpdatePosition(BlitterObject *c)
