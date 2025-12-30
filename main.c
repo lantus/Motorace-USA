@@ -338,7 +338,7 @@ static __attribute__((interrupt)) void interruptHandler()
 {
 	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
 
-	Game_Update();
+	
 
 	Timer_VBlankUpdate();
 
@@ -399,12 +399,9 @@ int main(void)
  
 	while(!MouseLeft()) 
     {		 
-
 		WaitLine(0x10);
- 
-		
+		Game_Update();
 		Game_Draw();
-
 	}
 
     ActivateSystem();

@@ -423,6 +423,17 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
        // slide right left
        car->x -= 1;  
     }
+    else if (center_tile == TILEATTRIB_CRASH)
+    {
+        if (rightside_tile == TILEATTRIB_CRASH)
+        {
+            car->x -= 2;
+        }
+        else if (leftside_tile == TILEATTRIB_CRASH)
+        {
+            car->x += 2;
+        }
+    }
  
 }
 
@@ -454,31 +465,31 @@ void Cars_UpdatePosition(BlitterObject *c)
     WORD car_movement = -GetScrollAmount(c->speed);
     c->accumulator += car_movement;
 
-    while (c->accumulator <= -256)
+    if (c->accumulator >= 256)
     {
-        c->y--;
-        c->accumulator += 256;
+        WORD pixels = c->accumulator >> 8;  
+        c->y += pixels;
+        c->accumulator &= 0xFF;  
     }
-
-    while (c->accumulator >= 256)
+    else if (c->accumulator <= -256)
     {
-        c->y++;
-        c->accumulator -= 256;
+        WORD pixels = (-c->accumulator) >> 8;  
+        c->y -= pixels;
+        c->accumulator += (pixels << 8);
     }
-
-    
+ 
     // AI steering - check ahead and adjust lane
     Cars_CheckLaneAndSteer(c);
 
-    // Animation
+    // Car Wheel Animation  
     c->anim_counter++;
-    WORD frame_delay = (c->speed > 0) ? (100 / c->speed) : 10;
-    if (frame_delay < 2) frame_delay = 2;
-    
-    if (c->anim_counter >= frame_delay)
+    WORD threshold = (c->speed < 84) ? 8 : 
+                    (c->speed < 126) ? 4 : 2;
+
+    if (c->anim_counter >= threshold)
     {
         c->anim_counter = 0;
-        c->anim_frame = (c->anim_frame == 0) ? 1 : 0;
+        c->anim_frame ^= 1;  
     }
 }
 

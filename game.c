@@ -266,7 +266,7 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	
 	UWORD block = mapdata[mapy * mapwidth + mapx];
 
-	mapx = (block % BLOCKSPERROW) * (BLOCKWIDTH / 8);
+	mapx = (block % BLOCKSPERROW) * (BLOCKWIDTH >> 3);
 	mapy = (block / BLOCKSPERROW) * (BLOCKPLANELINES * BLOCKSBYTESPERROW);
  
 	WaitBlit();
@@ -275,12 +275,12 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	custom->bltcon1 = 0;
 	custom->bltafwm = 0xFFFF;
 	custom->bltalwm = 0xFFFF;
-	custom->bltamod = BLOCKSBYTESPERROW - (BLOCKWIDTH / 8);
-	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
+	custom->bltamod = BLOCKSBYTESPERROW - (BLOCKWIDTH >> 3);
+	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH >> 3);
 	custom->bltapt  = blocksbuffer + mapy + mapx;
 	custom->bltdpt	= dest + y + x;
 	
-	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH / 16);
+	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH >> 4);
 }
  
 __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LONG mapy, UWORD blocksperrow, UWORD blockbytessperrow, UWORD blockplanelines, BOOL deltas_only, UBYTE tile_idx, UBYTE *dest)
@@ -301,12 +301,12 @@ __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LO
 	custom->bltcon1 = 0;
 	custom->bltafwm = 0xFFFF;
 	custom->bltalwm = 0xFFFF;
-	custom->bltamod = blockbytessperrow - (BLOCKWIDTH / 8);
-	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8);
+	custom->bltamod = blockbytessperrow - (BLOCKWIDTH >> 3);
+	custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH >> 3);
 	custom->bltapt  = blocksbuffer + mapy + mapx;
 	custom->bltdpt	= dest + y + x;
 	
-	custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16);
+	custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH >> 4);
  
 }
  
@@ -315,7 +315,7 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
     x = (x / 8) & 0xFFFE;
     y = y * BITMAPBYTESPERROW;
     
-    UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
+    UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH >> 3);
     UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
     
     WaitBlit();
@@ -324,13 +324,13 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
     custom->bltcon1 = 0;
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
-    custom->bltamod = blockbytesperrow - (BLOCKWIDTH / 8);
-    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH / 8) * count;  // Skip over tiles we're not writing
+    custom->bltamod = blockbytesperrow - (BLOCKWIDTH >> 3);
+    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH >> 3);  // Skip over tiles we're not writing
     custom->bltapt  = blocksbuffer + mapy + mapx;
     custom->bltdpt  = dest + y + x;
     
     // Blit width is count * BLOCKWIDTH
-    custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH / 16) * count;
+    custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH >> 4);
 }
  
 static void ScrollUp(void)
