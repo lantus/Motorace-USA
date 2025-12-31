@@ -136,7 +136,7 @@ __attribute__((always_inline)) TileAttribute Tile_GetAttrib(WORD world_x, WORD w
     if (map_tile_x < 0 || map_tile_x >= mapwidth ||
         map_tile_y < 0 || map_tile_y >= mapheight)
     {
-        return FALSE;
+        return TILEATTRIB_CRASH;
     }
     
     UWORD tile_number = mapdata[map_tile_y * mapwidth + map_tile_x];
