@@ -129,8 +129,8 @@ BOOL TileAttrib_IsDrivable(WORD tile_x, WORD tile_y)
 __attribute__((always_inline)) TileAttribute Tile_GetAttrib(WORD world_x, WORD world_y)
 {
      // Get tile coordinates in the map
-    WORD map_tile_x = world_x / BLOCKWIDTH;
-    WORD map_tile_y = world_y / BLOCKHEIGHT;
+    WORD map_tile_x = world_x >> 4;
+    WORD map_tile_y = world_y >> 4;
     
     // Bounds check
     if (map_tile_x < 0 || map_tile_x >= mapwidth ||

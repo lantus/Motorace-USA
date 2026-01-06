@@ -396,13 +396,15 @@ void Game_SwapBuffers(void)
     // Toggle current buffer
  
     // Update copper bitplane pointers to show the new display buffer
-    const USHORT lineSize = 320/8;
+ 
     const UBYTE* planes_temp[BLOCKSDEPTH];
     
-    for(int a = 0; a < BLOCKSDEPTH; a++)
-        planes_temp[a] = draw_buffer + lineSize * a;
-    
-    LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * BITMAPBYTESPERROW * BLOCKSDEPTH;
+    planes_temp[0] = draw_buffer;
+    planes_temp[1] = draw_buffer + 40;
+    planes_temp[2] = draw_buffer + 80;
+    planes_temp[3] = draw_buffer + 120;
+
+    LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * 160;
  
     Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
 }
