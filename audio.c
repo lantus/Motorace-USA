@@ -33,9 +33,9 @@ BOOL g_is_music_ready = FALSE;
 // Demo - Module Player - ThePlayer 6.1a: https://www.pouet.net/prod.php?which=19922
 // The Player® 6.1A: Copyright © 1992-95 Jarno Paananen
 
-INCBIN(player, "mus/player610.6.no_cia.bin")
+INCBIN(player, "mus/610.6.bin_new")
 
-//INCBIN_CHIP(mod_start, "mus/P61.onroadstag")
+INCBIN_CHIP(mod_start, "mus/P61.start")
 INCBIN_CHIP(mod_onroad, "mus/P61.onroadstag")
 //INCBIN_CHIP(mod_checkpoint, "")
 //INCBIN_CHIP(mod_ranking, "")
@@ -89,7 +89,7 @@ void Music_LoadModule(BYTE track)
     switch (track)
     {
     case MUSIC_START:
-        //p61Init(mod_start);
+        p61Init(mod_start);
         break;
     case MUSIC_ONROAD:
         p61Init(mod_onroad);

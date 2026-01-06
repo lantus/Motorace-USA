@@ -48,7 +48,7 @@ const UWORD scroll_speed_table[MAX_SPEED_TABLE] = {
     1536, 1536, 1536, 1536, 1536, 1536
 };
 
-UBYTE stage_state = STAGE_COUNTDOWN;
+UBYTE stage_state = STAGE_BEGIN;
 GameTimer countdown_timer;
 GameTimer hud_update_timer;
 GameTimer collision_recovery_timer;
@@ -543,9 +543,7 @@ void GameReady_Update(void)
         // Transition to actual game
         game_state = STAGE_START;
 
-        stage_state = STAGE_COUNTDOWN;
-        countdown_value = 4;
-        Timer_Start(&countdown_timer, 1);  // 1 second timer
+        stage_state = STAGE_BEGIN;
 
         // Start HUD update timer (update every 96 frames)
         Timer_StartMs(&hud_update_timer, 96);
@@ -562,6 +560,7 @@ void GameReady_Update(void)
 
         Stage_ShowInfo();
 
+        Music_LoadModule(MUSIC_START);
     }    
  
 }
@@ -640,7 +639,14 @@ void Stage_Update()
 {
     game_frame_count++;
 
-    if (stage_state == STAGE_COUNTDOWN)
+    if (stage_state == STAGE_BEGIN)
+    {
+        countdown_value = 4;
+        Timer_Start(&countdown_timer, 1);  // 1 second timer
+
+        stage_state = STAGE_COUNTDOWN;
+    }
+    else if (stage_state == STAGE_COUNTDOWN)
     {
         // Handle countdown timer
         if (Timer_HasElapsed(&countdown_timer))

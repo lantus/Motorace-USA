@@ -107,9 +107,10 @@ enum GameMapType
 
 enum StageState
 {
-    STAGE_COUNTDOWN = 0,
-    STAGE_PLAYING = 1,
-    STAGE_COMPLETE = 2
+    STAGE_BEGIN = 0,
+    STAGE_COUNTDOWN = 1,
+    STAGE_PLAYING = 2,
+    STAGE_COMPLETE = 3
 };
 
 typedef enum {

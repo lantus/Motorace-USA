@@ -338,8 +338,6 @@ static __attribute__((interrupt)) void interruptHandler()
 {
 	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
 
-	
-
 	Timer_VBlankUpdate();
 
 	Music_Play();
@@ -352,6 +350,7 @@ static __attribute__((interrupt)) void interruptHandler()
     // Swap pointers
     draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
     display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
+	
 }
 
 int main(void)
