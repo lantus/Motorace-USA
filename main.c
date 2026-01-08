@@ -389,7 +389,7 @@ int main(void)
  
 	while(!MouseLeft()) 
     {		 
-		WaitLine(0x10);
+		WaitLine(0x13);
 		Game_Update();
 		Game_Draw();
 

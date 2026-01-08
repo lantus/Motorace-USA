@@ -95,7 +95,7 @@ void Cars_ResetPositions(void)
     car[2].x = FAR_LEFT_LANE;
     car[2].y = mapposy + 140;
     car[2].speed = 65;
-    car[2].target_speed = 65;
+    car[2].target_speed = 165;
     car[2].accumulator = 0;
     car[2].off_screen = FALSE;
     car[2].needs_restore = FALSE;
@@ -109,7 +109,7 @@ void Cars_ResetPositions(void)
     car[3].x = FAR_RIGHT_LANE;
     car[3].y = mapposy + 140;  
     car[3].speed = 45;
-    car[3].target_speed = 65;
+    car[3].target_speed = 165;
     car[3].accumulator = 0;
     car[3].off_screen = FALSE;
     car[3].needs_restore = FALSE;
@@ -277,7 +277,7 @@ void Cars_Update(void)
         if (!car[i].visible) continue;
  
         // Check if car should block bike
-      //  Cars_CheckBikeOvertake(&car[i], bike_position_x);
+        Cars_CheckBikeOvertake(&car[i], bike_position_x);
         
         // Update and draw car
         Cars_Tick(&car[i]);
