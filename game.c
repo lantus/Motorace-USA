@@ -343,24 +343,25 @@ static void ScrollUp(void)
     videoposy = mapposy % HALFBITMAPHEIGHT;
 
 	mapx = mapposy & (NUMSTEPS - 1);
-	mapy = mapposy / BLOCKHEIGHT;
+	mapy = mapposy >> 4;
 	
-	y = ROUND2BLOCKHEIGHT(videoposy) * BLOCKSDEPTH;
+	y = ROUND2BLOCKHEIGHT(videoposy) << 2;
 
    // Only draw if within the 12-tile display width
     if (mapx < 12) 
     {  
+        UWORD yoff = y + (HALFBITMAPHEIGHT << 2);
         // Limit to 192 pixels (12 tiles)
-        x = mapx * BLOCKWIDTH;
+        x = mapx << 4;
         
         DrawBlock(x, y, mapx, mapy, screen.bitplanes);
-        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.bitplanes);
+        DrawBlock(x, yoff, mapx, mapy,screen.bitplanes);
 
         DrawBlock(x, y, mapx, mapy, screen.offscreen_bitplanes);
-        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.offscreen_bitplanes);    
+        DrawBlock(x, yoff, mapx, mapy,screen.offscreen_bitplanes);    
  
         DrawBlock(x, y, mapx, mapy, screen.pristine);
-        DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, mapx, mapy,screen.pristine);    
+        DrawBlock(x, yoff, mapx, mapy,screen.pristine);    
  
     }
 }

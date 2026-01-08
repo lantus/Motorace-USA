@@ -62,11 +62,13 @@ void Cars_Initialize(void)
  
 void Cars_ResetPositions(void)
 {
+    car[0].id = 0;
     car[0].visible = TRUE;
     car[0].x = FAR_RIGHT_LANE;
     car[0].y = mapposy + 220;   
-    car[0].speed = 81;
+    car[0].speed = 41;
     car[0].accumulator = 0;
+    car[0].target_speed = 125;
     car[0].off_screen = FALSE;
     car[0].needs_restore = FALSE;
     car[0].anim_frame = 0;
@@ -74,11 +76,13 @@ void Cars_ResetPositions(void)
     car[0].has_blocked_bike = FALSE;
     car[0].block_timer = 0;
 
+    car[1].id = 1;
     car[1].visible = TRUE;
     car[1].x = FAR_LEFT_LANE;
     car[1].y = mapposy + 220;
     car[1].speed = 63;
     car[1].accumulator = 0;
+    car[1].target_speed = 120;
     car[1].off_screen = FALSE;
     car[1].needs_restore = FALSE;
     car[1].anim_frame = 0;
@@ -86,10 +90,12 @@ void Cars_ResetPositions(void)
     car[1].has_blocked_bike = FALSE;
     car[1].block_timer = 0;
    
+    car[2].id = 2;
     car[2].visible = TRUE;
     car[2].x = FAR_LEFT_LANE;
     car[2].y = mapposy + 140;
-    car[2].speed = 161;
+    car[2].speed = 65;
+    car[2].target_speed = 65;
     car[2].accumulator = 0;
     car[2].off_screen = FALSE;
     car[2].needs_restore = FALSE;
@@ -98,10 +104,12 @@ void Cars_ResetPositions(void)
     car[2].has_blocked_bike = FALSE;
     car[2].block_timer = 0;  
    
+    car[3].id = 3;
     car[3].visible = TRUE;
     car[3].x = FAR_RIGHT_LANE;
     car[3].y = mapposy + 140;  
-    car[3].speed = 164;
+    car[3].speed = 45;
+    car[3].target_speed = 65;
     car[3].accumulator = 0;
     car[3].off_screen = FALSE;
     car[3].needs_restore = FALSE;
@@ -110,10 +118,12 @@ void Cars_ResetPositions(void)
     car[3].has_blocked_bike = FALSE;
     car[3].block_timer = 0;  
    
+    car[4].id = 4;
     car[4].visible = TRUE;
     car[4].x = CENTER_LANE;
     car[4].y = mapposy + 40;
-    car[4].speed = 108;
+    car[4].speed = 56;
+    car[4].target_speed = 165;
     car[4].accumulator = 0;
     car[4].off_screen = FALSE;
     car[4].needs_restore = FALSE;
@@ -121,68 +131,6 @@ void Cars_ResetPositions(void)
     car[4].anim_counter = 0;
     car[4].has_blocked_bike = FALSE;
     car[4].block_timer = 0;
-}
-
- 
-
-void SaveCarBOB(BlitterObject *car)
-{
-
-    if (!car->visible) return;
-    
-    WORD screen_y = car->y - mapposy;
-    if (screen_y < -8|| screen_y > SCREENHEIGHT + 8  ) 
-    {
-     //   car->off_screen = TRUE;
-           
-        return;
-    }
-    
-    car->off_screen = FALSE;
-    
-    WORD x = car->x;
-    WORD buffer_y = (videoposy + BLOCKHEIGHT + screen_y);
-    
-    if (buffer_y < 0 || buffer_y > (BITMAPHEIGHT ))
-    {
-        car->off_screen = TRUE;
-        return;
-    }
-    
-    // Detect if buffer_y jumped significantly (wrap happened)
-    static WORD last_buffer_y = -1;
-    if (last_buffer_y >= 0)
-    {
-        WORD y_diff = buffer_y - last_buffer_y;
-        // If jumped > 200 lines, videoposy wrapped - skip restore this frame
-        if (y_diff > 200 || y_diff < -200)
-        {
-            //KPrintF("WRAP DETECTED: last=%ld current=%ld, skipping restore\n", last_buffer_y, buffer_y);
-            car->needs_restore = FALSE;
-        }
-    }
-    last_buffer_y = buffer_y;
-    
-    // Calculate and STORE pointer
-    ULONG y_offset = (ULONG)buffer_y * 160;
-    WORD x_byte_offset = x >> 3;
-    UBYTE *bitmap_ptr = screen.bitplanes + y_offset + x_byte_offset;
-    
-    car->restore.screen_ptr = bitmap_ptr;
-    car->restore.background_ptr = car->background;
-    
-    UWORD bltsize = (128 << 6) | 3;
-
-    WaitBlit();
-    custom->bltcon0 = 0x9F0;
-    custom->bltcon1 = 0;
-    custom->bltamod = 34;
-    custom->bltdmod = 0;
-    custom->bltapt = bitmap_ptr;
-    custom->bltdpt = car->background;
-    custom->bltsize = bltsize;
-    WaitBlit();  // Wait BEFORE starting
-    car->needs_restore = TRUE;  // Only set flag AFTER successful save
 }
  
 void DrawCarBOB(BlitterObject *car)
@@ -239,7 +187,7 @@ void DrawCarBOB(BlitterObject *car)
     UBYTE *mask = source + 6;
     APTR car_restore_ptrs[4];
 
-        // Calculate and STORE pointer
+    // Calculate and STORE pointer
     ULONG y_offset = (ULONG)buffer_y * 160;
     WORD x_byte_offset = x >> 3;
     UBYTE *bitmap_ptr = draw_buffer + y_offset + x_byte_offset;
@@ -247,6 +195,22 @@ void DrawCarBOB(BlitterObject *car)
  
     BlitBob2(160, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
     
+}
+
+void Cars_AccelerateCar(BlitterObject *car)
+{
+    if (car->crashed) return;
+    
+    // Accelerate toward target speed
+    if (car->speed < car->target_speed)
+    {
+        car->speed += 2;  // Acceleration rate
+        if (car->speed > car->target_speed)
+        {
+            car->speed = car->target_speed;
+        }
+    }
+
 }
 
 void Cars_RestoreSaved()
@@ -311,7 +275,7 @@ void Cars_Update(void)
     for (int i = 0; i < MAX_CARS; i++)
     {
         if (!car[i].visible) continue;
-        
+ 
         // Check if car should block bike
       //  Cars_CheckBikeOvertake(&car[i], bike_position_x);
         
@@ -352,25 +316,7 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words    
 }
  
-// Sort cars in-place by Y position (lowest Y first = furthest ahead)
-void Cars_SortByY(void)
-{
-    // Simple insertion sort - very fast for 5 elements
-    for (int i = 1; i < MAX_CARS; i++)
-    {
-        BlitterObject temp = car[i];
-        int j = i - 1;
-        
-        // Shift elements right while they're greater than temp
-        while (j >= 0 && car[j].y > temp.y)
-        {
-            car[j + 1] = car[j];
-            j--;
-        }
-        
-        car[j + 1] = temp;
-    }
-}
+ 
 
 void Cars_HandleSpinout(UBYTE car_index)
 {
@@ -551,9 +497,35 @@ void Cars_Tick(BlitterObject *car)
     
     car->old_x = car->x;
     car->old_y = car->y;
-    
+ 
+    Cars_AccelerateCar(car);
     Cars_UpdatePosition(car);
+    Cars_CheckForCollision(car);
 
     DrawCarBOB(car);
     car->needs_restore = TRUE;
+}
+
+void Cars_CheckForCollision(BlitterObject *c)
+{
+    for (int j = c->id + 1; j < MAX_CARS; j++)
+    {
+        if (!car[c->id].visible || car[c->id].crashed) continue;
+        // Bounding box collision check (32x32 pixels)
+        WORD x_overlap = ABS(car[c->id].x - car[j].x) < 32;
+        LONG y_distance = ABS(car[c->id].y - car[j].y);
+
+        if (x_overlap && y_distance < CAR_COLLISION_DISTANCE)
+        {
+            // Determine which car is behind (higher Y = behind)
+            BlitterObject *car_behind = (car[c->id].y > car[j].y) ? &car[c->id] : &car[j];
+            BlitterObject *car_ahead = (car[c->id].y > car[j].y) ? &car[j] : &car[c->id];
+
+            // Slow down the car behind
+            if (car_behind->speed > car_ahead->speed)
+            {
+                car_behind->speed = car_ahead->speed - 4;
+            }
+        }
+    }
 }

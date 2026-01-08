@@ -341,16 +341,7 @@ static __attribute__((interrupt)) void interruptHandler()
 	Timer_VBlankUpdate();
 
 	Music_Play();
-
-	if (stage_state == STAGE_PLAYING)
-	{
-    	current_buffer = 1 - current_buffer;
-	}
-	
-    // Swap pointers
-    draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
-    display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
-	
+ 
 }
 
 int main(void)
@@ -401,6 +392,16 @@ int main(void)
 		WaitLine(0x10);
 		Game_Update();
 		Game_Draw();
+
+		// Flip Buffers
+		if (stage_state == STAGE_PLAYING)
+		{
+			current_buffer = 1 - current_buffer;
+		}
+
+		// Swap pointers
+		draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
+		display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
 	}
 
     ActivateSystem();

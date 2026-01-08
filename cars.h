@@ -16,6 +16,7 @@
 #define BOB_HEIGHT 32
 #define BOB_PLANES 4
 #define BOB_DATA_SIZE (BOB_WIDTH * BOB_HEIGHT * BOB_PLANES / 8)
+#define CAR_COLLISION_DISTANCE 48   
 
 extern BlitterObject car[MAX_CARS];
 extern WORD bike_speed;
@@ -32,5 +33,7 @@ void Cars_HandleSpinout(UBYTE car_index);
 void Cars_CheckBikeOvertake(BlitterObject *car, WORD bike_x);
 void Cars_Tick(BlitterObject *car);
 void Cars_Update(void);
+void Cars_AccelerateCar(BlitterObject *car);
+void Cars_CheckForCollision(BlitterObject *c);
 
 WORD GetScrollAmount(WORD speed);

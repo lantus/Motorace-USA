@@ -23,6 +23,7 @@ typedef struct {
 
 typedef struct 
 {
+    UBYTE id;
     UBYTE *data;
     UBYTE *data_frame2;     // Second animation frame
     WORD anim_frame;        // Current frame (0 or 1)
@@ -40,8 +41,9 @@ typedef struct
     BOOL needs_restore;     // Only restore if we drew last frame
     BOOL off_screen;        // Skip blits entirely if off-screen
     ULONG size;
-    WORD speed;
+    WORD speed;             // Random max speed ~160
     WORD accumulator;       // Fixed-point accumulator for smooth movement
+    WORD target_speed;
     WORD saved_buffer_y;    // Track where background was saved
     BOOL crashed;
     UBYTE crash_timer;

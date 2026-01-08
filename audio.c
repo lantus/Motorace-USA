@@ -34,6 +34,7 @@ BOOL g_is_music_ready = FALSE;
 // The Player® 6.1A: Copyright © 1992-95 Jarno Paananen
 
 INCBIN(player, "mus/610.6.bin_new")
+INCBIN(player_nocia, "mus/player610.6.no_cia.bin");
 
 INCBIN_CHIP(mod_start, "mus/P61.start")
 INCBIN_CHIP(mod_onroad, "mus/P61.onroadstag")
@@ -73,7 +74,7 @@ void p61Music() {
 }
 
 void p61End() {
-	register volatile const void* _a3 ASM("a3") = player;
+	register volatile const void* _a3 ASM("a3") = player_nocia;
 	register volatile const void* _a6 ASM("a6") = (void*)0xdff000;
 	__asm volatile (
 		"movem.l %%d0-%%d1/%%a0-%%a1,-(%%sp)\n"
@@ -121,10 +122,7 @@ void Music_LoadModule(BYTE track)
 
 void Music_Play()
 {
-    if (g_is_music_ready == TRUE)
-    {
-        p61Music();
-    }
+    
 }
 
 void Music_Stop()
