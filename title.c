@@ -37,7 +37,6 @@
 #define NUM_ROAD_FRAMES 14
 
 
- 
 extern volatile struct Custom *custom;
 
 BlitterObject zippy_logo;
@@ -72,7 +71,7 @@ void Title_Initialize(void)
     // Load Zippy Race Logo Bob
 
     zippy_logo.background = Mem_AllocChip((ZIPPY_LOGO_WIDTH_WORDS * 2) * ZIPPY_LOGO_HEIGHT * 4);
-    zippy_logo.background2 = Mem_AllocChip((ZIPPY_LOGO_WIDTH_WORDS * 2) * ZIPPY_LOGO_HEIGHT * 4);
+  
     zippy_logo.visible = TRUE;
     zippy_logo.off_screen = FALSE;
 
@@ -102,8 +101,8 @@ void Title_Draw()
         {
             Copper_SetPalette(0, 0x000);
 
-            BlitClearScreen(draw_buffer, 320 << 6 | 16);
-            BlitClearScreen(display_buffer, 320 << 6 | 16);
+            BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 16);
+            BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 16);
 
             // So we pre-draw the city skyline ones
             // then on update we only draw the tiles being replaced
@@ -179,8 +178,8 @@ void Title_Draw()
             Timer_Start(&hiscore_timer,10);     // 10 Seconds 
             title_state = TITLE_ATTRACT_INSERT_COIN;
 
-            BlitClearScreen(draw_buffer, 320 << 6 | 64);
-            BlitClearScreen(display_buffer, 320 << 6 | 64);
+            BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 64);
+            BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 64);
 
             Title_BlitLogo();
 
@@ -195,8 +194,8 @@ void Title_Draw()
             Timer_Reset(&hiscore_timer);
             title_state = TITLE_ATTRACT_HIGHSCORE;
 
-            BlitClearScreen(draw_buffer, 320 << 6 | 64);
-            BlitClearScreen(display_buffer, 320 << 6 | 64);
+            BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 64);
+            BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 64);
             AttractMode_ShowHiScores();
            
         }
@@ -232,8 +231,8 @@ void AttractMode_UpdateHiScores(void)
         title_state = TITLE_ATTRACT_INSERT_COIN;
         Timer_Reset(&hiscore_timer);
 
-        BlitClearScreen(draw_buffer, 320 << 6 | 64);
-        BlitClearScreen(display_buffer, 320 << 6 | 64);
+        BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 64);
+        BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 64);
 
         Title_BlitLogo();
 
@@ -272,8 +271,8 @@ void Title_Update()
     if (JoyFirePressed())
     {
         // Clear screens
-        BlitClearScreen(draw_buffer, 320 << 6 | 256);
-        BlitClearScreen(display_buffer, 320 << 6 | 256);
+        BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+        BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 256);
         
         // Turn off sprites
         Sprites_ClearLower();
@@ -449,7 +448,7 @@ void Title_BlitLogo()
     WORD y = zippy_logo.y;
 
     UWORD source_mod = 12;
-    UWORD dest_mod = 28;
+    UWORD dest_mod = (SCREENWIDTH / 8) - (6 * 2);
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
     UWORD bltsize = ((ZIPPY_LOGO_HEIGHT<<2) << 6) | 6;
@@ -458,7 +457,7 @@ void Title_BlitLogo()
     UBYTE *mask = source + 12;
     UBYTE *dest = draw_buffer;
  
-    BlitBob2(160, x, y, admod, bltsize, ZIPPY_LOGO_WIDTH, 
+    BlitBob2(SCREENWIDTH/2, x, y, admod, bltsize, ZIPPY_LOGO_WIDTH, 
              zippy_logo_restore_ptrs, source, mask, dest);
 }
 
@@ -467,9 +466,9 @@ void Title_SaveBackground()
     WORD x = zippy_logo.x;
     WORD y = zippy_logo.y;
 
-    APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
+    APTR background = zippy_logo.background;
  
-    UWORD source_mod = (320 / 8) - (6 * 2);  
+    UWORD source_mod = (SCREENWIDTH / 8) - (6 * 2);  
     UWORD dest_mod = 0;  // Tight-packed
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
@@ -478,7 +477,7 @@ void Title_SaveBackground()
     UBYTE *source = draw_buffer;
     UBYTE *dest = background;
     
-    BlitBobSimpleSave(160, x, y, admod, bltsize, source, dest);
+    BlitBobSimpleSave(SCREENWIDTH/2, x, y, admod, bltsize, source, dest);
 }
 
 void Title_RestoreLogo()
@@ -486,10 +485,10 @@ void Title_RestoreLogo()
     WORD old_x = zippy_logo.old_x;
     WORD old_y = zippy_logo.old_y;
 
-    APTR background = (current_buffer == 0) ? zippy_logo.background : zippy_logo.background2;
+    APTR background = zippy_logo.background;
  
     UWORD source_mod = 0;   
-    UWORD dest_mod = (320 / 8) - (6 * 2);  // 40 - 12 = 28
+    UWORD dest_mod = (SCREENWIDTH / 8) - (6 * 2); 
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
     UWORD bltsize = ((ZIPPY_LOGO_HEIGHT << 2) << 6) | 6;  // 192 lines, 6 words
@@ -497,7 +496,7 @@ void Title_RestoreLogo()
     UBYTE *source = background;
     UBYTE *dest = draw_buffer;
     
-    BlitBobSimple(160, old_x, old_y, admod, bltsize, source, dest);
+    BlitBobSimple(SCREENWIDTH/2, old_x, old_y, admod, bltsize, source, dest);
     
     zippy_logo.old_x = zippy_logo.x;
     zippy_logo.old_y = zippy_logo.y;

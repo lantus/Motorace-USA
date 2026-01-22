@@ -20,11 +20,13 @@
 #define ROUND_TO_FACTOR(x, m) ((((x) + (x) / 2) / (m)) * (m))
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-#define SCREENWIDTH  320
+#define SCREENWIDTH  192
 #define SCREENHEIGHT 256
 #define BLOCKHEIGHT 16
 #define EXTRAHEIGHT 32
 #define SCREENBYTESPERROW (SCREENWIDTH / 8)
+
+#define SCREENWIDTH_WORDS 96
 
 #define BITMAPWIDTH SCREENWIDTH
 #define BITMAPBYTESPERROW (BITMAPWIDTH / 8)

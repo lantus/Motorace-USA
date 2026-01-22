@@ -148,7 +148,7 @@ void DrawCarBOB(BlitterObject *car)
     BlitSize (32x4) << 6 | 3
  
     src mod = 3 words x 2 Bytes
-    dst mod = 40 - 6 = 34;
+    dst mod = 40 - 6 = 34; for 192 = 24 - 6 = 18
     */
 
  
@@ -175,7 +175,7 @@ void DrawCarBOB(BlitterObject *car)
   
     
     UWORD source_mod = 6;
-    UWORD dest_mod = 34;
+    UWORD dest_mod = 18;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     UWORD bltsize = (128 << 6) | 3;
 
@@ -188,12 +188,12 @@ void DrawCarBOB(BlitterObject *car)
     APTR car_restore_ptrs[4];
 
     // Calculate and STORE pointer
-    ULONG y_offset = (ULONG)buffer_y * 160;
+    ULONG y_offset = (ULONG)buffer_y * SCREENWIDTH_WORDS;
     WORD x_byte_offset = x >> 3;
     UBYTE *bitmap_ptr = draw_buffer + y_offset + x_byte_offset;
  
  
-    BlitBob2(160, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
+    BlitBob2(SCREENWIDTH_WORDS, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
     
 }
 
@@ -226,7 +226,7 @@ void Cars_RestoreSaved()
             custom->bltcon0 = 0x9F0;
             custom->bltcon1 = 0;
             custom->bltamod = 0;
-            custom->bltdmod = 34;
+            custom->bltdmod = 18;
             custom->bltapt = car[i].restore.background_ptr;
             custom->bltdpt = car[i].restore.screen_ptr;
             custom->bltsize = bltsize;
@@ -295,7 +295,7 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     if (buffer_y < 0 || buffer_y > (BITMAPHEIGHT - 32))
         return;
     
-    ULONG y_offset = (ULONG)buffer_y * 160;
+    ULONG y_offset = (ULONG)buffer_y * SCREENWIDTH_WORDS;
     WORD x_byte_offset = car->old_x >> 3;
     
     // Calculate X but aligned to word boundary for full coverage
@@ -309,8 +309,8 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     custom->bltcon1 = 0;
     custom->bltafwm = 0xFFFF;
     custom->bltalwm = 0xFFFF;
-    custom->bltamod = 34;   
-    custom->bltdmod = 34;   
+    custom->bltamod = 18;   
+    custom->bltdmod = 18;   
     custom->bltapt = pristine_ptr;
     custom->bltdpt = screen_ptr;
     custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words    

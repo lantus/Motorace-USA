@@ -146,7 +146,7 @@ static void InitCopperlist(void)
 	
 	// plane pointers
 	 
-	const USHORT lineSize=320/8;
+	const USHORT lineSize=SCREENWIDTH/8;
 	 
 	for(int a=0;a<BLOCKSDEPTH;a++)
 		planes[a]=(UBYTE*)screen.bitplanes + lineSize * a;

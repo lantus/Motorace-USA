@@ -58,7 +58,7 @@ void City_BlitHorizon()
     WORD y = city_horizon.y;
 
     UWORD source_mod = 0; 
-    UWORD dest_mod =  (320 - CITYSKYLINE_WIDTH) / 8;
+    UWORD dest_mod =  (SCREENWIDTH - CITYSKYLINE_WIDTH) / 8;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
     UWORD bltsize = ((CITYSKYLINE_HEIGHT<<2) << 6) | CITYSKYLINE_WIDTH/16;
@@ -69,7 +69,7 @@ void City_BlitHorizon()
     // Destination
     UBYTE *dest = draw_buffer;
  
-    BlitBobSimple(160, x, y, admod, bltsize, source, dest);
+    BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, dest);
 }
 
 void City_FreeHorizon()

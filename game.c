@@ -128,6 +128,9 @@ void Game_Initialize()
     Game_SetMap(game_map);
 
     MotorBike_Reset();
+
+    KPrintF("Avail Chip  = %ld\n", Mem_GetFreeChip());
+    KPrintF("Avail Fast  = %ld\n", Mem_GetFreeFast());
 }
 
 void Game_NewGame(UBYTE difficulty)
@@ -401,11 +404,11 @@ void Game_SwapBuffers(void)
     const UBYTE* planes_temp[BLOCKSDEPTH];
     
     planes_temp[0] = draw_buffer;
-    planes_temp[1] = draw_buffer + 40;
-    planes_temp[2] = draw_buffer + 80;
-    planes_temp[3] = draw_buffer + 120;
+    planes_temp[1] = draw_buffer + 24;
+    planes_temp[2] = draw_buffer + 48;
+    planes_temp[3] = draw_buffer + 72;
 
-    LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * 160;
+    LONG planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * SCREENWIDTH_WORDS;
  
     Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
 }
@@ -502,8 +505,8 @@ void GameReady_Initialize(void)
     Sprites_Initialize();
 
     // Clear entire screen including HUD area
-    BlitClearScreen(draw_buffer, 320 << 6 | 256);
-    BlitClearScreen(display_buffer, 320 << 6 | 256);
+    BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 256);
  
     // Start blink timer
     ready_text_visible = TRUE;
@@ -540,8 +543,8 @@ void GameReady_Update(void)
     if (JoyFirePressed())
     {
         // Clear screens for game start
-        BlitClearScreen(draw_buffer, 320 << 6 | 256);
-        BlitClearScreen(display_buffer, 320 << 6 | 256);
+        BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+        BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 256);
         
         // Transition to actual game
         game_state = STAGE_START;

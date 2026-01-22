@@ -55,15 +55,16 @@ void Screen_Initialize_DoubleBuff(UWORD width,
     screen.dual_playfield = dual_playfield;
     screen.height = height;
  
-    BlitClearScreen(screen.bitplanes, 320 << 6 | 16 );
-    BlitClearScreen(screen.offscreen_bitplanes, 320 << 6 | 16 );
+    BlitClearScreen(screen.bitplanes, width << 6 | 16 );
+    BlitClearScreen(screen.offscreen_bitplanes, width << 6 | 16 );
 
     draw_buffer = screen.bitplanes;
     display_buffer = screen.offscreen_bitplanes;
   
-    debug_register_bitmap(screen.bitplanes, "screen.bitplanes", 320, height, 4, 1 << 0);
-    debug_register_bitmap(screen.offscreen_bitplanes, "screen.offscreen_bitplanes", 320, height, 4, 1 << 0);
-    debug_register_bitmap(screen.pristine, "screen.pristine", 320, height, 4, 1 << 0);
+    debug_register_bitmap(screen.bitplanes, "screen.bitplanes", width, height, 4, 1 << 0);
+    debug_register_bitmap(screen.offscreen_bitplanes, "screen.offscreen_bitplanes", width, height, 4, 1 << 0);
+    debug_register_bitmap(screen.pristine, "screen.pristine", width, height, 4, 1 << 0);
+
 }
  
 static UWORD getFadedValueOCS(UWORD colorvalue, USHORT frame) 
