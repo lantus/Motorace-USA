@@ -133,7 +133,7 @@ void Cars_ResetPositions(void)
     car[4].block_timer = 0;
 }
  
-void DrawCarBOB(BlitterObject *car)
+void Cars_RenderBOB(BlitterObject *car)
 {
 
     /* 32x32
@@ -150,13 +150,44 @@ void DrawCarBOB(BlitterObject *car)
     src mod = 3 words x 2 Bytes
     dst mod = 40 - 6 = 34; for 192 = 24 - 6 = 18
     */
-
- 
+   
     if (!car->visible) return;
     
     WORD screen_y = car->y - mapposy;
     
-    if (screen_y < -8 || screen_y > SCREENHEIGHT + 8) 
+    // Calculate clipping
+    WORD src_y_offset = 0;
+    WORD clip_height = BOB_HEIGHT;
+    WORD dest_y = screen_y;
+    
+    // Clip TOP edge
+    if (screen_y < -BOB_HEIGHT)
+    {
+        src_y_offset = -screen_y;
+        clip_height -= src_y_offset;
+        dest_y = 0;
+        
+        if (clip_height <= 0)
+        {
+            car->off_screen = TRUE;
+            return;
+        }
+    }
+    
+    // Clip BOTTOM edge
+    if (screen_y + clip_height > SCREENHEIGHT)
+    {
+        clip_height = SCREENHEIGHT - screen_y;
+        
+        if (clip_height <= 0)
+        {
+            car->off_screen = TRUE;
+            return;
+        }
+    }
+    
+    // Check X bounds
+    if (car->x < -16 || car->x > SCREENWIDTH + 16)
     {
         car->off_screen = TRUE;
         return;
@@ -164,37 +195,61 @@ void DrawCarBOB(BlitterObject *car)
     
     car->off_screen = FALSE;
     
-    WORD x = car->x;
-    WORD buffer_y = (videoposy + BLOCKHEIGHT + screen_y);
+    WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
     
-    if (buffer_y < 0 || buffer_y > (BITMAPHEIGHT - 32))
-    {
-        car->off_screen = TRUE;
-        return;
-    }
-  
+    // Handle wraparound
+    if (buffer_y < 0)
+        buffer_y += BITMAPHEIGHT;
+    else if (buffer_y >= BITMAPHEIGHT)
+        buffer_y -= BITMAPHEIGHT;
+    
+    WORD x = car->x;
+    
+    // Select animation frame
+    UBYTE *source = (car->anim_frame == 0) ? car->data : car->data_frame2;
+    UBYTE *mask = source + 6;
+    
+    // Offset source: src_y_offset * 24 = (src_y_offset << 4) + (src_y_offset << 3)
+    ULONG src_offset = (src_y_offset << 4) + (src_y_offset << 3);  // * 16 + * 8 = * 24
+    source += src_offset;
+    mask += src_offset;
     
     UWORD source_mod = 6;
     UWORD dest_mod = 18;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
-    UWORD bltsize = (128 << 6) | 3;
-
- // Select animation frame
-    UBYTE *source = (car->anim_frame == 0) ? 
-                    (UBYTE*)&car->data[0] : 
-                    (UBYTE*)&car->data_frame2[0];
-
-    UBYTE *mask = source + 6;
-    APTR car_restore_ptrs[4];
-
-    // Calculate and STORE pointer
-    ULONG y_offset = (ULONG)buffer_y * SCREENWIDTH_WORDS;
-    WORD x_byte_offset = x >> 3;
-    UBYTE *bitmap_ptr = draw_buffer + y_offset + x_byte_offset;
- 
- 
-    BlitBob2(SCREENWIDTH_WORDS, x, buffer_y, admod, bltsize, BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
     
+    APTR car_restore_ptrs[4];
+    
+    // Check if BOB crosses buffer split
+    if (buffer_y + clip_height > BITMAPHEIGHT)
+    {
+        // SPLIT BLIT
+        WORD lines_before = BITMAPHEIGHT - buffer_y;
+        WORD lines_after = clip_height - lines_before;
+        
+        // bltsize: lines * 4 = lines << 2
+        UWORD bltsize1 = ((lines_before << 2) << 6) | 3;
+        BlitBob2(SCREENWIDTH_WORDS, x, buffer_y, admod, bltsize1, 
+                 BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
+        
+        // Advance source: lines_before * 24
+        ULONG advance = (lines_before << 4) + (lines_before << 3);
+        UBYTE *source2 = source + advance;
+        UBYTE *mask2 = mask + advance;
+        APTR restore_ptrs2[4];
+        UWORD bltsize2 = ((lines_after << 2) << 6) | 3;
+        
+        BlitBob2(SCREENWIDTH_WORDS, x, 0, admod, bltsize2,
+                 BOB_WIDTH, restore_ptrs2, source2, mask2, draw_buffer);
+    }
+    else
+    {
+        // Normal single blit
+        UWORD bltsize = ((clip_height << 2) << 6) | 3;
+        
+        BlitBob2(SCREENWIDTH_WORDS, x, buffer_y, admod, bltsize,
+                 BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
+    }
 }
 
 void Cars_AccelerateCar(BlitterObject *car)
@@ -212,29 +267,7 @@ void Cars_AccelerateCar(BlitterObject *car)
     }
 
 }
-
-void Cars_RestoreSaved()
-{
-   //Restore in reverse order  
-    for (int i = MAX_CARS - 1; i >= 0; i--) 
-    {
-        if (car[i].needs_restore && !car[i].off_screen && car[i].restore.screen_ptr)
-        {    
-            UWORD bltsize = (128 << 6) | 3;
-            
-            WaitBlit();
-            custom->bltcon0 = 0x9F0;
-            custom->bltcon1 = 0;
-            custom->bltamod = 0;
-            custom->bltdmod = 18;
-            custom->bltapt = car[i].restore.background_ptr;
-            custom->bltdpt = car[i].restore.screen_ptr;
-            custom->bltsize = bltsize;
-
-            car[i].needs_restore = FALSE;
-        }
-    }
-}
+ 
 
 void Cars_PreDraw(void)
 {
@@ -263,7 +296,7 @@ void Cars_PreDraw(void)
             car[i].old_y = car[i].y;
             
     
-            DrawCarBOB(&car[i]);
+            Cars_RenderBOB(&car[i]);
         }
     }
 
@@ -290,32 +323,83 @@ void Cars_CopyPristineBackground(BlitterObject *car)
     if (!car->needs_restore) return;
     
     WORD old_screen_y = car->old_y - mapposy;
-    WORD buffer_y = (videoposy + BLOCKHEIGHT + old_screen_y);
     
-    if (buffer_y < 0 || buffer_y > (BITMAPHEIGHT - 32))
-        return;
+    // Calculate clipping
+    WORD clip_height = BOB_HEIGHT;
+    WORD dest_y = old_screen_y;
     
-    ULONG y_offset = (ULONG)buffer_y * SCREENWIDTH_WORDS;
-    WORD x_byte_offset = car->old_x >> 3;
+    // Clip TOP edge
+    if (old_screen_y < -BOB_HEIGHT)
+    {
+        clip_height += old_screen_y;
+        dest_y = 0;
+        if (clip_height <= 0) return;
+    }
     
-    // Calculate X but aligned to word boundary for full coverage
-    WORD x_word_aligned = (car->old_x >> 4) << 1;  // Align to 16-pixel boundary
+    // Clip BOTTOM edge
+    if (old_screen_y + clip_height > SCREENHEIGHT)
+    {
+        clip_height = SCREENHEIGHT - old_screen_y;
+        if (clip_height <= 0) return;
+    }
     
-    UBYTE *pristine_ptr = screen.pristine + y_offset + x_word_aligned;
-    UBYTE *screen_ptr = draw_buffer + y_offset + x_word_aligned;
+    WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
     
-    WaitBlit();
-    custom->bltcon0 = 0x9F0;
-    custom->bltcon1 = 0;
-    custom->bltafwm = 0xFFFF;
-    custom->bltalwm = 0xFFFF;
-    custom->bltamod = 18;   
-    custom->bltdmod = 18;   
-    custom->bltapt = pristine_ptr;
-    custom->bltdpt = screen_ptr;
-    custom->bltsize = (128 << 6) | 3;  // 32 lines (128/4) x 3 words    
+    // Handle wraparound
+    if (buffer_y < 0)
+        buffer_y += BITMAPHEIGHT;
+    else if (buffer_y >= BITMAPHEIGHT)
+        buffer_y -= BITMAPHEIGHT;
+    
+    // X position word-aligned: (car->old_x >> 4) << 1
+    WORD x_word_aligned = (car->old_x >> 3) & 0xFFFE;  // Even faster
+    
+    // Check if restore crosses buffer split
+    if (buffer_y + clip_height > BITMAPHEIGHT)
+    {
+        // SPLIT RESTORE
+        WORD lines_before = BITMAPHEIGHT - buffer_y;
+        WORD lines_after = clip_height - lines_before;
+        
+        // buffer_y * SCREENWIDTH_WORDS: SCREENWIDTH_WORDS = 96 = 64 + 32
+        ULONG offset1 = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+        
+        WaitBlit();
+        custom->bltcon0 = 0x9F0;
+        custom->bltcon1 = 0;
+        custom->bltafwm = 0xFFFF;
+        custom->bltalwm = 0xFFFF;
+        custom->bltamod = 18;
+        custom->bltdmod = 18;
+        custom->bltapt = screen.pristine + offset1;
+        custom->bltdpt = draw_buffer + offset1;
+        custom->bltsize = ((lines_before << 2) << 6) | 3;
+        
+        // Part 2: Y=0
+        ULONG offset2 = x_word_aligned;
+        
+        WaitBlit();
+        custom->bltapt = screen.pristine + offset2;
+        custom->bltdpt = draw_buffer + offset2;
+        custom->bltsize = ((lines_after << 2) << 6) | 3;
+    }
+    else
+    {
+        // Single blit
+        ULONG offset = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+        
+        WaitBlit();
+        custom->bltcon0 = 0x9F0;
+        custom->bltcon1 = 0;
+        custom->bltafwm = 0xFFFF;
+        custom->bltalwm = 0xFFFF;
+        custom->bltamod = 18;
+        custom->bltdmod = 18;
+        custom->bltapt = screen.pristine + offset;
+        custom->bltdpt = draw_buffer + offset;
+        custom->bltsize = ((clip_height << 2) << 6) | 3;
+    }
 }
- 
  
 
 void Cars_HandleSpinout(UBYTE car_index)
@@ -502,7 +586,7 @@ void Cars_Tick(BlitterObject *car)
     Cars_UpdatePosition(car);
     Cars_CheckForCollision(car);
 
-    DrawCarBOB(car);
+    Cars_RenderBOB(car);
     car->needs_restore = TRUE;
 }
 
