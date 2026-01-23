@@ -53,16 +53,16 @@ void Font_GetChar(char c, UBYTE *char_data)
     // Calculate character position in font sheet
     UBYTE char_index = (UBYTE)c;
     
-    WORD char_x = (char_index % game_font.chars_per_row) * 8;
-    WORD char_y = (char_index / game_font.chars_per_row) * 8;
+    WORD char_x = (char_index % game_font.chars_per_row) << 3;
+    WORD char_y = (char_index / game_font.chars_per_row) << 3;
     
     // Font sheet is 128 pixels wide = 16 bytes per row
-    WORD bytes_per_row = 128 / 8;
+    WORD bytes_per_row = 128 >> 3;
     
     // Extract 8x8 character
     for (int row = 0; row < 8; row++) 
     {
-        WORD src_offset = ((char_y + row) * bytes_per_row) + (char_x / 8);
+        WORD src_offset = ((char_y + row) * bytes_per_row) + (char_x >> 3);
         char_data[row] = game_font.font_data[src_offset];
         
         // If character spans byte boundary, handle bit shifting
@@ -85,7 +85,7 @@ void Font_DrawChar(UBYTE *buffer, char c, UWORD x, UWORD y, UBYTE color)
     if (x + CHAR_WIDTH > VIEWPORT_WIDTH || y + CHAR_HEIGHT > VIEWPORT_HEIGHT)
         return;
     
-    UWORD byte_offset = x / 8;  // Which byte horizontally
+    UWORD byte_offset = x >> 1;  // Which byte horizontally
     UBYTE bit_shift = 7 - (x % 8);  // Bit position within byte
     
     for (int row = 0; row < CHAR_HEIGHT; row++)
@@ -95,14 +95,14 @@ void Font_DrawChar(UBYTE *buffer, char c, UWORD x, UWORD y, UBYTE color)
         // Calculate offset for this scanline in the buffer
         // Format: line0_plane0, line0_plane1, line0_plane2, line0_plane3,
         //         line1_plane0, line1_plane1, line1_plane2, line1_plane3, ...
-        ULONG line_offset = (y + row) * BITMAPBYTESPERROW * 4;
+        ULONG line_offset = (y + row) * BITMAPBYTESPERROW << 2;
         
         // Process each pixel in the character row
         for (int bit = 0; bit < 8; bit++)
         {
             if (font_row & (0x80 >> bit))
             {
-                UWORD pixel_byte = byte_offset + (bit / 8);
+                UWORD pixel_byte = byte_offset + (bit >> 3);
                 UBYTE pixel_bit = 7 - ((x + bit) % 8);
                 
                 // Set bits in each bitplane based on color value

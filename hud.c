@@ -182,40 +182,30 @@ int counter = 0;
 
 void ULongToString(ULONG value, char *buffer, int width, char pad_char)
 {
-    char temp[12];  // Temporary buffer for digits
-    int digit_count = 0;
-    int i;
+    // Work from right to left
+    int pos = width - 1;
     
-    // Handle zero case
-    if (value == 0) 
+    // Write digits right to left
+    if (value == 0)
     {
-        temp[0] = '0';
-        digit_count = 1;
-    } else 
-    {
-        // Extract digits in reverse order
-        ULONG num = value;
-        while (num > 0) {
-            temp[digit_count] = '0' + (num % 10);
-            num /= 10;
-            digit_count++;
-        }
+        buffer[pos--] = '0';
     }
-    
-    // Fill buffer with padding characters
-
-    if (pad_char != NULL)
+    else
     {
-        for (i = 0; i < width - digit_count; i++) 
+        while (value > 0)
         {
-            buffer[i] = pad_char;
+            buffer[pos--] = '0' + (value % 10);
+            value /= 10;
         }
     }
     
-    // Copy digits in correct order
-    for (i = 0; i < digit_count; i++)
-     {
-        buffer[width - digit_count + i] = temp[digit_count - 1 - i];
+    // Fill padding from left (if pad_char is not null)
+    if (pad_char != '\0')
+    {
+        while (pos >= 0)
+        {
+            buffer[pos--] = pad_char;
+        }
     }
     
     buffer[width] = '\0';  // Null terminate
