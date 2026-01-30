@@ -25,12 +25,18 @@
 #define CAR_BG_SIZE 768
 extern volatile struct Custom *custom;
 
+WORD next_respawn_id = 0;     // Start with car 0
+WORD respawn_timer = 60;
+WORD respawn_interval = 120;
+WORD respawn_distance = 400;
+WORD last_respawned_id = -1;  // -1 = none respawned yet
+
 BlitterObject car[MAX_CARS];
  
 /* Restore pointers */
 APTR restore_ptrs[MAX_CARS * 4];
 APTR *restore_ptr;
- 
+
 void Cars_LoadSprites()
 {
     car[0].data = Disk_AllocAndLoadAsset(CAR0_FRAME0, MEMF_CHIP);
@@ -305,6 +311,11 @@ void Cars_PreDraw(void)
 
 void Cars_Update(void)
 {
+
+    bike_world_y = mapposy + bike_position_y;
+
+    Cars_CheckForRespawn();
+
     for (int i = 0; i < MAX_CARS; i++)
     {
         if (!car[i].visible) continue;
@@ -611,5 +622,90 @@ void Cars_CheckForCollision(BlitterObject *c)
                 car_behind->speed = car_ahead->speed - 4;
             }
         }
+    }
+}
+
+void Cars_CheckForRespawn(void)
+{
+    if (respawn_timer > 0)
+    {
+        respawn_timer--;
+        return;
+    }
+    
+    // Don't respawn ANYTHING if ANY car is still visible on screen
+ 
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (car[i].visible && !car[i].off_screen)
+        {
+            return; // We are done
+        }
+    }
+ 
+    // If we recently respawned a car, check if it's moved far enough
+    if (last_respawned_id != -1)
+    {
+        BlitterObject *last_car = &car[last_respawned_id];
+        LONG distance = last_car->y - bike_world_y;
+        
+        BOOL far_enough = (distance > 150) || (distance < -150);
+        
+        if (!far_enough)
+        {
+            return;
+        }
+        
+        last_respawned_id = -1;
+    }
+    
+    // Now check ONLY the next car in queue
+    BlitterObject *car_to_check = &car[next_respawn_id];
+    
+    if (!car_to_check->visible) return;
+    
+    LONG distance = car_to_check->y - bike_world_y;
+    
+    // Bike overtook this car - respawn ahead
+    if (distance > 100)
+    {
+        WORD safe_lanes[] = {FAR_LEFT_LANE, CENTER_LANE, FAR_RIGHT_LANE};
+        car_to_check->x = safe_lanes[next_respawn_id % 3];
+        car_to_check->y = bike_world_y - respawn_distance - (next_respawn_id * 60);
+        car_to_check->off_screen = TRUE;
+        car_to_check->speed = car_to_check->target_speed;
+        
+        KPrintF("Respawned car #%ld AHEAD at y=%ld\n", next_respawn_id, car_to_check->y);
+        
+        last_respawned_id = next_respawn_id;
+        next_respawn_id = (next_respawn_id + 1) % MAX_CARS;
+        respawn_timer = respawn_interval;
+ 
+    }
+    // Car overtook bike - respawn behind
+    else if (distance < -100)
+    {
+        WORD safe_lanes[] = {FAR_LEFT_LANE, CENTER_LANE, FAR_RIGHT_LANE};
+        LONG base_spawn_y = bike_world_y + 400 + (next_respawn_id * 80);
+        WORD spawn_x = safe_lanes[next_respawn_id % 3];
+        
+        WORD x_distance = ABS(spawn_x - bike_position_x);
+        LONG y_distance = base_spawn_y - bike_world_y;
+        
+        if (y_distance < 120 && x_distance < 32)
+        {
+            base_spawn_y = bike_world_y + 500;
+        }
+        
+        car_to_check->x = spawn_x;
+        car_to_check->y = base_spawn_y;
+        car_to_check->off_screen = FALSE;
+        car_to_check->speed = car_to_check->target_speed;
+        
+        KPrintF("Respawned car #%ld BEHIND at y=%ld\n", next_respawn_id, car_to_check->y);
+        
+        last_respawned_id = next_respawn_id;
+        next_respawn_id = (next_respawn_id + 1) % MAX_CARS;
+        respawn_timer = respawn_interval;
     }
 }

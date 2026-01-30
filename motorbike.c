@@ -61,7 +61,7 @@ UBYTE bike_state = BIKE_STATE_MOVING;
 
 UWORD bike_position_x;
 UWORD bike_position_y;
-
+LONG  bike_world_y = 0;
 ULONG bike_anim_frames = 0;
 static ULONG bike_anim_lr_frames = 0;
 static UBYTE bike_frame = 0;

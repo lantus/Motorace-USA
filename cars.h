@@ -36,4 +36,5 @@ void Cars_Update(void);
 void Cars_AccelerateCar(BlitterObject *car);
 void Cars_CheckForCollision(BlitterObject *c);
 void Cars_RenderBOB(BlitterObject *c);
+void Cars_CheckForRespawn(void);
 WORD GetScrollAmount(WORD speed);

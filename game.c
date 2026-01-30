@@ -623,6 +623,8 @@ void Stage_Draw()
         SmoothScroll();
         Cars_Update();
  
+        bike_world_y = mapposy + bike_position_y;
+        
         Game_SwapBuffers();
     }
     

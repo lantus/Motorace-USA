@@ -45,7 +45,7 @@ typedef enum {
  
 extern UWORD bike_position_x;
 extern UWORD bike_position_y;
- 
+extern LONG  bike_world_y;   
 
 // TODO: Crashing, Jump, Wheelie
 
