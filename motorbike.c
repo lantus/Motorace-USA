@@ -145,7 +145,8 @@ void MotorBike_Initialize()
  
 void MotorBike_Reset()
 {
-    if (game_map == MAP_ATTRACT_INTRO)
+    if (game_map == MAP_ATTRACT_INTRO ||
+        game_map == MAP_APPROACH_LASANGELES)
     {
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
         Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);

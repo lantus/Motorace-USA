@@ -49,6 +49,8 @@ const UWORD scroll_speed_table[MAX_SPEED_TABLE] = {
 };
 
 UBYTE stage_state = STAGE_BEGIN;
+UBYTE stage_complete = 0;
+
 GameTimer countdown_timer;
 GameTimer hud_update_timer;
 GameTimer collision_recovery_timer;
@@ -197,6 +199,7 @@ void Game_SetBackGroundColor(UWORD color)
 
 void Game_SetMap(UBYTE maptype)
 {
+    game_map = maptype;
     switch (maptype)
     {
         case MAP_ATTRACT_INTRO:
@@ -212,6 +215,11 @@ void Game_SetMap(UBYTE maptype)
             blocksbuffer = la_tiles->planes[0];
             break;
         case MAP_APPROACH_LASANGELES:
+            // use attract mode assets for now
+            mapdata = (UWORD *)city_attract_map->data;
+            mapwidth = city_attract_map->mapwidth;
+            mapheight = city_attract_map->mapheight;  
+            blocksbuffer = city_attract_tiles->planes[0];
             break;
         case MAP_OVERHEAD_LASVEGAS:
             break;
@@ -620,12 +628,18 @@ void Stage_Draw()
     else if (stage_state == STAGE_PLAYING)
     {
  
-        SmoothScroll();
-        Cars_Update();
- 
-        bike_world_y = mapposy + bike_position_y;
-        
-        Game_SwapBuffers();
+        if (game_map == MAP_APPROACH_LASANGELES)
+        {
+             City_DrawRoad();
+        }
+        else
+        {
+            SmoothScroll();
+            Stage_CheckCompletion();
+            Cars_Update();
+            bike_world_y = mapposy + bike_position_y;
+            Game_SwapBuffers();
+        }
     }
     
      // === PERIODIC HUD UPDATE ===
@@ -871,4 +885,34 @@ void Game_HandleCollisions(void)
     else
         Copper_SetPalette(0,0x00);
  
+}
+
+void Stage_CheckCompletion(void)
+{
+    // Check if bike reached the top of the map (end of stage)
+    // Map starts at high Y values and scrolls toward 0
+    
+    if (mapposy <= 100)  // Near the top/end of map
+    {
+        if (!stage_complete)
+        {
+            stage_complete = TRUE;
+          
+            switch(game_stage)
+            {
+                 // Transition to 3D city section
+   
+                case STAGE_LASANGELES:
+                    BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 16);
+                    BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 16);
+                    //City_Initialize();
+                    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
+                    Game_SetMap(MAP_APPROACH_LASANGELES);
+                    MotorBike_Reset();
+                    City_PreDrawRoad();
+                    break;
+            }
+           
+        }
+    }
 }

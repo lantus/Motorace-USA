@@ -396,7 +396,10 @@ int main(void)
 		// Flip Buffers
 		if (stage_state == STAGE_PLAYING)
 		{
-			current_buffer = 1 - current_buffer;
+			if (game_map == MAP_OVERHEAD_LASANGELES)
+			{
+				current_buffer = 1 - current_buffer;
+			}
 		}
 
 		// Swap pointers

@@ -128,6 +128,7 @@ extern UBYTE game_difficulty;
 extern UBYTE game_map;
 
 extern UBYTE stage_state;
+extern UBYTE stage_complete;
 
 extern WORD mapposy,videoposy;
 extern LONG	mapwidth,mapheight;
@@ -144,6 +145,7 @@ extern ULONG game_frame_count;
 
 extern CollisionState collision_state;
 extern int collision_car_index;  
+
 
 // Palettes
 extern UWORD	intro_colors[BLOCKSCOLORS];
@@ -183,4 +185,5 @@ void Stage_Initialize(void);
 void Stage_Draw(void);
 void Stage_Update(void);
 void Stage_ShowInfo(void);
+void Stage_CheckCompletion(void);
 #endif
