@@ -112,7 +112,8 @@ enum StageState
     STAGE_BEGIN = 0,
     STAGE_COUNTDOWN = 1,
     STAGE_PLAYING = 2,
-    STAGE_COMPLETE = 3
+    STAGE_FRONTVIEW = 3,
+    STAGE_COMPLETE = 4
 };
 
 typedef enum {
@@ -142,7 +143,7 @@ extern UBYTE game_car_block_move_rate;
 extern UBYTE game_car_block_move_speed;  
 extern UBYTE game_car_block_x_threshold;
 extern ULONG game_frame_count;
-
+extern UWORD frontview_bike_frames;
 extern CollisionState collision_state;
 extern int collision_car_index;  
 
@@ -170,6 +171,7 @@ void Game_FillScreen(void);
 void Game_CheckJoyScroll(void);
 void Game_SwapBuffers(void);
 void Game_RenderBackgroundToDrawBuffer(void);
+void Game_ResetBitplanePointer(void);
 void Game_Update(void);
 void Game_Draw(void);
 void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors);
@@ -186,4 +188,5 @@ void Stage_Draw(void);
 void Stage_Update(void);
 void Stage_ShowInfo(void);
 void Stage_CheckCompletion(void);
+void Stage_InitializeFrontView(void);
 #endif

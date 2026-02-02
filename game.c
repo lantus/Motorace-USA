@@ -71,6 +71,8 @@ UBYTE game_car_block_move_rate = 5;   // Frames between movements (lower = faste
 UBYTE game_car_block_move_speed = 1;  // Pixels per move (higher = faster)
 UBYTE game_car_block_x_threshold = 32; // How close bike needs to be horizontally
 
+UWORD frontview_bike_frames = 0;
+
 WORD mapposy,videoposy;
 LONG mapwidth,mapheight;
 
@@ -421,6 +423,20 @@ void Game_SwapBuffers(void)
     Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
 }
 
+void Game_ResetBitplanePointer(void)
+{
+    // Reset copper bitplane pointers  
+ 
+    const UBYTE* planes_temp[BLOCKSDEPTH];
+    
+    planes_temp[0] = draw_buffer;
+    planes_temp[1] = draw_buffer + 24;
+    planes_temp[2] = draw_buffer + 48;
+    planes_temp[3] = draw_buffer + 72;
+
+    Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, 0);
+}
+
 
 void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors)
 {
@@ -623,38 +639,58 @@ void Stage_Draw()
         
         Cars_PreDraw();
         Game_SwapBuffers();  // Add this
-        
+        MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
     }
     else if (stage_state == STAGE_PLAYING)
     {
- 
-        if (game_map == MAP_APPROACH_LASANGELES)
+        SmoothScroll();
+        Cars_Update();
+        bike_world_y = mapposy + bike_position_y;
+        Game_SwapBuffers();
+
+        // === PERIODIC HUD UPDATE ===
+        if (Timer_HasElapsed(&hud_update_timer))
         {
-             City_DrawRoad();
+            //HUD_UpdateScore(player_score);     // Use actual score variable
+            //HUD_UpdateRank(player_rank);       // Use actual rank variable
+            HUD_UpdateBikeSpeed(bike_speed);
+            Timer_Reset(&hud_update_timer);
         }
-        else
+
+        MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
+        Game_HandleCollisions();
+    }
+    else if (stage_state == STAGE_FRONTVIEW)
+    {
+         // Update approach frame based on Y position (perspective)
+        MotorBike_UpdateApproachFrame(bike_position_y);
+        
+        // Only do the 2-frame animation for the closest view (frames 1-2)
+        if (bike_position_y >= 176)
         {
-            SmoothScroll();
-            Stage_CheckCompletion();
-            Cars_Update();
-            bike_world_y = mapposy + bike_position_y;
-            Game_SwapBuffers();
+            // Calculate animation speed based on bike speed
+            UWORD anim_speed = 15 - (bike_speed / 20);
+            if (anim_speed < 3) anim_speed = 3;
+            
+            if (frontview_bike_frames % anim_speed == 0)
+            {
+                bike_anim_frames ^= 1;
+                
+                if (bike_anim_frames == 0)
+                {
+                    MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+                }
+                else
+                {
+                    MotorBike_SetFrame(BIKE_FRAME_APPROACH2);
+                }
+            }
         }
+        
+        City_DrawRoad();
     }
     
-     // === PERIODIC HUD UPDATE ===
-    if (Timer_HasElapsed(&hud_update_timer))
-    {
-        //HUD_UpdateScore(player_score);     // Use actual score variable
-        //HUD_UpdateRank(player_rank);       // Use actual rank variable
-        HUD_UpdateBikeSpeed(bike_speed);
-        
-        Timer_Reset(&hud_update_timer);
-    }
 
-    MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
- 
-    Game_HandleCollisions();
 }
 
 void Stage_Update()
@@ -694,7 +730,7 @@ void Stage_Update()
             }
         }
     }
-    else if (stage_state == STAGE_PLAYING)
+    else if (stage_state == STAGE_PLAYING || stage_state == STAGE_FRONTVIEW)
     {
       
         // === ACCELERATION LOGIC ===
@@ -737,6 +773,7 @@ void Stage_Update()
                 // Maintain cruising speed
                 bike_state = BIKE_STATE_MOVING;
             }
+ 
         }        
  
         // === LEFT/RIGHT MOVEMENT ===
@@ -757,6 +794,15 @@ void Stage_Update()
             {
                 bike_state = BIKE_STATE_RIGHT;
             }
+        }
+
+        if (stage_state == STAGE_PLAYING)
+        {
+            Stage_CheckCompletion();
+        }
+        else
+        {
+            UpdateRoadScroll(bike_speed<<1, 0);
         }
     }
 }
@@ -892,27 +938,43 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (mapposy <= 100)  // Near the top/end of map
+    if (mapposy <= 12000)  // Near the top/end of map
     {
-        if (!stage_complete)
-        {
-            stage_complete = TRUE;
-          
-            switch(game_stage)
-            {
-                 // Transition to 3D city section
-   
-                case STAGE_LASANGELES:
-                    BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 16);
-                    BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 16);
-                    //City_Initialize();
-                    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
-                    Game_SetMap(MAP_APPROACH_LASANGELES);
-                    MotorBike_Reset();
-                    City_PreDrawRoad();
-                    break;
-            }
-           
-        }
+        stage_state = STAGE_FRONTVIEW;
+
+        // clear screens and initialize frontview
+        Stage_InitializeFrontView();
+       
     }
+}
+
+void Stage_InitializeFrontView(void)
+{
+
+    Game_ResetBitplanePointer();
+
+    BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+
+    bike_position_x = 80;
+    bike_position_y = 200;
+ 
+    Sprites_ClearLower();
+    Sprites_ClearHigher();
+
+    Game_SetMap(MAP_APPROACH_LASANGELES);
+
+    MotorBike_Reset();
+
+    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
+ 
+    Title_Reset();
+   
+    City_PreDrawRoad();
+    
+    HUD_DrawAll();
+
+    Music_Stop();
+    Music_LoadModule(MUSIC_FRONTVIEW);
 }

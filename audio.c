@@ -41,7 +41,7 @@ INCBIN_CHIP(mod_onroad, "mus/P61.onroadstag")
 //INCBIN_CHIP(mod_checkpoint, "")
 //INCBIN_CHIP(mod_ranking, "")
 //INCBIN_CHIP(mod_offroad,"" )
-//INCBIN_CHIP(mod_frontview,"" )
+INCBIN_CHIP(mod_frontview,"mus/P61.frontview" )
 //INCBIN_CHIP(mod_vivany,"" )
 //INCBIN_CHIP(mod_gameover,"" )
  
@@ -105,7 +105,7 @@ void Music_LoadModule(BYTE track)
         //p61Init(mod_offroad);
         break;
     case MUSIC_FRONTVIEW:
-        //p61Init(mod_frontview);
+        p61Init(mod_frontview);
         break;
     case MUSIC_VIVANY:
         //p61Init(mod_vivany);
