@@ -22,12 +22,17 @@
 #include "font.h"
 #include "title.h"
 #include "hiscore.h"
-#include "city_approach.h"
 #include "blitter.h"
+#include "city_approach.h"
+
 #include "cars.h"
 #include "audio.h"
 
 extern volatile struct Custom *custom;
+extern BlitterObject nyc_horizon;
+extern BlitterObject lv_horizon;
+extern BlitterObject *city_horizon;
+
 
 // Precomputed scroll amounts for speeds 0-255 (8.8 fixed point)
 #define MAX_SPEED_TABLE 256
@@ -90,6 +95,7 @@ BitMapEx *la_tiles;
 
 // Palettes
 UWORD	intro_colors[BLOCKSCOLORS];
+UWORD	lv_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
 UWORD	desert_colors[BLOCKSCOLORS];
 
@@ -209,12 +215,14 @@ void Game_SetMap(UBYTE maptype)
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             blocksbuffer = city_attract_tiles->planes[0];
+            city_horizon = &nyc_horizon;
             break;
         case MAP_OVERHEAD_LASANGELES:
             mapdata = (UWORD *)la_map->data;
             mapwidth = la_map->mapwidth;
             mapheight = la_map->mapheight;  
             blocksbuffer = la_tiles->planes[0];
+            city_horizon = &lv_horizon;
             break;
         case MAP_APPROACH_LASANGELES:
             // use attract mode assets for now
@@ -222,6 +230,7 @@ void Game_SetMap(UBYTE maptype)
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             blocksbuffer = city_attract_tiles->planes[0];
+            city_horizon = &lv_horizon;
             break;
         case MAP_OVERHEAD_LASVEGAS:
             break;

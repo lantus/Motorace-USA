@@ -121,8 +121,7 @@ typedef enum {
     COLLISION_TRAFFIC = 1,
     COLLISION_OFFROAD = 2
 } CollisionState;
-
-
+ 
 extern UBYTE game_stage;
 extern UBYTE game_state;
 extern UBYTE game_difficulty;
@@ -152,6 +151,7 @@ extern int collision_car_index;
 extern UWORD	intro_colors[BLOCKSCOLORS];
 extern UWORD	city_colors[BLOCKSCOLORS];
 extern UWORD	desert_colors[BLOCKSCOLORS];
+extern UWORD    lv_colors[BLOCKSCOLORS];
 
 extern struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 extern void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest);

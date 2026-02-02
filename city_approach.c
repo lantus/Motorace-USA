@@ -28,34 +28,34 @@
 
 extern volatile struct Custom *custom;
 
-BlitterObject city_horizon;
-
-void City_LoadHorizon(const char* city)
-{
-    city_horizon.size = findSize(city);
-    city_horizon.data = Disk_AllocAndLoadAsset(city, MEMF_CHIP);
-}
+BlitterObject nyc_horizon;
+BlitterObject lv_horizon;
+BlitterObject *city_horizon;
 
 void City_Initialize()
 {
      // The City Skyline
 
-    city_horizon.visible = TRUE;
-    city_horizon.off_screen = FALSE;
+    nyc_horizon.visible = TRUE;
+    nyc_horizon.off_screen = FALSE;
 
-    city_horizon.x = 0;
-    city_horizon.y = 0;
+    nyc_horizon.x = 0;
+    nyc_horizon.y = 0;
  
-    // default to demo/nyc
-    City_LoadHorizon(DEMO_NYC_SKYLINE);
+    nyc_horizon.size = findSize(NYC_SKYLINE);
+    nyc_horizon.data = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_CHIP);
+    
+    lv_horizon.size = findSize(VEGAS_SKYLINE);
+    lv_horizon.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_CHIP);
 
+    city_horizon = &nyc_horizon;
 }
 
 void City_BlitHorizon()
 {
     // Position
-    WORD x = city_horizon.x;
-    WORD y = city_horizon.y;
+    WORD x = city_horizon->x;
+    WORD y = city_horizon->y;
 
     UWORD source_mod = 0; 
     UWORD dest_mod =  (SCREENWIDTH - CITYSKYLINE_WIDTH) / 8;
@@ -64,7 +64,7 @@ void City_BlitHorizon()
     UWORD bltsize = ((CITYSKYLINE_HEIGHT<<2) << 6) | CITYSKYLINE_WIDTH/16;
     
     // Source data
-    UBYTE *source = (UBYTE*)&city_horizon.data[0];
+    UBYTE *source = (UBYTE*)&city_horizon->data[0];
  
     // Destination
     UBYTE *dest = draw_buffer;
@@ -74,13 +74,10 @@ void City_BlitHorizon()
 
 void City_FreeHorizon()
 {
-    if (city_horizon.data != NULL)
-    {
-        Mem_Free(city_horizon.data, city_horizon.size);
-        city_horizon.data = NULL;
-    }
+ 
 }
 
+ 
 void City_DrawRoad()
 {
     const UBYTE blocksperrow = 16;
