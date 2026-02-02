@@ -976,7 +976,7 @@ void Stage_InitializeFrontView(void)
 
     MotorBike_Reset();
 
-    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
+    Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
  
     Title_Reset();
    
