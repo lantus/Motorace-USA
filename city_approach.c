@@ -30,6 +30,8 @@ extern volatile struct Custom *custom;
 
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
+BlitterObject lv_horizon_anim1;
+BlitterObject lv_horizon_anim2;
 BlitterObject *city_horizon;
 
 void City_Initialize()
@@ -47,6 +49,12 @@ void City_Initialize()
     
     lv_horizon.size = findSize(VEGAS_SKYLINE);
     lv_horizon.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_CHIP);
+
+    lv_horizon_anim1.size = findSize(VEGAS_SKYLINE_ANIM1);
+    lv_horizon_anim1.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE_ANIM1, MEMF_CHIP);
+
+    lv_horizon_anim2.size = findSize(VEGAS_SKYLINE_ANIM2);
+    lv_horizon_anim2.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE_ANIM2, MEMF_CHIP);    
 
     city_horizon = &nyc_horizon;
 }

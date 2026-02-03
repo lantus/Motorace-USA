@@ -59,8 +59,11 @@ enum BikeState
     BIKE_STATE_BRAKING = 5,
     BIKE_STATE_CRASHED = 6,
     BIKE_STATE_JUMP = 7,
-    BIKE_STATE_WHEELIE = 8
+    BIKE_STATE_WHEELIE = 8,
+    BIKE_STATE_FRONTVIEW_LEFT = 15,
+    BIKE_STATE_FRONTVIEW_RIGHT = 16,
 };
+
 
 extern UBYTE bike_state;
 extern ULONG bike_anim_frames;

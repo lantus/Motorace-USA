@@ -671,9 +671,10 @@ void Stage_Draw()
     }
     else if (stage_state == STAGE_FRONTVIEW)
     {
-         // Update approach frame based on Y position (perspective)
-        MotorBike_UpdateApproachFrame(bike_position_y);
+        // Update approach frame based on Y position (perspective)
+       // MotorBike_UpdateApproachFrame(bike_position_y);
         
+       /* 
         // Only do the 2-frame animation for the closest view (frames 1-2)
         if (bike_position_y >= 176)
         {
@@ -694,9 +695,17 @@ void Stage_Draw()
                     MotorBike_SetFrame(BIKE_FRAME_APPROACH2);
                 }
             }
-        }
+        } */
         
         City_DrawRoad();
+
+        // Apply vibration offset for distant sprites (ADD THIS)
+        WORD vibration_x = MotorBike_GetVibrationOffset();
+
+        KPrintF("Bike State = %d\n", bike_state);
+        MotorBike_SetFrame(bike_state);
+        MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
+        MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
     }
     
 
@@ -739,7 +748,7 @@ void Stage_Update()
             }
         }
     }
-    else if (stage_state == STAGE_PLAYING || stage_state == STAGE_FRONTVIEW)
+    else if (stage_state == STAGE_PLAYING)
     {
       
         // === ACCELERATION LOGIC ===
@@ -805,14 +814,68 @@ void Stage_Update()
             }
         }
 
-        if (stage_state == STAGE_PLAYING)
+        Stage_CheckCompletion();
+    }
+    else if (stage_state == STAGE_FRONTVIEW)
+    {
+      
+        // === ACCELERATION LOGIC ===
+
+        if (JoyFireHeld())
         {
-            Stage_CheckCompletion();
+            // Fire button held - accelerate to max speed
+            bike_speed += ACCEL_RATE;   
+            if (bike_speed > MAX_SPEED)
+            {
+                bike_speed = MAX_SPEED;
+            }
+            bike_state = BIKE_FRAME_APPROACH1;
         }
         else
         {
-            UpdateRoadScroll(bike_speed<<1, 0);
+            // Fire button not held - auto-adjust to cruising speed
+            if (bike_speed < MIN_CRUISING_SPEED)
+            {
+                // Auto-accelerate to cruising speed SLOWLY  
+                bike_speed += 1;   
+                if (bike_speed > MIN_CRUISING_SPEED)
+                {
+                    bike_speed = MIN_CRUISING_SPEED;
+                }
+                bike_state = BIKE_FRAME_APPROACH1;
+            }
+            else if (bike_speed > MIN_CRUISING_SPEED)
+            {
+                // Decelerate back to cruising speed
+                bike_speed -= DECEL_RATE;
+                if (bike_speed < MIN_CRUISING_SPEED)
+                {
+                    bike_speed = MIN_CRUISING_SPEED;
+                }
+                bike_state = BIKE_FRAME_APPROACH1;
+            }
+            else
+            {
+                // Maintain cruising speed
+                bike_state = BIKE_FRAME_APPROACH1;
+            }
+ 
+        }        
+ 
+        // === LEFT/RIGHT MOVEMENT ===
+        if (JoyLeft())
+        {
+            bike_position_x -= 2;
+            bike_state = BIKE_STATE_FRONTVIEW_LEFT;
         }
+
+        if (JoyRight())
+        {
+            bike_position_x += 2;
+            bike_state = BIKE_STATE_FRONTVIEW_RIGHT;
+        }
+
+        UpdateRoadScroll(bike_speed<<1, 0);
     }
 }
  

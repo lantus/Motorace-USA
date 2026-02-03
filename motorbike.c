@@ -139,6 +139,9 @@ void MotorBike_Initialize()
     Sprites_BuildComposite(spr_approach_bike_frame7,4,&spr_rsrc_approach_bike_frame7);   
     Sprites_BuildComposite(spr_approach_bike_frame8,4,&spr_rsrc_approach_bike_frame8);   
 
+    Sprites_BuildComposite(spr_approach_bike_frame1_left,4,&spr_rsrc_approach_bike_frame1_left);   
+    Sprites_BuildComposite(spr_approach_bike_frame1_right,4,&spr_rsrc_approach_bike_frame1_right);   
+
     Sprites_ApplyPalette(&spr_rsrc_bike_moving1);
  
 }
@@ -199,6 +202,14 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
                 current_bike_sprite = spr_bike_moving3;
             }
         }
+    }
+    else if ( state == BIKE_STATE_FRONTVIEW_LEFT)
+    {
+        current_bike_sprite = spr_approach_bike_frame1_left;
+    }
+    else if ( state == BIKE_STATE_FRONTVIEW_RIGHT)
+    {
+        current_bike_sprite = spr_approach_bike_frame1_right;
     }
     else if (state == BIKE_STATE_LEFT)
     {
