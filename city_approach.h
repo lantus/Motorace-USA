@@ -30,6 +30,11 @@ typedef struct {
     BOOL active;         // Is this car slot in use?
     WORD speed;          // How fast it approaches (pixels per frame)
     WORD lane;           // Which lane (0=left, 1=center, 2=right)
+
+    // Background restoration
+    UBYTE *background;      // Saved background data
+    BOOL needs_restore;
+        
 } OncomingCar;
 
 extern OncomingCar oncoming_cars[MAX_ONCOMING_CARS];
@@ -43,4 +48,8 @@ void City_Initialize();
 void City_BlitHorizon();
 void City_DrawRoad();
 void City_PreDrawRoad();
- 
+void City_SpawnOncomingCar(void);
+void City_UpdateOncomingCars(void);
+void City_DrawOncomingCar(OncomingCar *car);
+void City_Update(void);
+BOOL City_IsComplete(void);

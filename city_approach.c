@@ -101,6 +101,18 @@ void City_Initialize()
     car_scale_data[6] = Disk_AllocAndLoadAsset(ONCOMING_CAR_7, MEMF_CHIP);
     car_scale_data[7] = Disk_AllocAndLoadAsset(ONCOMING_CAR_8, MEMF_CHIP);
     car_scale_data[8] = Disk_AllocAndLoadAsset(ONCOMING_CAR_9, MEMF_CHIP);  // Largest
+
+    // Reset all cars
+    for (int i = 0; i < MAX_ONCOMING_CARS; i++)
+    {
+        oncoming_cars[i].active = FALSE;
+        oncoming_cars[i].scale_index = 0;
+        oncoming_cars[i].y = 0;
+        oncoming_cars[i].speed = 2;
+    }
+    
+    spawn_timer = 0;
+    city_approach_complete = FALSE;
 }
 
 void City_BlitHorizon()
@@ -205,4 +217,105 @@ void City_PreDrawRoad()
     
     // Disable DMA ONCE at end
     custom->dmacon = 0x0400;
+}
+
+void City_SpawnOncomingCar(void)
+{
+    // Find empty slot
+    for (int i = 0; i < MAX_ONCOMING_CARS; i++)
+    {
+        if (!oncoming_cars[i].active)
+        {
+            oncoming_cars[i].active = TRUE;
+            oncoming_cars[i].scale_index = 0;  // Start at smallest scale
+            oncoming_cars[i].y = scale_start_y[0];  // Start at horizon
+            oncoming_cars[i].lane = i % 3;  // Cycle through lanes
+            oncoming_cars[i].x = lane_positions[oncoming_cars[i].lane];
+            oncoming_cars[i].speed = 2 + (i % 2);  // Vary speed slightly
+            
+            KPrintF("Spawned oncoming car in slot %d, lane %d\n", i, oncoming_cars[i].lane);
+            break;
+        }
+    }
+}
+
+void City_UpdateOncomingCars(void)
+{
+    for (int i = 0; i < MAX_ONCOMING_CARS; i++)
+    {
+        if (!oncoming_cars[i].active) continue;
+        
+        OncomingCar *car = &oncoming_cars[i];
+        
+        // Move car down screen (approaching)
+        car->y += car->speed;
+        
+        // Check if we should advance to next scale
+        if (car->scale_index < NUM_CAR_SCALES - 1)
+        {
+            // Advance to next scale when Y position passes threshold
+            if (car->y >= scale_start_y[car->scale_index + 1])
+            {
+                car->scale_index++;
+                KPrintF("Car %ld advanced to scale %ld\n", i, car->scale_index);
+            }
+        }
+        
+        // Despawn when car reaches bottom/passes bike
+        if (car->y > 200 || car->scale_index >= NUM_CAR_SCALES - 1)
+        {
+            car->active = FALSE;
+            KPrintF("Car %ld despawned\n", i);
+        }
+    }
+}
+
+void City_DrawOncomingCar(OncomingCar *car)
+{
+    if (!car->active) return;
+    
+    WORD width = car_scale_widths[car->scale_index];
+    WORD height = car_scale_heights[car->scale_index];
+    UBYTE *sprite_data = car_scale_data[car->scale_index];
+    
+    // Center the sprite on the lane position
+    WORD draw_x = car->x - (width / 2);
+    WORD draw_y = car->y;
+    
+    // TODO: Use your blitter routine to draw the sprite
+    // BlitSprite(sprite_data, draw_x, draw_y, width, height);
+    
+    // For now, just log it
+    // KPrintF("Draw car: x=%d y=%d scale=%d\n", draw_x, draw_y, car->scale_index);
+}
+
+void City_Update(void)
+{
+    // Spawn new cars at intervals
+    spawn_timer++;
+    if (spawn_timer >= spawn_interval)
+    {
+        spawn_timer = 0;
+        City_SpawnOncomingCar();
+    }
+    
+    // Update all active cars
+    City_UpdateOncomingCars();
+    
+    // Draw all active cars
+    for (int i = 0; i < MAX_ONCOMING_CARS; i++)
+    {
+        if (oncoming_cars[i].active)
+        {
+            City_DrawOncomingCar(&oncoming_cars[i]);
+        }
+    }
+    
+    // Check completion (placeholder)
+    // city_approach_complete = TRUE after X seconds or Y cars
+}
+
+BOOL City_IsComplete(void)
+{
+    return city_approach_complete;
 }
