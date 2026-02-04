@@ -28,6 +28,37 @@
 
 extern volatile struct Custom *custom;
 
+
+OncomingCar oncoming_cars[MAX_ONCOMING_CARS];
+
+// Sprite data for 9 scales
+UBYTE *car_scale_data[NUM_CAR_SCALES];
+
+// Dimensions for each scale (example values - adjust based on your sprites)
+WORD car_scale_widths[NUM_CAR_SCALES] = {
+    8, 12, 16, 20, 24, 28, 32, 36, 40  // Width in pixels
+};
+
+WORD car_scale_heights[NUM_CAR_SCALES] = {
+    6, 9, 12, 15, 18, 21, 24, 27, 30   // Height in pixels
+};
+
+// Starting Y positions for each scale (where car appears on screen)
+static const WORD scale_start_y[NUM_CAR_SCALES] = {
+    30, 40, 50, 60, 75, 90, 110, 135, 165  // Y position for each scale
+};
+
+// Lane X positions (adjust based on your road perspective)
+static const WORD lane_positions[3] = {
+    100,  // Left lane
+    160,  // Center lane  
+    220   // Right lane
+};
+
+static WORD spawn_timer = 0;
+static WORD spawn_interval = 60;  // Frames between car spawns
+static BOOL city_approach_complete = FALSE;
+
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
 BlitterObject lv_horizon_anim1;
@@ -57,6 +88,19 @@ void City_Initialize()
     lv_horizon_anim2.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE_ANIM2, MEMF_CHIP);    
 
     city_horizon = &nyc_horizon;
+
+
+    // Scaled Oncoming Car Bobs
+
+    car_scale_data[0] = Disk_AllocAndLoadAsset(ONCOMING_CAR_1, MEMF_CHIP);  // Smallest
+    car_scale_data[1] = Disk_AllocAndLoadAsset(ONCOMING_CAR_2, MEMF_CHIP);
+    car_scale_data[2] = Disk_AllocAndLoadAsset(ONCOMING_CAR_3, MEMF_CHIP);
+    car_scale_data[3] = Disk_AllocAndLoadAsset(ONCOMING_CAR_4, MEMF_CHIP);
+    car_scale_data[4] = Disk_AllocAndLoadAsset(ONCOMING_CAR_5, MEMF_CHIP);
+    car_scale_data[5] = Disk_AllocAndLoadAsset(ONCOMING_CAR_6, MEMF_CHIP);
+    car_scale_data[6] = Disk_AllocAndLoadAsset(ONCOMING_CAR_7, MEMF_CHIP);
+    car_scale_data[7] = Disk_AllocAndLoadAsset(ONCOMING_CAR_8, MEMF_CHIP);
+    car_scale_data[8] = Disk_AllocAndLoadAsset(ONCOMING_CAR_9, MEMF_CHIP);  // Largest
 }
 
 void City_BlitHorizon()
