@@ -1,4 +1,7 @@
  
+#ifndef BLITTER_H
+#define BLITTER_H
+
 UBYTE* Bob_CreateMask(unsigned char* bob,int bitplanes, int frames, int rows, int words);
 void BlitBob(WORD x, WORD y, ULONG admod, UWORD bltsize, 
              UBYTE **restore_ptrs, UBYTE *source, UBYTE *mask, UBYTE *dest,
@@ -52,3 +55,5 @@ typedef struct
     RestorePtrs restore;
 
 } BlitterObject;
+
+#endif

@@ -20,15 +20,12 @@ kingcon Car3_1.iff ..\objects\car3_1 -Interleaved -format=4 -Mask -AW
 kingcon Car4_0.iff ..\objects\car4_0 -Interleaved -format=4 -Mask -AW
 kingcon Car4_1.iff ..\objects\car4_1 -Interleaved -format=4 -Mask -AW
 
-kingcon frontview_car5.iff ..\objects\frontview\frontview_car5 -Interleaved -format=4
-kingcon frontview_car6.iff ..\objects\frontview\frontview_car6 -Interleaved -format=4
-kingcon frontview_car7.iff ..\objects\frontview\frontview_car7 -Interleaved -format=4
-kingcon frontview_car8.iff ..\objects\frontview\frontview_car8 -Interleaved -format=4
-kingcon left_frontview_car1.iff ..\objects\frontview\left_frontview_car1 -Interleaved -format=4
-kingcon left_frontview_car2.iff ..\objects\frontview\left_frontview_car2 -Interleaved -format=4
-kingcon left_frontview_car3.iff ..\objects\frontview\left_frontview_car3 -Interleaved -format=4
-kingcon left_frontview_car4.iff ..\objects\frontview\left_frontview_car4 -Interleaved -format=4
-kingcon right_frontview_car1.iff ..\objects\frontview\right_frontview_car1 -Interleaved -format=4
-kingcon right_frontview_car2.iff ..\objects\frontview\right_frontview_car2 -Interleaved -format=4
-kingcon right_frontview_car3.iff ..\objects\frontview\right_frontview_car3 -Interleaved -format=4
-kingcon right_frontview_car4.iff ..\objects\frontview\right_frontview_car4 -Interleaved -format=4
+
+kingcon frontview\fv1.iff ..\objects\frontview\fv1 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv2.iff ..\objects\frontview\fv2 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv3.iff ..\objects\frontview\fv3 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv4.iff ..\objects\frontview\fv4 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv5.iff ..\objects\frontview\fv5 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv6.iff ..\objects\frontview\fv6 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv7.iff ..\objects\frontview\fv7 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv8.iff ..\objects\frontview\fv8 -Interleaved -format=4 -Mask -AW

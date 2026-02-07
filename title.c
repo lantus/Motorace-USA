@@ -83,9 +83,9 @@ void Title_Initialize(void)
 
     // Palette
     Game_LoadPalette("palettes/intro.pal", intro_colors, BLOCKSCOLORS);
-    Game_LoadPalette("palettes/frontview_lv.pal", lv_colors, BLOCKSCOLORS);
+    Game_LoadPalette("palettes/cars_frontview_lv.pal", lv_colors, BLOCKSCOLORS);
     Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
-
+   
     title_state = TITLE_ATTRACT_INIT;
     
     // Reset Positions

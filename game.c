@@ -699,7 +699,9 @@ void Stage_Draw()
             }
         } */
         
+       
         City_DrawRoad();
+        City_DrawOncomingCars();
 
         // Apply vibration offset for distant sprites (ADD THIS)
         WORD vibration_x = MotorBike_GetVibrationOffset();
@@ -820,6 +822,17 @@ void Stage_Update()
     else if (stage_state == STAGE_FRONTVIEW)
     {
       
+        // *** Check if city approach complete (all 8 cars passed) ***
+        if (City_OncomingCarsIsComplete())
+        {
+            stage_state = STAGE_COMPLETE;
+            KPrintF("=== Stage 1 Complete! ===\n");
+            
+            // TODO: Transition to stage complete screen or next stage
+            
+            return;
+        }
+
         // === ACCELERATION LOGIC ===
 
         if (JoyFireHeld())
@@ -1011,13 +1024,13 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (mapposy <= 12000)  // Near the top/end of map
+    if (mapposy <= 16000)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 
         // clear screens and initialize frontview
         Stage_InitializeFrontView();
-       
+        
     }
 }
 
@@ -1040,11 +1053,13 @@ void Stage_InitializeFrontView(void)
     MotorBike_Reset();
 
     Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
- 
+    Game_SetBackGroundColor(0x00);
+    
     Title_Reset();
    
     City_PreDrawRoad();
-    
+    City_OncomingCarsReset();
+
     HUD_DrawAll();
 
     Music_Stop();
