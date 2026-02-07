@@ -1,14 +1,5 @@
 #include "support/gcc8_c_support.h"
-#include <exec/types.h>
-#include <exec/exec.h>
-#include <graphics/gfx.h>
-#include <graphics/gfxbase.h>
-#include <hardware/custom.h>
-#include <hardware/intbits.h>
-#include <hardware/dmabits.h>
-#include <proto/exec.h>
-#include <proto/graphics.h>
-#include <proto/dos.h>
+ 
 #include "game.h"
 #include "copper.h"
 #include "memory.h"

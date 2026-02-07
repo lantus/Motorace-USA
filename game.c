@@ -24,6 +24,7 @@
 #include "hiscore.h"
 #include "blitter.h"
 #include "city_approach.h"
+#include "roadsystem.h"
 
 #include "cars.h"
 #include "audio.h"
@@ -592,6 +593,7 @@ void GameReady_Update(void)
         Game_ApplyPalette(city_colors,BLOCKSCOLORS);
 
         MotorBike_Reset();
+
         HUD_SetSpritePositions();
         HUD_DrawAll();
         
@@ -1022,7 +1024,6 @@ void Stage_CheckCompletion(void)
 
 void Stage_InitializeFrontView(void)
 {
-
     Game_ResetBitplanePointer();
 
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
