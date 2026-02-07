@@ -704,7 +704,6 @@ void Stage_Draw()
         // Apply vibration offset for distant sprites (ADD THIS)
         WORD vibration_x = MotorBike_GetVibrationOffset();
 
-        KPrintF("Bike State = %d\n", bike_state);
         MotorBike_SetFrame(bike_state);
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);

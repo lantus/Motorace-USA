@@ -167,7 +167,7 @@ void Title_Draw()
  
         if (Timer_HasElapsed(&logo_flash_timer) == FALSE)
         {
-            if (title_flash_counter % 2 == 0) 
+            if (title_flash_counter % 4 == 0) 
             {          
                 Copper_SwapColors(7, 12);
             }
@@ -182,6 +182,7 @@ void Title_Draw()
             BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 64);
             BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 64);
 
+            WaitBlit();
             Title_BlitLogo();
 
             AttractMode_DrawText();
