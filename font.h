@@ -32,3 +32,6 @@ UWORD Font_MeasureText(char *text);
 
 // Clear a rectangular area (useful for erasing text)
 void Font_ClearArea(UBYTE *buffer, UWORD x, UWORD y, UWORD width, UWORD height);
+
+// Clear a rectangular area from a pristine bitmap (useful for erasing text)
+void Font_RestoreFromPristine(UBYTE *dest_buffer, UWORD x, UWORD y, UWORD width, UWORD height);

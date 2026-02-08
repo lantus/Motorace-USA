@@ -125,6 +125,41 @@ void BlitClearScreen(APTR buffer, UWORD bltsize)
     custom->bltsize = bltsize;
 }
 
+void BlitClearScreenWithColor(APTR buffer, UWORD bltsize, UBYTE color)
+{
+    // For interleaved 4 bitplanes, fill each plane based on color bits
+    for (WORD plane = 0; plane < 4; plane++)
+    {
+        BOOL bit_set = (color >> plane) & 1;
+        
+        WaitBlit();
+        
+        if (bit_set)
+        {
+            // Fill plane with 1s
+            custom->bltcon0 = 0xFF00;  // A->D with all 1s
+            custom->bltadat = 0xFFFF;  // Source data = all 1s
+        }
+        else
+        {
+            // Fill plane with 0s
+            custom->bltcon0 = 0x0100;  // D only, minterm 0 = clear
+        }
+        
+        custom->bltcon1 = 0;
+        custom->bltafwm = 0xFFFF;
+        custom->bltalwm = 0xFFFF;
+        
+        // Offset to this plane (interleaved: skip 'plane' words)
+        custom->bltdpt = buffer + (plane << 1);
+        
+        // Modulo: skip 3 other planes (4 planes * 2 bytes - 2)
+        custom->bltdmod = 6;
+        
+        custom->bltsize = bltsize;
+    }
+}
+
 /*
  * BlitRestoreBobs
  * Restores backgrounds for all bobs in restore array

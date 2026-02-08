@@ -678,12 +678,19 @@ void Stage_Draw()
 
         Game_ResetBitplanePointer();
 
+        City_UpdateHorizonTransition(&bike_position_y, &bike_speed, game_frame_count);
+
         // Apply vibration offset for distant sprites (ADD THIS)
         WORD vibration_x = MotorBike_GetVibrationOffset();
 
         MotorBike_SetFrame(bike_state);
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
+
+        if (City_GetApproachState() == CITY_STATE_INTO_HORIZON)
+        {
+            MotorBike_UpdateApproachFrame(bike_position_y);
+        }
     }
     
 
@@ -797,14 +804,10 @@ void Stage_Update()
     else if (stage_state == STAGE_FRONTVIEW)
     {
       
-        // *** Check if city approach complete (all 8 cars passed) ***
         if (City_OncomingCarsIsComplete())
         {
             stage_state = STAGE_COMPLETE;
             KPrintF("=== Stage 1 Complete! ===\n");
-            
-            // TODO: Transition to stage complete screen or next stage
-            
             return;
         }
 
@@ -864,7 +867,17 @@ void Stage_Update()
             bike_state = BIKE_STATE_FRONTVIEW_RIGHT;
         }
 
-        UpdateRoadScroll(bike_speed<<1, 0);
+        CityApproachState approach_state = City_GetApproachState();
+        
+        if (approach_state == CITY_STATE_WAITING_NAME  || approach_state == CITY_STATE_ACTIVE)
+        {
+           UpdateRoadScroll(bike_speed << 1, 0);
+        }
+        else if (approach_state == CITY_STATE_INTO_HORIZON)
+        {
+            // Road continues scrolling during horizon transition
+            UpdateRoadScroll(bike_speed << 1, game_frame_count);
+        }
     }
 }
  
@@ -1034,6 +1047,8 @@ void Stage_InitializeFrontView(void)
    
     City_PreDrawRoad();
     City_OncomingCarsReset();
+
+    City_ShowCityName("LAS VEGAS");
 
     HUD_DrawAll();
 

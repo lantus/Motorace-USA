@@ -81,37 +81,38 @@ void Font_DrawChar(UBYTE *buffer, char c, UWORD x, UWORD y, UBYTE color)
     UBYTE char_data[8];
     Font_GetChar(c, char_data);
     
-    // Clipping
     if (x + CHAR_WIDTH > VIEWPORT_WIDTH || y + CHAR_HEIGHT > VIEWPORT_HEIGHT)
         return;
     
-    UWORD byte_offset = x >> 1;  // Which byte horizontally
-    UBYTE bit_shift = 7 - (x % 8);  // Bit position within byte
+    UWORD byte_offset = x >> 3;  // ✅ Fixed: x / 8
     
     for (int row = 0; row < CHAR_HEIGHT; row++)
     {
         UBYTE font_row = char_data[row];
+ 
+        ULONG line_offset = ((ULONG)(y + row) << 6) + ((ULONG)(y + row) << 5);
         
-        // Calculate offset for this scanline in the buffer
-        // Format: line0_plane0, line0_plane1, line0_plane2, line0_plane3,
-        //         line1_plane0, line1_plane1, line1_plane2, line1_plane3, ...
-        ULONG line_offset = (y + row) * BITMAPBYTESPERROW << 2;
-        
-        // Process each pixel in the character row
         for (int bit = 0; bit < 8; bit++)
         {
             if (font_row & (0x80 >> bit))
             {
-                UWORD pixel_byte = byte_offset + (bit >> 3);
-                UBYTE pixel_bit = 7 - ((x + bit) % 8);
+                UWORD pixel_x = x + bit;
+                UWORD pixel_byte = pixel_x >> 3;
+                UBYTE pixel_bit = 7 - (pixel_x & 7);
+                UBYTE pixel_mask = 1 << pixel_bit;
                 
-                // Set bits in each bitplane based on color value
+     
                 for (int plane = 0; plane < 4; plane++)
                 {
+                    ULONG plane_offset = line_offset + ((plane << 4) + (plane << 3)) + pixel_byte;
+                    
                     if (color & (1 << plane))
                     {
-                        ULONG plane_offset = line_offset + (plane * BITMAPBYTESPERROW) + pixel_byte;
-                        buffer[plane_offset] |= (1 << pixel_bit);
+                        buffer[plane_offset] |= pixel_mask;   // Set bit
+                    }
+                    else
+                    {
+                        buffer[plane_offset] &= ~pixel_mask;  // Clear bit
                     }
                 }
             }
@@ -127,21 +128,29 @@ void Font_DrawCharAligned(UBYTE *buffer, char c, UWORD x, UWORD y, UBYTE color)
     
     if (x + CHAR_WIDTH > VIEWPORT_WIDTH || y + CHAR_HEIGHT > VIEWPORT_HEIGHT)
         return;
-    
-    UWORD byte_offset = x / 8;
+
+    UWORD byte_offset = x >> 3;
     
     for (int row = 0; row < CHAR_HEIGHT; row++)
     {
         UBYTE font_row = char_data[row];
-        ULONG line_offset = (y + row) * BITMAPBYTESPERROW * 4;
+        
+        // For BITMAPBYTESPERROW = 24: 96 = 64 + 32
+        ULONG line_offset = ((ULONG)(y + row) << 6) + ((ULONG)(y + row) << 5);
         
         // Write to each bitplane
         for (int plane = 0; plane < 4; plane++)
-        {
+        { 
+            // 24 = 16 + 8
+            ULONG plane_offset = line_offset + ((plane << 4) + (plane << 3)) + byte_offset;
+            
             if (color & (1 << plane))
             {
-                ULONG plane_offset = line_offset + (plane * BITMAPBYTESPERROW) + byte_offset;
-                buffer[plane_offset] |= font_row;
+                buffer[plane_offset] |= font_row;   // Set bits
+            }
+            else
+            {
+                buffer[plane_offset] &= ~font_row;  // Clear bits
             }
         }
     }
@@ -171,17 +180,16 @@ void Font_DrawString(UBYTE *buffer, char *text, UWORD x, UWORD y, UBYTE color)
 // Measure text width in pixels
 UWORD Font_MeasureText(char *text)
 {
-    return strlen(text) * CHAR_WIDTH;
+    return strlen(text) << 3;
 }
 
 // Draw string centered horizontally
 void Font_DrawStringCentered(UBYTE *buffer, char *text, UWORD y, UBYTE color)
 {
     UWORD text_width = Font_MeasureText(text);
-    UWORD x = (VIEWPORT_WIDTH - text_width) / 2;
+    UWORD x = (VIEWPORT_WIDTH - text_width) >> 1;
     
-    // Align to byte boundary for speed
-    x = (x / 8) * 8;
+    x &= 0xFFF8;
     
     Font_DrawString(buffer, text, x, y, color);
 }
@@ -201,24 +209,63 @@ void Font_DrawStringCenteredBoth(UBYTE *buffer, char *text, UBYTE color)
 // Clear rectangular area (set to color 0)
 void Font_ClearArea(UBYTE *buffer, UWORD x, UWORD y, UWORD width, UWORD height)
 {
+    UWORD start_byte = x >> 3;  // x / 8
+    UWORD end_byte = (x + width + 7) >> 3;  // Ceiling division
+
+    if (end_byte > BITMAPBYTESPERROW) 
+        end_byte = BITMAPBYTESPERROW;
+
+    
+    // For BITMAPBYTESPERROW = 24: 24 * 4 = 96 = 64 + 32
+    ULONG line_offset = ((ULONG)y << 6) + ((ULONG)y << 5);
+
     for (UWORD row = 0; row < height; row++)
     {
         if (y + row >= VIEWPORT_HEIGHT) break;
         
-        ULONG line_offset = (y + row) * BITMAPBYTESPERROW * 4;
-        
         for (int plane = 0; plane < 4; plane++)
         {
-            ULONG plane_offset = line_offset + (plane * BITMAPBYTESPERROW);
+           
+            // 24 = 16 + 8 = 2^4 + 2^3
+            ULONG plane_offset = line_offset + ((plane << 4) + (plane << 3));
             
             // Clear bytes for this line
-            UWORD start_byte = x / 8;
-            UWORD end_byte = (x + width + 7) / 8;
-            
-            for (UWORD byte = start_byte; byte < end_byte && byte < BITMAPBYTESPERROW; byte++)
+            for (UWORD byte = start_byte; byte < end_byte; byte++)
             {
                 buffer[plane_offset + byte] = 0;
             }
         }
+        
+       
+        line_offset += 96;  // Compiler will optimize to (64 + 32)
+    }
+}
+
+void Font_RestoreFromPristine(UBYTE *dest_buffer, UWORD x, UWORD y, UWORD width, UWORD height)
+{
+    UWORD start_byte = x >> 3;
+    UWORD width_bytes = ((x + width + 7) >> 3) - start_byte;
+    
+    if (start_byte + width_bytes > BITMAPBYTESPERROW) 
+        width_bytes = BITMAPBYTESPERROW - start_byte;
+    
+    ULONG line_offset = ((ULONG)y << 6) + ((ULONG)y << 5) + start_byte;
+    
+    for (UWORD row = 0; row < height; row++)
+    {
+        if (y + row >= VIEWPORT_HEIGHT) break;
+        
+        for (int plane = 0; plane < 4; plane++)
+        {
+            ULONG plane_offset = line_offset + ((plane << 4) + (plane << 3));
+            
+            // ✅ Copy from pristine to destination
+            for (UWORD byte = 0; byte < width_bytes; byte++)
+            {
+                dest_buffer[plane_offset + byte] = screen.pristine[plane_offset + byte];
+            }
+        }
+        
+        line_offset += 96;
     }
 }

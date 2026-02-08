@@ -24,6 +24,7 @@
 #include "motorbike.h"
 #include "timers.h"
 #include "disk.h"
+#include "font.h"
 #include "city_approach.h"
 
 extern volatile struct Custom *custom;
@@ -49,7 +50,9 @@ static const WORD lane_positions[3] = {
 
 static WORD cars_passed = 0;
 static GameTimer spawn_timer;
-static BOOL city_approach_complete = FALSE;
+static GameTimer city_name_timer;
+static BOOL city_name_complete = FALSE;
+static CityApproachState city_state = CITY_STATE_WAITING_NAME;
 
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
@@ -106,16 +109,12 @@ void City_Initialize()
 
 void City_OncomingCarsReset()
 {
- 
     cars_passed = 0;
-    city_approach_complete = FALSE;
+    city_name_complete = FALSE;
+    city_state = CITY_STATE_WAITING_NAME;
  
     Timer_Stop(&spawn_timer);
-    
-    // Spawn first car immediately
-    City_SpawnOncomingCar();
-    
-    KPrintF("City approach initialized - 8 cars to pass\n");
+
 }
 
 void City_BlitHorizon()
@@ -146,7 +145,7 @@ void City_DrawRoad()
 
     WORD a, b, x, y;
  
-    for (b = 0; b < 10; b++)
+    for (b = 1; b < 10; b++)
     {
         a = 0;
         while (a < 12)
@@ -194,7 +193,7 @@ void City_PreDrawRoad()
     // Enable DMA ONCE at start
     custom->dmacon = 0x8400;
  
-    for (b = 0; b < 11; b++)
+    for (b = 0; b < 13; b++)
     {
         for (a = 0; a < 12; a++)
         {
@@ -203,7 +202,13 @@ void City_PreDrawRoad()
             
             tmpa = a;
             tmpb = b;
-            
+
+            if (tmpb > 10)
+            {
+                tmpa = 2;
+                tmpb = 10;
+            }
+ 
             DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
                     blockplanelines, FALSE, road_tile_idx, screen.bitplanes); 
 
@@ -217,7 +222,7 @@ void City_PreDrawRoad()
     }
 
     // Blit the Skyline
-    City_BlitHorizon();     
+    City_BlitHorizon();
     
     // Disable DMA ONCE at end
     custom->dmacon = 0x0400;
@@ -295,59 +300,106 @@ void City_DrawOncomingCar(BlitterObject *car)
 
 void City_DrawOncomingCars(void)
 {
-    if (current_car->visible)
+    // Wait for city name to finish
+    if (city_state == CITY_STATE_WAITING_NAME)
     {
-        // Move car down screen
-       current_car->y += current_car->speed;
-        
-        // Advance to next scale when passing threshold
-        if (current_car->id < NUM_CAR_SCALES - 1)
+        if (City_IsCityNameComplete())
         {
-            // Check if we've reached the NEXT scale's Y threshold
-            if (current_car->y >= scale_start_y[current_car->id + 1])
-            {
-                current_car->id++;
-                KPrintF("Car advancing to scale %d at Y=%d\n",current_car->id, current_car->y);
-            }
-        }
-        
-        // Car has passed bike (reached largest scale and bottom of screen)
-        if (current_car->id >= NUM_CAR_SCALES - 1 && current_car->y > 210)
-        {
-            //City_RestoreBackground(current_car);  // Clean up last position
-            current_car->visible = FALSE;
-            cars_passed++;
-            
-            KPrintF("Car passed! Total: %d/%d\n", cars_passed, TOTAL_CARS_TO_PASS);
-            
-            if (cars_passed >= TOTAL_CARS_TO_PASS)
-            {
-                city_approach_complete = TRUE;
-                KPrintF("=== City approach complete! ===\n");
-            }
-            else
-            {
-                Timer_Start(&spawn_timer, 2);  // 2 second delay
-            }
-        }
-        
-        // Draw the car
-        City_DrawOncomingCar(current_car);
-    }
-    else if (!city_approach_complete)
-    {
-        // Wait for spawn delay
-        if (Timer_HasElapsed(&spawn_timer))
-        {
-            Timer_Stop(&spawn_timer);
             City_SpawnOncomingCar();
         }
+        return;
+    }
+    
+    // Active car spawning/passing
+    if (city_state == CITY_STATE_ACTIVE)
+    {
+        if (current_car->visible)
+        {
+            current_car->y += current_car->speed;
+            
+            if (current_car->id < NUM_CAR_SCALES - 1)
+            {
+                if (current_car->y >= scale_start_y[current_car->id + 1])
+                {
+                    current_car->id++;
+                }
+            }
+            
+            if (current_car->id >= NUM_CAR_SCALES - 1 && current_car->y > 210)
+            {
+                current_car->visible = FALSE;
+                cars_passed++;
+                
+                KPrintF("Car passed! Total: %d/%d\n", cars_passed, TOTAL_CARS_TO_PASS);
+                
+                if (cars_passed >= TOTAL_CARS_TO_PASS)
+                {
+                 
+                    city_state = CITY_STATE_INTO_HORIZON;
+                    KPrintF("=== All cars passed - moving into horizon ===\n");
+                }
+                else
+                {
+                    Timer_Start(&spawn_timer, 2);
+                }
+            }
+            
+            City_DrawOncomingCar(current_car);
+        }
+        else
+        {
+            if (Timer_HasElapsed(&spawn_timer))
+            {
+                Timer_Stop(&spawn_timer);
+                City_SpawnOncomingCar();
+            }
+        }
+    }
+    // Horizon transition - bike only, no cars
+    else if (city_state == CITY_STATE_INTO_HORIZON)
+    {
+        // Bike moves into horizon - handled in City_UpdateHorizonTransition
+    }
+}
+
+void City_UpdateHorizonTransition(WORD *bike_y, WORD *bike_speed, UWORD frame_count)
+{
+    if (city_state != CITY_STATE_INTO_HORIZON) return;
+    
+    if (*bike_speed > 80 && frame_count % 3 == 0)
+    {
+        *bike_speed -= 1;
+    }
+    
+    UWORD y_speed;
+    
+    if (*bike_speed > 150)
+        y_speed = 2;
+    else if (*bike_speed > 100)
+        y_speed = 2;
+    else
+        y_speed = 2;
+    
+    if (frame_count % y_speed == 0)
+    {
+        (*bike_y)--;
+    }
+    
+    if (*bike_y <= 100)
+    {
+        city_state = CITY_STATE_COMPLETE;
+        KPrintF("=== Horizon transition complete ===\n");
     }
 }
 
 BOOL City_OncomingCarsIsComplete(void)
 {
-    return city_approach_complete;
+     return (city_state == CITY_STATE_COMPLETE);
+}
+
+CityApproachState City_GetApproachState(void)
+{
+    return city_state;
 }
 
 void City_RestoreOncomingCars(void)
@@ -399,3 +451,40 @@ void City_CopyPristineBackground(BlitterObject *car)
     custom->bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4;
 }
  
+void City_ShowCityName(const char *city_name)
+{
+    // Draw city name on all buffers
+    Font_DrawStringCentered(screen.bitplanes, (char*)city_name, 220, 7);  
+    Font_DrawStringCentered(screen.offscreen_bitplanes, (char*)city_name, 220, 7);
+    
+    // Start 3-second timer
+    Timer_Start(&city_name_timer,3);
+    city_name_complete = FALSE;
+
+}
+
+BOOL City_IsCityNameComplete(void)
+{
+    if (city_name_complete) return TRUE;
+
+    if (Timer_HasElapsed(&city_name_timer))
+    {
+        Timer_Stop(&city_name_timer);
+        city_name_complete = TRUE;
+        
+        // Clear text by restoring road from pristine
+        UWORD text_width = Font_MeasureText("LAS VEGAS");
+        UWORD x = (VIEWPORT_WIDTH - text_width) >> 1;
+        x &= 0xFFF8;
+        
+        Font_RestoreFromPristine(screen.bitplanes, x, 220, text_width, CHAR_HEIGHT);
+        Font_RestoreFromPristine(screen.offscreen_bitplanes, x, 220, text_width, CHAR_HEIGHT);
+        
+        city_state = CITY_STATE_ACTIVE;   
+        
+        KPrintF("City name complete - starting cars\n");
+        return TRUE;
+    }
+
+    return FALSE;
+}

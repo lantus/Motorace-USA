@@ -35,7 +35,15 @@
 #define ONCOMING_CAR_WIDTH_WORDS 4            // (includes padding)
 
 #define NUM_CAR_SCALES 8
-#define TOTAL_CARS_TO_PASS 32
+#define TOTAL_CARS_TO_PASS 8
+
+// City approach states
+typedef enum {
+    CITY_STATE_WAITING_NAME,       // Showing city name
+    CITY_STATE_ACTIVE,             // Cars spawning/passing
+    CITY_STATE_INTO_HORIZON,       // All cars passed, bike moving into horizon
+    CITY_STATE_COMPLETE            // Horizon transition done
+} CityApproachState;
 
 extern BlitterObject *city_horizon;
 extern BlitterObject oncoming_car[8];
@@ -44,6 +52,7 @@ extern UBYTE *car_scale_data[NUM_CAR_SCALES];
 extern WORD car_scale_widths[NUM_CAR_SCALES];
 extern WORD car_scale_heights[NUM_CAR_SCALES];
 
+// City/frontview functions
 void City_Initialize(void);
 void City_OncomingCarsReset(void);
 void City_SpawnOncomingCar(void);
@@ -52,9 +61,11 @@ void City_DrawOncomingCar(BlitterObject *car);
 void City_RestoreOncomingCars(void);
 void City_CopyPristineBackground(BlitterObject *car);
 BOOL City_OncomingCarsIsComplete(void);
-
-// City drawing functions
+BOOL City_IsCityNameComplete(void);
+void City_ShowCityName(const char *city_name);
 void City_BlitHorizon(void);
 void City_DrawRoad(void);
 void City_PreDrawRoad(void);
+void City_UpdateHorizonTransition(WORD *bike_y, WORD *bike_speed, UWORD frame_count);
+CityApproachState City_GetApproachState(void);
 #endif
