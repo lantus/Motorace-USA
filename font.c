@@ -81,10 +81,10 @@ void Font_DrawChar(UBYTE *buffer, char c, UWORD x, UWORD y, UBYTE color)
     UBYTE char_data[8];
     Font_GetChar(c, char_data);
     
-    if (x + CHAR_WIDTH > VIEWPORT_WIDTH || y + CHAR_HEIGHT > VIEWPORT_HEIGHT)
+    if (x + CHAR_WIDTH > VIEWPORT_WIDTH || y + CHAR_HEIGHT > BITMAPHEIGHT)
         return;
     
-    UWORD byte_offset = x >> 3;  // ✅ Fixed: x / 8
+    UWORD byte_offset = x >> 3;   
     
     for (int row = 0; row < CHAR_HEIGHT; row++)
     {
@@ -126,7 +126,7 @@ void Font_DrawCharAligned(UBYTE *buffer, char c, UWORD x, UWORD y, UBYTE color)
     UBYTE char_data[8];
     Font_GetChar(c, char_data);
     
-    if (x + CHAR_WIDTH > VIEWPORT_WIDTH || y + CHAR_HEIGHT > VIEWPORT_HEIGHT)
+    if (x + CHAR_WIDTH > VIEWPORT_WIDTH || y + CHAR_HEIGHT > BITMAPHEIGHT)
         return;
 
     UWORD byte_offset = x >> 3;

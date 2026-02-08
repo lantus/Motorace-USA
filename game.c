@@ -413,6 +413,7 @@ void Game_FillScreen(void)
 	} 
  
 }
+ 
 
 void Game_SwapBuffers(void)
 {
@@ -643,10 +644,8 @@ void Stage_Draw()
     {
         if (game_frame_count == 0)
         {
-            Stage_ShowInfo();
-           
+            Stage_ShowInfo();   
         }
-        
         Cars_PreDraw();
         Game_SwapBuffers();  // Add this
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
@@ -723,6 +722,8 @@ void Stage_Update()
             }
             else
             {
+                // TODO: clear the road text
+ 
                 // Countdown complete - start gameplay
                 stage_state = STAGE_PLAYING;
                 Timer_Stop(&countdown_timer);
@@ -932,11 +933,18 @@ void Stage_ShowInfo(void)
             break;
     }
     
-    // Draw difficulty at top  
-    Font_DrawString(draw_buffer, difficulty_text, 48, 50, 12);  
+    WORD difficulty_y = videoposy + BLOCKHEIGHT + 70;
+    WORD stage_y = videoposy + BLOCKHEIGHT + 120;
+
+    if (difficulty_y >= BITMAPHEIGHT)
+        difficulty_y -= BITMAPHEIGHT;
+    if (stage_y >= BITMAPHEIGHT)
+        stage_y -= BITMAPHEIGHT;
  
-    // Draw stage name at bottom  
-    Font_DrawStringCentered(draw_buffer, stage_text, 120, 12);   
+    Font_DrawString(screen.bitplanes, difficulty_text, 48, difficulty_y, 13);
+    Font_DrawStringCentered(screen.bitplanes, stage_text, stage_y, 13);
+    Font_DrawString(screen.offscreen_bitplanes, difficulty_text, 48, difficulty_y, 13);
+    Font_DrawStringCentered(screen.offscreen_bitplanes, stage_text, stage_y, 13);
 }
 
 void Game_HandleCollisions(void)
