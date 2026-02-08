@@ -41,12 +41,6 @@ static const WORD scale_start_y[NUM_CAR_SCALES] = {
     150   // Scale 7 at Y=170
 };
 
-// Lane X positions - CRITICAL: Use WORD not BYTE (180 as BYTE = -76!)
-static const WORD lane_positions[3] = {
-    73,   // Left lane
-    73,  // Center lane  
-    73   // Right lane
-};
 
 static WORD cars_passed = 0;
 static GameTimer spawn_timer;
@@ -144,8 +138,12 @@ void City_DrawRoad()
     const UBYTE blockplanelines = 64;
 
     WORD a, b, x, y;
+    WORD b_offset = 1;
+
+    if (stage_state == STAGE_FRONTVIEW)
+        b_offset = 0;
  
-    for (b = 1; b < 10; b++)
+    for (b = b_offset; b < 10; b++)
     {
         a = 0;
         while (a < 12)
@@ -236,18 +234,25 @@ void City_SpawnOncomingCar(void)
 
     current_car->id = 0;  // Start at smallest scale
     current_car->y = scale_start_y[0];  // Start at first Y position
-    current_car->anim_counter = cars_passed % 3;  // lane (reusing anim_counter)
+    current_car->anim_counter = bike_position_x;
 
-    current_car->x = lane_positions[current_car->anim_counter];
-
-    current_car->speed = 3;
+    current_car->x = HORIZON_VANISHING_X;
+    current_car->speed = 1;
     current_car->needs_restore = FALSE;
 
     current_car->old_x = current_car->x;
     current_car->old_y = current_car->y;
     current_car->prev_old_x = current_car->x;
     current_car->prev_old_y = current_car->y;
- 
+    
+    if (cars_passed & 1)
+    {
+        Copper_SetPalette(12, 0x0F0);
+    }
+    else 
+    {
+        Copper_SetPalette(12, 0xD00);
+    }
 }
  
 
@@ -315,13 +320,17 @@ void City_DrawOncomingCars(void)
     {
         if (current_car->visible)
         {
+ 
+
             current_car->y += current_car->speed;
-            
+            current_car->x = City_CalculatePerspectiveX(current_car->y, current_car->anim_counter);
+      
             if (current_car->id < NUM_CAR_SCALES - 1)
             {
                 if (current_car->y >= scale_start_y[current_car->id + 1])
                 {
                     current_car->id++;
+                    current_car->speed++;
                 }
             }
             
@@ -487,4 +496,24 @@ BOOL City_IsCityNameComplete(void)
     }
 
     return FALSE;
+}
+
+WORD City_CalculatePerspectiveX(WORD car_y, WORD target_x)
+{
+  
+    WORD center_y = car_y + 16;   
+    
+    WORD car_progress_y = center_y - HORIZON_Y;
+    
+    if (car_progress_y <= 0) return HORIZON_VANISHING_X;
+    
+    // Total Y distance from horizon (67) to bottom (240)
+    WORD total_y = 240 - HORIZON_Y;  // 173 pixels
+    
+    WORD delta_x = target_x - HORIZON_VANISHING_X;
+    
+    // Linear interpolation: x = 96 + delta_x * (car_y / total_y)
+    LONG x = HORIZON_VANISHING_X + ((LONG)delta_x * car_progress_y) / total_y;
+    
+    return (WORD)x;
 }

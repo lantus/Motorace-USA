@@ -24,6 +24,9 @@
 #define ONCOMING_CAR_7 "objects/frontview/fv7.BPL"
 #define ONCOMING_CAR_8 "objects/frontview/fv8.BPL"
  
+// Horizon vanishing point (center of road at top)
+#define HORIZON_VANISHING_X 72   // Center of 192-pixel screen
+#define HORIZON_Y 67             // Where cars spawn (scale_start_y[0])
 
 #define CITYSKYLINE_WIDTH   192
 #define CITYSKYLINE_HEIGHT   56
@@ -67,5 +70,6 @@ void City_BlitHorizon(void);
 void City_DrawRoad(void);
 void City_PreDrawRoad(void);
 void City_UpdateHorizonTransition(WORD *bike_y, WORD *bike_speed, UWORD frame_count);
+WORD City_CalculatePerspectiveX(WORD scale_index, WORD target_x);
 CityApproachState City_GetApproachState(void);
 #endif
