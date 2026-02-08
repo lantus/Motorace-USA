@@ -390,16 +390,15 @@ int main(void)
 	while(!MouseLeft()) 
     {		 
 		WaitLine(0x13);
+
 		Game_Update();
 		Game_Draw();
 
 		// Flip Buffers
-		if (stage_state == STAGE_PLAYING)
+		if (stage_state == STAGE_PLAYING || 
+			stage_state == STAGE_FRONTVIEW)
 		{
-			if (game_map == MAP_OVERHEAD_LASANGELES)
-			{
-				current_buffer = 1 - current_buffer;
-			}
+			current_buffer = 1 - current_buffer;
 		}
 
 		// Swap pointers

@@ -49,8 +49,8 @@ void City_OncomingCarsReset(void);
 void City_SpawnOncomingCar(void);
 void City_DrawOncomingCars(void);
 void City_DrawOncomingCar(BlitterObject *car);
-void City_RestoreBackground(BlitterObject *car);
-void City_SaveBackground(BlitterObject *car);
+void City_RestoreOncomingCars(void);
+void City_CopyPristineBackground(BlitterObject *car);
 BOOL City_OncomingCarsIsComplete(void);
 
 // City drawing functions

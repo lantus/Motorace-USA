@@ -283,9 +283,8 @@ static void SmoothScroll(void)
 
 __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest)
 {
-	 
-	x = (x / 8) & 0xFFFE;
-	y = y * BITMAPBYTESPERROW;
+	x = (x >> 3) & 0xFFFE;
+	y = (y << 4) + (y << 3);
 	
 	UWORD block = mapdata[mapy * mapwidth + mapx];
 
@@ -309,8 +308,8 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LONG mapy, UWORD blocksperrow, UWORD blockbytessperrow, UWORD blockplanelines, BOOL deltas_only, UBYTE tile_idx, UBYTE *dest)
 {
 	 
-	x = (x / 8) & 0xFFFE;
-	y = y * BITMAPBYTESPERROW;
+	x = (x >> 3) & 0xFFFE;
+	y = (y << 4) + (y << 3);
  
 
 	UWORD block = mapdata[mapy * mapwidth + mapx];
@@ -335,10 +334,10 @@ __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LO
  
 __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest)
 {
-    x = (x / 8) & 0xFFFE;
-    y = y * BITMAPBYTESPERROW;
-    
-    UWORD mapx = (block % blocksperrow) * (BLOCKWIDTH >> 3);
+    x = (x >> 3) & 0xFFFE;
+    y = (y << 4) + (y << 3); // y * 16 + y * 8 = y * 24
+
+    UWORD mapx = (block % blocksperrow) << 1;
     UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
     
     WaitBlit();
@@ -672,36 +671,12 @@ void Stage_Draw()
         Game_HandleCollisions();
     }
     else if (stage_state == STAGE_FRONTVIEW)
-    {
-        // Update approach frame based on Y position (perspective)
-       // MotorBike_UpdateApproachFrame(bike_position_y);
-        
-       /* 
-        // Only do the 2-frame animation for the closest view (frames 1-2)
-        if (bike_position_y >= 176)
-        {
-            // Calculate animation speed based on bike speed
-            UWORD anim_speed = 15 - (bike_speed / 20);
-            if (anim_speed < 3) anim_speed = 3;
-            
-            if (frontview_bike_frames % anim_speed == 0)
-            {
-                bike_anim_frames ^= 1;
-                
-                if (bike_anim_frames == 0)
-                {
-                    MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
-                }
-                else
-                {
-                    MotorBike_SetFrame(BIKE_FRAME_APPROACH2);
-                }
-            }
-        } */
-        
-       
+    {       
+        City_RestoreOncomingCars();
         City_DrawRoad();
         City_DrawOncomingCars();
+
+        Game_ResetBitplanePointer();
 
         // Apply vibration offset for distant sprites (ADD THIS)
         WORD vibration_x = MotorBike_GetVibrationOffset();
@@ -1024,7 +999,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (mapposy <= 16000)  // Near the top/end of map
+    if (mapposy <= 12000)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 

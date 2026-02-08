@@ -30,21 +30,21 @@ extern volatile struct Custom *custom;
 
 // Starting Y positions for each scale (horizon to foreground)
 static const WORD scale_start_y[NUM_CAR_SCALES] = {
-    67,   // Scale 0 starts
-    70,   // Scale 1 at Y=60
-    90,   // Scale 2 at Y=70
-    100,   // Scale 3 at Y=80
-    110,   // Scale 4 at Y=95
-    125,  // Scale 5 at Y=115
-    130,  // Scale 6 at Y=140
-    160   // Scale 7 at Y=170
+    42,   // Scale 0 starts
+    56,   // Scale 1 at Y=60
+    72,   // Scale 2 at Y=70
+    92,   // Scale 3 at Y=80
+    114,   // Scale 4 at Y=95
+    124,  // Scale 5 at Y=115
+    135,  // Scale 6 at Y=140
+    150   // Scale 7 at Y=170
 };
 
 // Lane X positions - CRITICAL: Use WORD not BYTE (180 as BYTE = -76!)
 static const WORD lane_positions[3] = {
-    100,   // Left lane
-    100,  // Center lane  
-    100   // Right lane
+    73,   // Left lane
+    73,  // Center lane  
+    73   // Right lane
 };
 
 static WORD cars_passed = 0;
@@ -132,11 +132,10 @@ void City_BlitHorizon()
     
     // Source data
     UBYTE *source = (UBYTE*)&city_horizon->data[0];
-  
-    // Destination
-    UBYTE *dest = draw_buffer;
  
-    BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, dest);
+    BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.bitplanes);
+    BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.offscreen_bitplanes);
+    BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.pristine);
 }
 
 void City_DrawRoad()
@@ -146,10 +145,8 @@ void City_DrawRoad()
     const UBYTE blockplanelines = 64;
 
     WORD a, b, x, y;
-    
-    custom->dmacon = 0x8400;
-    
-    for (b = 1; b < 10; b++)
+ 
+    for (b = 0; b < 10; b++)
     {
         a = 0;
         while (a < 12)
@@ -170,18 +167,20 @@ void City_DrawRoad()
                     run_length++;
                 }
             
-                x = a * BLOCKWIDTH;
-                y = b * blockplanelines;
+                x = a << 4;
+                y = b << 6;
                 
                 // Blit 'run_length' tiles in one operation
-                DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
+                DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
+                            blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
+                DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
+                            blocksperrow, blockbytesperrow, blockplanelines, screen.pristine);
             }
 
             a += run_length;
         }
     }
  
-    custom->dmacon = 0x0400;
 }
 
 void City_PreDrawRoad()
@@ -206,7 +205,14 @@ void City_PreDrawRoad()
             tmpb = b;
             
             DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
-                      blockplanelines, FALSE, road_tile_idx, draw_buffer); 
+                    blockplanelines, FALSE, road_tile_idx, screen.bitplanes); 
+
+            DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                    blockplanelines, FALSE, road_tile_idx, screen.offscreen_bitplanes); 
+
+            DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                    blockplanelines, FALSE, road_tile_idx, screen.pristine);                     
+
         }
     }
 
@@ -219,7 +225,7 @@ void City_PreDrawRoad()
 
 void City_SpawnOncomingCar(void)
 {
-    current_car = &oncoming_car[7];
+    current_car = &oncoming_car[0];
     current_car->visible = TRUE;
     current_car->y = scale_start_y[0];
 
@@ -229,51 +235,16 @@ void City_SpawnOncomingCar(void)
 
     current_car->x = lane_positions[current_car->anim_counter];
 
-    current_car->speed = 2;
+    current_car->speed = 3;
     current_car->needs_restore = FALSE;
+
+    current_car->old_x = current_car->x;
+    current_car->old_y = current_car->y;
+    current_car->prev_old_x = current_car->x;
+    current_car->prev_old_y = current_car->y;
  
 }
-
-void City_RestoreBackground(BlitterObject *car)
-{
-     if (!car->needs_restore) return;  // ✅ Add this!
-
-    WORD old_x = car->old_x;
-    WORD old_y = car->old_y;
-
-    APTR background = car->background;
  
-    UWORD source_mod = 0;   
-    UWORD dest_mod = (SCREENWIDTH / 8) - (4 * 2);
-    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
-    
-    UWORD bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4; 
-    
-    UBYTE *source = background;
-    UBYTE *dest = draw_buffer;
-    
-    BlitBobSimple(SCREENWIDTH/2, old_x, old_y, admod, bltsize, source, dest);
- 
-}
-
-void City_SaveBackground(BlitterObject *car)
-{
-    WORD x = car->x;
-    WORD y = car->y;
-
-    APTR background = car->background;
-
-    UWORD source_mod = (SCREENWIDTH / 8) - (4 * 2);
-    UWORD dest_mod = 0;  // Tight-packed
-    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
-
-    UWORD bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4;   
-
-    UBYTE *source = draw_buffer;
-    UBYTE *dest = background;
-
-    BlitBobSimpleSave(SCREENWIDTH/2, x, y, admod, bltsize, source, dest);
-}
 
 void City_DrawOncomingCar(BlitterObject *car)
 {
@@ -295,13 +266,8 @@ void City_DrawOncomingCar(BlitterObject *car)
     */
 
     if (!car->visible) return;
- 
-    // Restore old position first
-    City_RestoreBackground(car);
     
-    // Save new background
-    City_SaveBackground(car);
-    
+    // Draw car
     WORD x = car->x;
     WORD y = car->y;
 
@@ -309,19 +275,22 @@ void City_DrawOncomingCar(BlitterObject *car)
     UWORD dest_mod = (SCREENWIDTH / 8) - (4 * 2);
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
-    UWORD bltsize = ((ONCOMING_CAR_HEIGHT<<2) << 6) | 4;
+    UWORD bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4;
     
-    UBYTE *source = (UBYTE*)&car->data[0];
+    UBYTE *source = (UBYTE*)&oncoming_car[car->id].data[0];
     UBYTE *mask = source + source_mod;
     UBYTE *dest = draw_buffer;
  
     BlitBob2(SCREENWIDTH/2, x, y, admod, bltsize, ONCOMING_CAR_WIDTH, 
              oncoming_car_restore_ptrs, source, mask, dest);
+
+    car->prev_old_x = car->old_x;
+    car->prev_old_y = car->old_y;
+    
+    car->old_x = x;
+    car->old_y = y;
     
     car->needs_restore = TRUE;
-    
-    car->old_x = car->x;
-    car->old_y = car->y;
 }
 
 void City_DrawOncomingCars(void)
@@ -345,7 +314,7 @@ void City_DrawOncomingCars(void)
         // Car has passed bike (reached largest scale and bottom of screen)
         if (current_car->id >= NUM_CAR_SCALES - 1 && current_car->y > 210)
         {
-            City_RestoreBackground(current_car);  // Clean up last position
+            //City_RestoreBackground(current_car);  // Clean up last position
             current_car->visible = FALSE;
             cars_passed++;
             
@@ -380,3 +349,53 @@ BOOL City_OncomingCarsIsComplete(void)
 {
     return city_approach_complete;
 }
+
+void City_RestoreOncomingCars(void)
+{
+    if (current_car && current_car->visible && current_car->needs_restore)
+    {
+         
+        WORD temp_x = current_car->old_x;
+        WORD temp_y = current_car->old_y;
+        
+        current_car->old_x = current_car->prev_old_x;
+        current_car->old_y = current_car->prev_old_y;
+
+        City_CopyPristineBackground(current_car);
+        
+        current_car->old_x = temp_x;
+        current_car->old_y = temp_y;
+    }
+}
+
+void City_CopyPristineBackground(BlitterObject *car)
+{
+  if (!car->needs_restore) return;
+ 
+    WORD old_screen_y = car->prev_old_y;
+ 
+    ULONG y_offset = ((ULONG)old_screen_y << 6) + ((ULONG)old_screen_y << 5);
+   
+ 
+    WORD x_word_aligned = (car->old_x >> 3) & 0xFFFE;
+    
+    UBYTE *pristine_ptr = screen.pristine + y_offset + x_word_aligned;
+    UBYTE *screen_ptr = draw_buffer + y_offset + x_word_aligned;
+    
+    WaitBlit();
+    
+    custom->bltcon0 = 0x9F0;
+    custom->bltcon1 = 0;
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+ 
+ 
+    custom->bltamod = 16;
+    custom->bltdmod = 16;
+    
+    custom->bltapt = pristine_ptr;
+    custom->bltdpt = screen_ptr;
+ 
+    custom->bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4;
+}
+ 
