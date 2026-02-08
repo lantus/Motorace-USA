@@ -325,7 +325,7 @@ void City_DrawOncomingCars(void)
                 }
             }
             
-            if (current_car->id >= NUM_CAR_SCALES - 1 && current_car->y > 210)
+            if (current_car->id >= NUM_CAR_SCALES - 1 && current_car->y > 256+32)
             {
                 current_car->visible = FALSE;
                 cars_passed++;

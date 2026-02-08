@@ -253,13 +253,12 @@ void Font_RestoreFromPristine(UBYTE *dest_buffer, UWORD x, UWORD y, UWORD width,
     
     for (UWORD row = 0; row < height; row++)
     {
-        if (y + row >= VIEWPORT_HEIGHT) break;
+        if (y + row >= BITMAPHEIGHT) break;
         
         for (int plane = 0; plane < 4; plane++)
         {
             ULONG plane_offset = line_offset + ((plane << 4) + (plane << 3));
             
-            // ✅ Copy from pristine to destination
             for (UWORD byte = 0; byte < width_bytes; byte++)
             {
                 dest_buffer[plane_offset + byte] = screen.pristine[plane_offset + byte];

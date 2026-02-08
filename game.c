@@ -717,13 +717,24 @@ void Stage_Update()
                 Timer_Reset(&countdown_timer);  // Reset for next second
                 current_countdown_spr = spr_countdown[countdown_value];
                 Sprites_SetPointers(current_countdown_spr, 2, SPRITEPTR_TWO_AND_THREE);
-                Sprites_SetScreenPosition((UWORD *)current_countdown_spr[0],96,100,32);
-                Sprites_SetScreenPosition((UWORD *)current_countdown_spr[1],96,100,32);
+                Sprites_SetScreenPosition((UWORD *)current_countdown_spr[0],96,120,32);
+                Sprites_SetScreenPosition((UWORD *)current_countdown_spr[1],96,120,32);
             }
             else
             {
-                // TODO: clear the road text
- 
+                WORD difficulty_y = videoposy + BLOCKHEIGHT + 70;
+                WORD stage_y = videoposy + BLOCKHEIGHT + 120;
+
+                if (difficulty_y >= BITMAPHEIGHT)
+                    difficulty_y -= BITMAPHEIGHT;
+                if (stage_y >= BITMAPHEIGHT)
+                    stage_y -= BITMAPHEIGHT;
+    
+
+                Font_RestoreFromPristine(screen.bitplanes, 48, difficulty_y, 192, CHAR_HEIGHT);
+                Font_RestoreFromPristine(screen.offscreen_bitplanes, 48, difficulty_y, 192, CHAR_HEIGHT);
+                Font_RestoreFromPristine(screen.bitplanes, 48, stage_y, 192, CHAR_HEIGHT);
+                Font_RestoreFromPristine(screen.offscreen_bitplanes, 48, stage_y, 192, CHAR_HEIGHT);
                 // Countdown complete - start gameplay
                 stage_state = STAGE_PLAYING;
                 Timer_Stop(&countdown_timer);
