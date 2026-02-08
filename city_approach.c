@@ -344,11 +344,16 @@ void City_DrawOncomingCars(void)
     {
         if (current_car->visible)
         {
- 
 
             current_car->y += current_car->speed;
             current_car->x = City_CalculatePerspectiveX(current_car->y, current_car->anim_counter);
       
+            if (City_CheckCarCollision(current_car))
+            {
+                Game_SetBackGroundColor(0xF00);  // Flash red
+                KPrintF("=== HIT! ===\n");
+            }
+
             if (current_car->id < NUM_CAR_SCALES - 1)
             {
                 if (current_car->y >= scale_start_y[current_car->id + 1])
@@ -540,4 +545,37 @@ WORD City_CalculatePerspectiveX(WORD car_y, WORD target_x)
     LONG x = HORIZON_VANISHING_X + ((LONG)delta_x * car_progress_y) / total_y;
     
     return (WORD)x;
+}
+
+BOOL City_CheckCarCollision(BlitterObject *car)
+{
+    // Only check collision for closest scales (large cars)
+    if (car->id < 6) return FALSE;
+    
+    // Car bounding box (x is center, y is top)
+    WORD car_width = 48;  // ONCOMING_CAR_WIDTH
+    WORD car_left = car->x - (car_width >> 1);
+    WORD car_right = car->x + (car_width >> 1);
+    WORD car_bottom = car->y + ONCOMING_CAR_HEIGHT;  // Bottom edge
+    
+    // Bike bounding box (estimate - adjust if needed)
+    WORD bike_width = 32;
+    WORD bike_height = 32;
+    WORD bike_left = bike_position_x - (bike_width >> 1);
+    WORD bike_right = bike_position_x + (bike_width >> 1);
+    WORD bike_top = bike_position_y;
+    WORD bike_bottom = bike_position_y + bike_height;
+    
+    // Check X overlap
+    BOOL x_overlap = (car_right > bike_left) && (car_left < bike_right);
+    
+    // Check if car bottom edge overlaps bike
+    BOOL y_overlap = (car_bottom >= bike_top) && (car->y < bike_bottom);
+    
+    if (x_overlap && y_overlap)
+    {
+        return TRUE;
+    }
+    
+    return FALSE;
 }

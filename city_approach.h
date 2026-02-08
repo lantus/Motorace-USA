@@ -76,5 +76,6 @@ void City_DrawRoad(void);
 void City_PreDrawRoad(void);
 void City_UpdateHorizonTransition(WORD *bike_y, WORD *bike_speed, UWORD frame_count);
 WORD City_CalculatePerspectiveX(WORD scale_index, WORD target_x);
+BOOL City_CheckCarCollision(BlitterObject *car);
 CityApproachState City_GetApproachState(void);
 #endif
