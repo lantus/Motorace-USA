@@ -250,7 +250,7 @@ void City_SpawnOncomingCar(void)
     current_car->anim_counter = bike_position_x;
 
     current_car->x = HORIZON_VANISHING_X;
-    current_car->speed = 1;
+    current_car->speed = 2;
     current_car->needs_restore = FALSE;
 
     current_car->old_x = current_car->x;
