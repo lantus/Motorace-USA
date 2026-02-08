@@ -23,7 +23,12 @@
 #define ONCOMING_CAR_6 "objects/frontview/fv6.BPL"
 #define ONCOMING_CAR_7 "objects/frontview/fv7.BPL"
 #define ONCOMING_CAR_8 "objects/frontview/fv8.BPL"
- 
+#define ONCOMING_CAR_5_RIGHT "objects/frontview/fv5_r.BPL"
+#define ONCOMING_CAR_6_RIGHT "objects/frontview/fv6_r.BPL"
+#define ONCOMING_CAR_7_RIGHT "objects/frontview/fv7_r.BPL"
+#define ONCOMING_CAR_8_RIGHT "objects/frontview/fv8_r.BPL"
+
+
 // Horizon vanishing point (center of road at top)
 #define HORIZON_VANISHING_X 72   // Center of 192-pixel screen
 #define HORIZON_Y 67             // Where cars spawn (scale_start_y[0])

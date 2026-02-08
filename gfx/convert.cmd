@@ -29,3 +29,7 @@ kingcon frontview\fv5.iff ..\objects\frontview\fv5 -Interleaved -format=4 -Mask 
 kingcon frontview\fv6.iff ..\objects\frontview\fv6 -Interleaved -format=4 -Mask -AW
 kingcon frontview\fv7.iff ..\objects\frontview\fv7 -Interleaved -format=4 -Mask -AW
 kingcon frontview\fv8.iff ..\objects\frontview\fv8 -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv5_r.iff ..\objects\frontview\fv5_r -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv6_r.iff ..\objects\frontview\fv6_r -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv7_r.iff ..\objects\frontview\fv7_r -Interleaved -format=4 -Mask -AW
+kingcon frontview\fv8_r.iff ..\objects\frontview\fv8_r -Interleaved -format=4 -Mask -AW

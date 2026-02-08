@@ -53,6 +53,7 @@ BlitterObject lv_horizon;
 BlitterObject lv_horizon_anim1;
 BlitterObject lv_horizon_anim2;
 BlitterObject oncoming_car[8];
+BlitterObject flipped_car[4];
 BlitterObject *city_horizon;
 BlitterObject *current_car;
 
@@ -90,7 +91,7 @@ void City_Initialize()
     oncoming_car[5].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_6, MEMF_CHIP);
     oncoming_car[6].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_7, MEMF_CHIP);
     oncoming_car[7].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_8, MEMF_CHIP);
-
+ 
     oncoming_car[0].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
     oncoming_car[1].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
     oncoming_car[2].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
@@ -99,6 +100,18 @@ void City_Initialize()
     oncoming_car[5].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
     oncoming_car[6].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
     oncoming_car[7].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
+
+    // flipped cars
+
+    flipped_car[0].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_5_RIGHT, MEMF_CHIP);
+    flipped_car[1].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_6_RIGHT, MEMF_CHIP);
+    flipped_car[2].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_7_RIGHT, MEMF_CHIP);
+    flipped_car[3].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_8_RIGHT, MEMF_CHIP);
+
+    flipped_car[0].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
+    flipped_car[1].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
+    flipped_car[2].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
+    flipped_car[3].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
 }
 
 void City_OncomingCarsReset()
@@ -244,6 +257,8 @@ void City_SpawnOncomingCar(void)
     current_car->old_y = current_car->y;
     current_car->prev_old_x = current_car->x;
     current_car->prev_old_y = current_car->y;
+
+    current_car->moved = (bike_position_x > 96);
     
     if (cars_passed & 1)
     {
@@ -287,7 +302,16 @@ void City_DrawOncomingCar(BlitterObject *car)
  
     UWORD bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4;
     
-    UBYTE *source = (UBYTE*)&oncoming_car[car->id].data[0];
+    UBYTE *source;
+    if (car->id >= 4 && car->moved)
+    {
+        source = (UBYTE*)&flipped_car[car->id - 4].data[0];
+    }
+    else
+    {
+        source = (UBYTE*)&oncoming_car[car->id].data[0];
+    }
+ 
     UBYTE *mask = source + source_mod;
     UBYTE *dest = draw_buffer;
  
