@@ -825,58 +825,61 @@ void Stage_Update()
 
         // === ACCELERATION LOGIC ===
 
-        if (JoyFireHeld())
+        if (frontview_bike_crashed == FALSE)
         {
-            // Fire button held - accelerate to max speed
-            bike_speed += ACCEL_RATE;   
-            if (bike_speed > MAX_SPEED)
+            if (JoyFireHeld())
             {
-                bike_speed = MAX_SPEED;
-            }
-            bike_state = BIKE_FRAME_APPROACH1;
-        }
-        else
-        {
-            // Fire button not held - auto-adjust to cruising speed
-            if (bike_speed < MIN_CRUISING_SPEED)
-            {
-                // Auto-accelerate to cruising speed SLOWLY  
-                bike_speed += 1;   
-                if (bike_speed > MIN_CRUISING_SPEED)
+                // Fire button held - accelerate to max speed
+                bike_speed += ACCEL_RATE;   
+                if (bike_speed > MAX_SPEED)
                 {
-                    bike_speed = MIN_CRUISING_SPEED;
-                }
-                bike_state = BIKE_FRAME_APPROACH1;
-            }
-            else if (bike_speed > MIN_CRUISING_SPEED)
-            {
-                // Decelerate back to cruising speed
-                bike_speed -= DECEL_RATE;
-                if (bike_speed < MIN_CRUISING_SPEED)
-                {
-                    bike_speed = MIN_CRUISING_SPEED;
+                    bike_speed = MAX_SPEED;
                 }
                 bike_state = BIKE_FRAME_APPROACH1;
             }
             else
             {
-                // Maintain cruising speed
-                bike_state = BIKE_FRAME_APPROACH1;
+                // Fire button not held - auto-adjust to cruising speed
+                if (bike_speed < MIN_CRUISING_SPEED)
+                {
+                    // Auto-accelerate to cruising speed SLOWLY  
+                    bike_speed += 1;   
+                    if (bike_speed > MIN_CRUISING_SPEED)
+                    {
+                        bike_speed = MIN_CRUISING_SPEED;
+                    }
+                    bike_state = BIKE_FRAME_APPROACH1;
+                }
+                else if (bike_speed > MIN_CRUISING_SPEED)
+                {
+                    // Decelerate back to cruising speed
+                    bike_speed -= DECEL_RATE;
+                    if (bike_speed < MIN_CRUISING_SPEED)
+                    {
+                        bike_speed = MIN_CRUISING_SPEED;
+                    }
+                    bike_state = BIKE_FRAME_APPROACH1;
+                }
+                else
+                {
+                    // Maintain cruising speed
+                    bike_state = BIKE_FRAME_APPROACH1;
+                }
+    
+            }        
+    
+            // === LEFT/RIGHT MOVEMENT ===
+            if (JoyLeft())
+            {
+                bike_position_x -= 2;
+                bike_state = BIKE_STATE_FRONTVIEW_LEFT;
             }
- 
-        }        
- 
-        // === LEFT/RIGHT MOVEMENT ===
-        if (JoyLeft())
-        {
-            bike_position_x -= 2;
-            bike_state = BIKE_STATE_FRONTVIEW_LEFT;
-        }
 
-        if (JoyRight())
-        {
-            bike_position_x += 2;
-            bike_state = BIKE_STATE_FRONTVIEW_RIGHT;
+            if (JoyRight())
+            {
+                bike_position_x += 2;
+                bike_state = BIKE_STATE_FRONTVIEW_RIGHT;
+            }
         }
 
         CityApproachState approach_state = City_GetApproachState();

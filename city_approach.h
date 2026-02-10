@@ -60,6 +60,8 @@ extern UBYTE *car_scale_data[NUM_CAR_SCALES];
 extern WORD car_scale_widths[NUM_CAR_SCALES];
 extern WORD car_scale_heights[NUM_CAR_SCALES];
 
+extern BOOL frontview_bike_crashed;
+
 // City/frontview functions
 void City_Initialize(void);
 void City_OncomingCarsReset(void);
@@ -77,5 +79,6 @@ void City_PreDrawRoad(void);
 void City_UpdateHorizonTransition(WORD *bike_y, WORD *bike_speed, UWORD frame_count);
 WORD City_CalculatePerspectiveX(WORD scale_index, WORD target_x);
 BOOL City_CheckCarCollision(BlitterObject *car);
+void City_UpdateBikeCrashAnimation(void);
 CityApproachState City_GetApproachState(void);
 #endif

@@ -42,11 +42,16 @@ static const WORD scale_start_y[NUM_CAR_SCALES] = {
 };
 
 
+static CityApproachState city_state = CITY_STATE_WAITING_NAME;
+
 static WORD cars_passed = 0;
+static BOOL city_name_complete = FALSE;
+static UBYTE crash_anim_frame = 0;
+static UWORD crash_anim_counter = 0;
+
 static GameTimer spawn_timer;
 static GameTimer city_name_timer;
-static BOOL city_name_complete = FALSE;
-static CityApproachState city_state = CITY_STATE_WAITING_NAME;
+static GameTimer crash_recovery_timer;
 
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
@@ -59,6 +64,8 @@ BlitterObject *current_car;
 
 APTR oncoming_car_restore_ptrs[4];
 APTR *oncoming_car_restore_ptr;
+
+BOOL frontview_bike_crashed = FALSE;
 
 void City_Initialize()
 {
@@ -119,8 +126,10 @@ void City_OncomingCarsReset()
     cars_passed = 0;
     city_name_complete = FALSE;
     city_state = CITY_STATE_WAITING_NAME;
- 
+    frontview_bike_crashed = FALSE;
+    
     Timer_Stop(&spawn_timer);
+    Timer_Stop(&crash_recovery_timer);
 
 }
 
@@ -250,7 +259,7 @@ void City_SpawnOncomingCar(void)
     current_car->anim_counter = bike_position_x;
 
     current_car->x = HORIZON_VANISHING_X;
-    current_car->speed = 2;
+    current_car->speed = 1;
     current_car->needs_restore = FALSE;
 
     current_car->old_x = current_car->x;
@@ -348,10 +357,15 @@ void City_DrawOncomingCars(void)
             current_car->y += current_car->speed;
             current_car->x = City_CalculatePerspectiveX(current_car->y, current_car->anim_counter);
       
-            if (City_CheckCarCollision(current_car))
+            if (!frontview_bike_crashed && City_CheckCarCollision(current_car))
             {
                 Game_SetBackGroundColor(0xF00);  // Flash red
-                KPrintF("=== HIT! ===\n");
+                frontview_bike_crashed = TRUE;
+                bike_speed = 20;  // Drop to near zero
+                crash_anim_frame = 0;
+                crash_anim_counter = 0;
+                MotorBike_SetFrame(BIKE_FRAME_CRASH1);  
+                Timer_Start(&crash_recovery_timer, 2);  // 2 second recovery
             }
 
             if (current_car->id < NUM_CAR_SCALES - 1)
@@ -398,22 +412,38 @@ void City_DrawOncomingCars(void)
     {
         // Bike moves into horizon - handled in City_UpdateHorizonTransition
     }
+
+     City_UpdateBikeCrashAnimation();
+
+    if (frontview_bike_crashed && Timer_HasElapsed(&crash_recovery_timer))
+    {
+        frontview_bike_crashed = FALSE;
+        Timer_Stop(&crash_recovery_timer);
+        Game_SetBackGroundColor(0x000);
+        
+        MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+
+        if (!current_car->visible && cars_passed < TOTAL_CARS_TO_PASS)
+        {
+            Timer_Start(&spawn_timer, 2);
+        }
+    }
 }
 
-void City_UpdateHorizonTransition(WORD *bike_y, WORD *bike_speed, UWORD frame_count)
+void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_count)
 {
     if (city_state != CITY_STATE_INTO_HORIZON) return;
     
-    if (*bike_speed > 80 && frame_count % 3 == 0)
+    if (*bikespeed > 80 && frame_count % 3 == 0)
     {
-        *bike_speed -= 1;
+        *bikespeed -= 1;
     }
     
     UWORD y_speed;
     
-    if (*bike_speed > 150)
+    if (*bikespeed > 150)
         y_speed = 2;
-    else if (*bike_speed > 100)
+    else if (*bikespeed > 100)
         y_speed = 2;
     else
         y_speed = 2;
@@ -578,4 +608,28 @@ BOOL City_CheckCarCollision(BlitterObject *car)
     }
     
     return FALSE;
+}
+
+void City_UpdateBikeCrashAnimation(void)
+{
+    if (!frontview_bike_crashed) return;
+    
+    crash_anim_counter++;
+    
+    // Change frame every 4 game frames
+    if (crash_anim_counter % 4 == 0)
+    {
+        crash_anim_frame++;
+ 
+        if (crash_anim_frame > 4)
+            crash_anim_frame = 0;   
+ 
+        switch(crash_anim_frame)
+        {
+            case 0: bike_state = BIKE_FRAME_CRASH1; break;
+            case 1: bike_state = BIKE_FRAME_CRASH2; break;
+            case 2: bike_state = BIKE_FRAME_CRASH3; break;
+            case 3: bike_state = BIKE_FRAME_CRASH4; break;
+        }
+    }
 }

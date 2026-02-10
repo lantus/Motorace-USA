@@ -36,6 +36,11 @@ static Sprite spr_rsrc_approach_bike_frame6;
 static Sprite spr_rsrc_approach_bike_frame7;
 static Sprite spr_rsrc_approach_bike_frame8;
 
+static Sprite spr_rsrc_frontview_bike_crash1;
+static Sprite spr_rsrc_frontview_bike_crash2;
+static Sprite spr_rsrc_frontview_bike_crash3;
+static Sprite spr_rsrc_frontview_bike_crash4;
+
 ULONG *spr_bike_moving1;
 ULONG *spr_bike_moving2;
 ULONG *spr_bike_moving3;
@@ -54,6 +59,11 @@ ULONG *spr_approach_bike_frame5;
 ULONG *spr_approach_bike_frame6;
 ULONG *spr_approach_bike_frame7;
 ULONG *spr_approach_bike_frame8;
+
+ULONG *spr_frontview_bike_crash1;
+ULONG *spr_frontview_bike_crash2;
+ULONG *spr_frontview_bike_crash3;
+ULONG *spr_frontview_bike_crash4;
 
 ULONG *current_bike_sprite;
 
@@ -85,7 +95,7 @@ void MotorBike_Initialize()
     Sprites_LoadFromFile(BIKE_RIGHT1,&spr_rsrc_bike_turn_right1);
     Sprites_LoadFromFile(BIKE_RIGHT2,&spr_rsrc_bike_turn_right2);
 
-    // Approach City Bike Sprites
+    // Frontview Bike Sprites
 
     Sprites_LoadFromFile(APPROACH_BIKE1,&spr_rsrc_approach_bike_frame1);
     Sprites_LoadFromFile(APPROACH_BIKE2,&spr_rsrc_approach_bike_frame2);
@@ -98,6 +108,12 @@ void MotorBike_Initialize()
 
     Sprites_LoadFromFile(APPROACH_BIKE_LEFT,&spr_rsrc_approach_bike_frame1_left);
     Sprites_LoadFromFile(APPROACH_BIKE_RIGHT,&spr_rsrc_approach_bike_frame1_right);
+
+    Sprites_LoadFromFile(FRONTVIEW_BIKECRASH1,&spr_rsrc_frontview_bike_crash1);
+    Sprites_LoadFromFile(FRONTVIEW_BIKECRASH2,&spr_rsrc_frontview_bike_crash2);
+    Sprites_LoadFromFile(FRONTVIEW_BIKECRASH3,&spr_rsrc_frontview_bike_crash3);
+    Sprites_LoadFromFile(FRONTVIEW_BIKECRASH4,&spr_rsrc_frontview_bike_crash4); 
+    // Frontview Crash
 
     spr_bike_moving1 = Mem_AllocChip(32);
     spr_bike_moving2 = Mem_AllocChip(32);
@@ -119,6 +135,11 @@ void MotorBike_Initialize()
     spr_approach_bike_frame6 = Mem_AllocChip(32);  
     spr_approach_bike_frame7 = Mem_AllocChip(32);       
     spr_approach_bike_frame8 = Mem_AllocChip(32);     
+
+    spr_frontview_bike_crash1 = Mem_AllocChip(32);  
+    spr_frontview_bike_crash2 = Mem_AllocChip(32);  
+    spr_frontview_bike_crash3 = Mem_AllocChip(32);       
+    spr_frontview_bike_crash4 = Mem_AllocChip(32);     
  
     Sprites_BuildComposite(spr_bike_moving1,2,&spr_rsrc_bike_moving1);
     Sprites_BuildComposite(spr_bike_moving2,2,&spr_rsrc_bike_moving2);
@@ -141,6 +162,12 @@ void MotorBike_Initialize()
 
     Sprites_BuildComposite(spr_approach_bike_frame1_left,4,&spr_rsrc_approach_bike_frame1_left);   
     Sprites_BuildComposite(spr_approach_bike_frame1_right,4,&spr_rsrc_approach_bike_frame1_right);   
+
+    Sprites_BuildComposite(spr_frontview_bike_crash1,4,&spr_rsrc_frontview_bike_crash1);
+    Sprites_BuildComposite(spr_frontview_bike_crash2,4,&spr_rsrc_frontview_bike_crash2);   
+    Sprites_BuildComposite(spr_frontview_bike_crash3,4,&spr_rsrc_frontview_bike_crash3);   
+    Sprites_BuildComposite(spr_frontview_bike_crash4,4,&spr_rsrc_frontview_bike_crash4);   
+
 
     Sprites_ApplyPalette(&spr_rsrc_bike_moving1);
  
@@ -347,6 +374,22 @@ void MotorBike_SetFrame(BikeFrame frame)
             current_bike_sprite = spr_approach_bike_frame1_right;
             num_sprites = 4;
             break;
+        case BIKE_FRAME_CRASH1:
+            current_bike_sprite = spr_frontview_bike_crash1;
+            num_sprites = 4;
+            break;
+        case BIKE_FRAME_CRASH2:
+            current_bike_sprite = spr_frontview_bike_crash2;
+            num_sprites = 4;
+            break;
+        case BIKE_FRAME_CRASH3:
+            current_bike_sprite = spr_frontview_bike_crash3;
+            num_sprites = 4;
+            break;
+        case BIKE_FRAME_CRASH4:
+            current_bike_sprite = spr_frontview_bike_crash4;
+            num_sprites = 4;
+            break;            
         default:
             return;
     }
