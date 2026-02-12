@@ -25,6 +25,7 @@
 #include "timers.h"
 #include "disk.h"
 #include "font.h"
+#include "audio.h"
 #include "city_approach.h"
 
 extern volatile struct Custom *custom;
@@ -365,6 +366,8 @@ void City_DrawOncomingCars(void)
                 crash_anim_frame = 0;
                 crash_anim_counter = 0;
                 MotorBike_SetFrame(BIKE_FRAME_CRASH1);  
+                Music_Stop();
+                SFX_Play(SFX_CRASHSKID);
                 Timer_Start(&crash_recovery_timer, 2);  // 2 second recovery
             }
 
@@ -420,7 +423,7 @@ void City_DrawOncomingCars(void)
         frontview_bike_crashed = FALSE;
         Timer_Stop(&crash_recovery_timer);
         Game_SetBackGroundColor(0x000);
-        
+        Music_LoadModule(MUSIC_FRONTVIEW);
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
 
         if (!current_car->visible && cars_passed < TOTAL_CARS_TO_PASS)

@@ -114,6 +114,8 @@ void Game_Initialize()
     Sprites_Initialize();
     HiScore_Initialize();
     
+    Audio_Initialize();     // SFX
+    
     // Motorbike
     MotorBike_Initialize();
     

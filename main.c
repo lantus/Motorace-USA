@@ -229,6 +229,10 @@ void SetInterruptHandler(APTR interrupt)
     *(volatile APTR*)(((UBYTE*)VBR) + 0x6c) = interrupt;
 }
 
+void SetInterruptHandlerLevel4(APTR interrupt) {
+	*(volatile APTR*)(((UBYTE*)VBR)+0x6c + 4) = interrupt;
+}
+
 APTR GetInterruptHandler() {
     return *(volatile APTR*)(((UBYTE*)VBR) + 0x6c);
 }
@@ -334,13 +338,67 @@ __attribute__((always_inline)) inline static void UpdateCopperlist(void)
  
 }
 
+static __attribute__((interrupt)) void interruptHandlerLvl4() 
+{
+ 	const UWORD intreq = custom->intreqr;
+    
+	const UBYTE sample_oneshot_count = 2;
+    // Check which audio channels triggered interrupt
+    if (intreq & INTF_AUD0)
+    {
+		channel_play_count[0]++;
+
+		if ( channel_play_count[0] == sample_oneshot_count )
+		{
+			custom->dmacon = DMAF_AUD0;  // Stop channel 0
+		}
+ 
+		custom->intreq = INTF_AUD0;  // Clear interrupt
+    }
+    
+    if (intreq & INTF_AUD1)
+    {
+		channel_play_count[1]++;
+
+		if ( channel_play_count[1] == sample_oneshot_count )
+		{
+			custom->dmacon = DMAF_AUD1;  // Stop channel 1
+		}
+ 
+		custom->intreq = INTF_AUD1;  // Clear interrupt
+    }
+    
+    if (intreq & INTF_AUD2)
+    {
+		channel_play_count[2]++;
+
+		if ( channel_play_count[2] == sample_oneshot_count )
+		{
+			custom->dmacon = DMAF_AUD2;  // Stop channel 2
+		}
+ 
+		custom->intreq = INTF_AUD2;  // Clear interrupt
+    }
+    
+    if (intreq & INTF_AUD3)
+    {
+		channel_play_count[3]++;
+
+		if ( channel_play_count[3] == sample_oneshot_count )
+		{
+			custom->dmacon = DMAF_AUD3;  // Stop channel 3
+		}
+ 
+		custom->intreq = INTF_AUD3;  // Clear interrupt
+    }
+ 
+}
+
 static __attribute__((interrupt)) void interruptHandler() 
 {
 	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
 
 	Timer_VBlankUpdate();
-
-	Music_Play();
  
 }
 
@@ -383,8 +441,10 @@ int main(void)
 	// Enable VBlank first
 	custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB;
 	custom->intreq = (1<<INTB_VERTB);  // Clear pending
-	SetInterruptHandler((APTR)interruptHandler);
 	
+	SetInterruptHandler((APTR)interruptHandler);
+	SetInterruptHandlerLevel4((APTR)interruptHandlerLvl4);
+  
 	HUD_DrawAll();
  
 	while(!MouseLeft()) 
