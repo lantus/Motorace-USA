@@ -227,8 +227,7 @@ void Game_SetMap(UBYTE maptype)
             blocksbuffer = la_tiles->planes[0];
             city_horizon = &lv_horizon;
             break;
-        case MAP_APPROACH_LASANGELES:
-            // use attract mode assets for now
+        case MAP_FRONTVIEW_LASVEGAS:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
@@ -236,24 +235,6 @@ void Game_SetMap(UBYTE maptype)
             city_horizon = &lv_horizon;
             break;
         case MAP_OVERHEAD_LASVEGAS:
-            break;
-        case MAP_APPROACH_LASVEGAS:
-            break;
-        case MAP_OVERHEAD_HOUSTON:
-            break;
-        case MAP_APPROACH_HOUSTON:  
-            break;
-        case MAP_OVERHEAD_STLOUIS:
-            break;
-        case MAP_APPROACH_STLOUIS:
-            break;
-        case MAP_OVERHEAD_CHICAGO: 
-            break;
-        case MAP_APPROACH_CHICAGO:  
-            break;
-        case MAP_OVERHEAD_NEWYORK: 
-            break;
-        case MAP_APPROACH_NEWYORK: 
             break;
     }
 }
@@ -1060,7 +1041,7 @@ void Stage_InitializeFrontView(void)
     Sprites_ClearLower();
     Sprites_ClearHigher();
 
-    Game_SetMap(MAP_APPROACH_LASANGELES);
+    Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
 
     MotorBike_Reset();
 

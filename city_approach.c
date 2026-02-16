@@ -49,15 +49,15 @@ static WORD cars_passed = 0;
 static BOOL city_name_complete = FALSE;
 static UBYTE crash_anim_frame = 0;
 static UWORD crash_anim_counter = 0;
+static UWORD skyline_anim_frame = 0;
 
 static GameTimer spawn_timer;
 static GameTimer city_name_timer;
+static GameTimer city_skyline_anim_timer;
 static GameTimer crash_recovery_timer;
 
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
-BlitterObject lv_horizon_anim1;
-BlitterObject lv_horizon_anim2;
 BlitterObject oncoming_car[8];
 BlitterObject flipped_car[4];
 BlitterObject *city_horizon;
@@ -67,6 +67,7 @@ APTR oncoming_car_restore_ptrs[4];
 APTR *oncoming_car_restore_ptr;
 
 BOOL frontview_bike_crashed = FALSE;
+BOOL use_alt_frame = FALSE;
 
 void City_Initialize()
 {
@@ -78,15 +79,12 @@ void City_Initialize()
  
     nyc_horizon.size = findSize(NYC_SKYLINE);
     nyc_horizon.data = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_CHIP);
+    nyc_horizon.data_frame2 = NULL;
     
     lv_horizon.size = findSize(VEGAS_SKYLINE);
     lv_horizon.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_CHIP);
-
-    lv_horizon_anim1.size = findSize(VEGAS_SKYLINE_ANIM1);
-    lv_horizon_anim1.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE_ANIM1, MEMF_CHIP);
-
-    lv_horizon_anim2.size = findSize(VEGAS_SKYLINE_ANIM2);
-    lv_horizon_anim2.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE_ANIM2, MEMF_CHIP);    
+    lv_horizon.data_frame2 = Disk_AllocAndLoadAsset(VEGAS_SKYLINE2, MEMF_CHIP);
+ 
 
     city_horizon = &nyc_horizon;
 
@@ -147,8 +145,18 @@ void City_BlitHorizon()
     UWORD bltsize = ((CITYSKYLINE_HEIGHT << 2) << 6) | CITYSKYLINE_WIDTH / 16;
     
     // Source data
-    UBYTE *source = (UBYTE*)&city_horizon->data[0];
- 
+
+    UBYTE *source;
+
+    if (use_alt_frame == TRUE)
+    {
+        source = (UBYTE*)&city_horizon->data_frame2[0];
+    }
+    else
+    {
+        source = (UBYTE*)&city_horizon->data[0];
+    }
+   
     BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.bitplanes);
     BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.offscreen_bitplanes);
     BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.pristine);
@@ -163,8 +171,8 @@ void City_DrawRoad()
     WORD a, b, x, y;
     WORD b_offset = 1;
 
-    if (stage_state == STAGE_FRONTVIEW)
-        b_offset = 0;
+    //if (stage_state == STAGE_FRONTVIEW)
+    //    b_offset = 0;
  
     for (b = b_offset; b < 10; b++)
     {
@@ -200,7 +208,17 @@ void City_DrawRoad()
             a += run_length;
         }
     }
- 
+
+    // City Horizon Animation. Some stages dont use it
+    if (game_map == MAP_FRONTVIEW_LASVEGAS)
+    {
+        if (Timer_HasElapsed(&city_skyline_anim_timer))
+        {
+            use_alt_frame = !use_alt_frame;
+            Timer_Reset(&city_skyline_anim_timer);
+            City_BlitHorizon();
+        }
+    }   
 }
 
 void City_PreDrawRoad()
@@ -247,6 +265,8 @@ void City_PreDrawRoad()
     
     // Disable DMA ONCE at end
     custom->dmacon = 0x0400;
+
+    Timer_StartMs(&city_skyline_anim_timer,400);
 }
 
 void City_SpawnOncomingCar(void)

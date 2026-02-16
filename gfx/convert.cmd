@@ -6,8 +6,7 @@ kingcon zippylogo.iff ..\objects\zippylogo -Interleaved -format=4 -Mask -AW
 
 kingcon skyline_nyc.iff ..\images\skyline_nyc -Interleaved -format=4
 kingcon skyline_lv.iff ..\images\skyline_lv -Interleaved -format=4
-kingcon lv_anim1.iff ..\images\lv_anim1 -Interleaved -format=4
-kingcon lv_anim2.iff ..\images\lv_anim2 -Interleaved -format=4
+kingcon skyline_lv2.iff ..\images\skyline_lv2 -Interleaved -format=4 
 
 kingcon Car0_0.iff ..\objects\car0_0 -Interleaved -format=4 -Mask -AW
 kingcon Car0_1.iff ..\objects\car0_1 -Interleaved -format=4 -Mask -AW
