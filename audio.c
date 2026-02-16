@@ -63,7 +63,7 @@ INCBIN(player_nocia, "mus/player610.6.no_cia.bin");
 
 INCBIN_CHIP(mod_start, "mus/P61.start")
 INCBIN_CHIP(mod_onroad, "mus/P61.onroadstag")
-//INCBIN_CHIP(mod_checkpoint, "")
+INCBIN_CHIP(mod_checkpoint, "mus/P61.checkpoint")
 //INCBIN_CHIP(mod_ranking, "")
 //INCBIN_CHIP(mod_offroad,"" )
 INCBIN_CHIP(mod_frontview,"mus/P61.frontview" )
@@ -121,7 +121,7 @@ void Music_LoadModule(BYTE track)
         p61Init(mod_onroad);
         break;
     case MUSIC_CHECKPOINT:
-        //p61Init(mod_checkpoint);
+        p61Init(mod_checkpoint);
         break;
     case MUSIC_RANKING:
         //p61Init(mod_ranking);

@@ -659,20 +659,16 @@ void Stage_Draw()
         City_DrawOncomingCars();
 
         Game_ResetBitplanePointer();
-
-        City_UpdateHorizonTransition(&bike_position_y, &bike_speed, game_frame_count);
-
+ 
         // Apply vibration offset for distant sprites (ADD THIS)
         WORD vibration_x = MotorBike_GetVibrationOffset();
 
-        MotorBike_SetFrame(bike_state);
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
-
-        if (City_GetApproachState() == CITY_STATE_INTO_HORIZON)
-        {
-            MotorBike_UpdateApproachFrame(bike_position_y);
-        }
+    }
+    else
+    {
+        City_DrawRoad();
     }
     
 
@@ -798,7 +794,6 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_FRONTVIEW)
     {
-      
         if (City_OncomingCarsIsComplete())
         {
             stage_state = STAGE_COMPLETE;
@@ -806,9 +801,9 @@ void Stage_Update()
             return;
         }
 
-        // === ACCELERATION LOGIC ===
-
-        if (frontview_bike_crashed == FALSE)
+        CityApproachState approach_state = City_GetApproachState();
+ 
+        if (frontview_bike_crashed == FALSE && approach_state < CITY_STATE_INTO_HORIZON )
         {
             if (JoyFireHeld())
             {
@@ -857,24 +852,50 @@ void Stage_Update()
                 bike_position_x -= 2;
                 bike_state = BIKE_STATE_FRONTVIEW_LEFT;
             }
-
-            if (JoyRight())
+            else if (JoyRight())
             {
                 bike_position_x += 2;
                 bike_state = BIKE_STATE_FRONTVIEW_RIGHT;
             }
+            else
+            {
+                static UBYTE frontview_bike_anim_frame = 0;   
+                UWORD anim_speed = 8 - (bike_speed / 30);
+                
+                if (anim_speed < 2) anim_speed = 2;
+                
+                if (game_frame_count % anim_speed == 0)
+                {
+                    frontview_bike_anim_frame ^= 1;
+                }
+                
+                bike_state = frontview_bike_anim_frame ? BIKE_FRAME_APPROACH2 : BIKE_FRAME_APPROACH1;
+            }
         }
 
-        CityApproachState approach_state = City_GetApproachState();
-        
-        if (approach_state == CITY_STATE_WAITING_NAME  || approach_state == CITY_STATE_ACTIVE)
+        if (approach_state == CITY_STATE_INTO_HORIZON)
         {
-           UpdateRoadScroll(bike_speed << 1, 0);
+            City_UpdateHorizonTransition(&bike_position_y, &bike_speed, game_frame_count);
+
+            bike_position_x = City_CalculateBikePerspectiveX(bike_position_y, 
+                                                        City_GetBikeHorizonStartX());
+
+            MotorBike_UpdateApproachFrame(bike_position_y);
+        }
+        else
+        {
+            // Normal gameplay - use the bike_state set above
+            MotorBike_SetFrame(bike_state);
+        }
+
+        // Update road scrolling
+        if (approach_state == CITY_STATE_WAITING_NAME || approach_state == CITY_STATE_ACTIVE)
+        {
+            UpdateRoadScroll(bike_speed << 1, 0);
         }
         else if (approach_state == CITY_STATE_INTO_HORIZON)
         {
-            // Road continues scrolling during horizon transition
-            UpdateRoadScroll(bike_speed << 1, game_frame_count);
+            UpdateRoadScroll(bike_speed, game_frame_count);
         }
     }
 }

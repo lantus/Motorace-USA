@@ -42,7 +42,7 @@ static const WORD scale_start_y[NUM_CAR_SCALES] = {
     150   // Scale 7 at Y=170
 };
 
-
+#
 static CityApproachState city_state = CITY_STATE_WAITING_NAME;
 
 static WORD cars_passed = 0;
@@ -55,6 +55,8 @@ static GameTimer spawn_timer;
 static GameTimer city_name_timer;
 static GameTimer city_skyline_anim_timer;
 static GameTimer crash_recovery_timer;
+
+static WORD bike_horizon_start_x = 0;  
 
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
@@ -405,28 +407,46 @@ void City_DrawOncomingCars(void)
                 current_car->visible = FALSE;
                 cars_passed++;
                 
-                KPrintF("Car passed! Total: %d/%d\n", cars_passed, TOTAL_CARS_TO_PASS);
+                KPrintF("Car passed! Total: %ld/%ld\n", cars_passed, TOTAL_CARS_TO_PASS);
                 
                 if (cars_passed >= TOTAL_CARS_TO_PASS)
                 {
-                 
-                    city_state = CITY_STATE_INTO_HORIZON;
-                    KPrintF("=== All cars passed - moving into horizon ===\n");
+                    Timer_Start(&spawn_timer, CAR_SPAWN_TIMER+2);
                 }
                 else
                 {
-                    Timer_Start(&spawn_timer, 2);
+                    if (frontview_bike_crashed == FALSE)
+                    {
+                        Timer_Start(&spawn_timer, CAR_SPAWN_TIMER);
+                    }
                 }
+                
             }
             
             City_DrawOncomingCar(current_car);
         }
         else
         {
-            if (Timer_HasElapsed(&spawn_timer))
+            if (cars_passed >= TOTAL_CARS_TO_PASS)
             {
-                Timer_Stop(&spawn_timer);
-                City_SpawnOncomingCar();
+                // Last car already passed, waiting for timer
+                if (Timer_HasElapsed(&spawn_timer))
+                {
+                    Timer_Stop(&spawn_timer);
+                    
+                    city_state = CITY_STATE_INTO_HORIZON;
+                    bike_horizon_start_x = bike_position_x;
+                    bike_state = BIKE_FRAME_APPROACH1;
+                }
+            }
+            else
+            {
+                // Normal spawn - not the last car yet
+                if (!frontview_bike_crashed && Timer_HasElapsed(&spawn_timer))
+                {
+                    Timer_Stop(&spawn_timer);
+                    City_SpawnOncomingCar();
+                }
             }
         }
     }
@@ -436,7 +456,7 @@ void City_DrawOncomingCars(void)
         // Bike moves into horizon - handled in City_UpdateHorizonTransition
     }
 
-     City_UpdateBikeCrashAnimation();
+    City_UpdateBikeCrashAnimation();
 
     if (frontview_bike_crashed && Timer_HasElapsed(&crash_recovery_timer))
     {
@@ -448,7 +468,7 @@ void City_DrawOncomingCars(void)
 
         if (!current_car->visible && cars_passed < TOTAL_CARS_TO_PASS)
         {
-            Timer_Start(&spawn_timer, 2);
+            Timer_Start(&spawn_timer, CAR_SPAWN_TIMER);
         }
     }
 }
@@ -456,12 +476,18 @@ void City_DrawOncomingCars(void)
 void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_count)
 {
     if (city_state != CITY_STATE_INTO_HORIZON) return;
-    
-    if (*bikespeed > 80 && frame_count % 3 == 0)
+   
+
+    if (*bikespeed > 80)
     {
         *bikespeed -= 1;
     }
-    
+ 
+    if (*bikespeed < 80)
+    {
+        *bikespeed = 80;
+    }
+ 
     UWORD y_speed;
     
     if (*bikespeed > 150)
@@ -475,11 +501,24 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
     {
         (*bike_y)--;
     }
-    
-    if (*bike_y <= 100)
+ 
+    if (*bike_y <= 84)
     {
+        Music_Stop();
+        
+        SFX_StopAll();
+
+        LONG vpos = VBeamPos();
+        while (VBeamPos() - vpos < 6) ;
+
         city_state = CITY_STATE_COMPLETE;
-        KPrintF("=== Horizon transition complete ===\n");
+
+        Sprites_ClearLower();
+        Sprites_ClearHigher();
+
+        custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD2 ;
+
+        Music_LoadModule(MUSIC_CHECKPOINT);
     }
 }
 
@@ -518,7 +557,6 @@ void City_CopyPristineBackground(BlitterObject *car)
     WORD old_screen_y = car->prev_old_y;
  
     ULONG y_offset = ((ULONG)old_screen_y << 6) + ((ULONG)old_screen_y << 5);
-   
  
     WORD x_word_aligned = (car->old_x >> 3) & 0xFFFE;
     
@@ -588,13 +626,11 @@ WORD City_CalculatePerspectiveX(WORD car_y, WORD target_x)
     WORD car_progress_y = center_y - HORIZON_Y;
     
     if (car_progress_y <= 0) return HORIZON_VANISHING_X;
-    
-    // Total Y distance from horizon (67) to bottom (240)
-    WORD total_y = 240 - HORIZON_Y;  // 173 pixels
+ 
+    WORD total_y = 240 - HORIZON_Y; 
     
     WORD delta_x = target_x - HORIZON_VANISHING_X;
-    
-    // Linear interpolation: x = 96 + delta_x * (car_y / total_y)
+ 
     LONG x = HORIZON_VANISHING_X + ((LONG)delta_x * car_progress_y) / total_y;
     
     return (WORD)x;
@@ -655,4 +691,31 @@ void City_UpdateBikeCrashAnimation(void)
             case 3: bike_state = BIKE_FRAME_CRASH4; break;
         }
     }
+}
+
+// Calculate bike X position as it moves into horizon
+ 
+WORD City_CalculateBikePerspectiveX(WORD bike_y, WORD starting_x)
+{
+    WORD HORIZON_CENTER_X = 81;
+    const WORD BIKE_START_Y = 200;
+    const WORD HORIZON_END_Y = 92;
+
+    if (bike_y <= HORIZON_END_Y) return HORIZON_CENTER_X;
+    
+    if (bike_y >= BIKE_START_Y) return starting_x;
+ 
+    WORD distance_traveled = BIKE_START_Y - bike_y;
+    WORD total_distance = BIKE_START_Y - HORIZON_END_Y;  
+ 
+    WORD delta_x = HORIZON_CENTER_X - starting_x;
+ 
+    LONG x = starting_x + ((LONG)delta_x * distance_traveled) / total_distance;
+    
+    return (WORD)x;
+}
+
+WORD City_GetBikeHorizonStartX(void)
+{
+    return bike_horizon_start_x;
 }

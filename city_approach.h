@@ -40,10 +40,11 @@
 
 #define ONCOMING_CAR_WIDTH 48
 #define ONCOMING_CAR_HEIGHT 32
-#define ONCOMING_CAR_WIDTH_WORDS 4            // (includes padding)
+#define ONCOMING_CAR_WIDTH_WORDS 4           
 
 #define NUM_CAR_SCALES 8
 #define TOTAL_CARS_TO_PASS 8
+#define CAR_SPAWN_TIMER 1 // 1 sec
 
 // City approach states
 typedef enum {
@@ -79,6 +80,8 @@ void City_DrawRoad(void);
 void City_PreDrawRoad(void);
 void City_UpdateHorizonTransition(WORD *bike_y, WORD *bike_speed, UWORD frame_count);
 WORD City_CalculatePerspectiveX(WORD scale_index, WORD target_x);
+WORD City_CalculateBikePerspectiveX(WORD bike_y, WORD starting_x);
+WORD City_GetBikeHorizonStartX(void);
 BOOL City_CheckCarCollision(BlitterObject *car);
 void City_UpdateBikeCrashAnimation(void);
 CityApproachState City_GetApproachState(void);
