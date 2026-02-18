@@ -1,5 +1,6 @@
 #define ZIPPY_LOGO "objects/zippylogo.BPL"
 #define CITY_ATTRACT "images/city_attract.BPL"
+#define AMIGA_LOGO "images/amilogo.BPL"
 
 extern RawMap *city_attract_map;
 extern BitMapEx *city_attract_tiles;
@@ -13,7 +14,8 @@ enum TitleState {
     TITLE_ATTRACT_INTO_HORIZON = 3, // bike traveling into horizon.  drop and flash logo cut speed
     TITLE_ATTRACT_LOGO_DROP = 4,
     TITLE_ATTRACT_INSERT_COIN = 5,
-    TITLE_ATTRACT_HIGHSCORE = 6
+    TITLE_ATTRACT_HIGHSCORE = 6,
+    TITLE_ATTRACT_CREDITS = 7
 };
 
 void Title_Initialize();
@@ -30,5 +32,8 @@ void Title_OpenBlocks();
 // Attract Mode stuff
 void AttractMode_Update(void);
 void AttractMode_UpdateHiScores(void);
+void AttractMode_UpdateCredits(void);
 void AttractMode_ShowHiScores(void);
+void AttractMode_ShowCredits(void);
 void AttractMode_DrawText(void);
+void AttractMode_BlitAmiLogo();

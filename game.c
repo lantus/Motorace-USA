@@ -25,6 +25,7 @@
 #include "blitter.h"
 #include "city_approach.h"
 #include "roadsystem.h"
+#include "ranking.h"
 
 #include "cars.h"
 #include "audio.h"
@@ -107,6 +108,10 @@ ULONG *current_countdown_spr;
 UBYTE countdown_idx = 0;
 
 // One time startup for everything
+
+// At top with other static variables
+static GameTimer stage_complete_timer;
+static WORD ranking_backdrop_y = 0;   
 
 void Game_Initialize()
 {
@@ -529,8 +534,8 @@ void GameReady_Initialize(void)
     ready_text_visible = TRUE;
     Timer_StartMs(&ready_blink_timer, 800);  // Blink every 800ms
 
-    Font_DrawStringCentered(draw_buffer, "            PUSH BUTTON", 60, 17);   
-    Font_DrawStringCentered(draw_buffer, "            ONLY 1 PLAYER", 100, 17);  
+    Font_DrawStringCentered(draw_buffer, "       PUSH BUTTON", 60, 17);   
+    Font_DrawStringCentered(draw_buffer, "       ONLY 1 PLAYER", 100, 17);  
 }
 
 void GameReady_Draw(void)
@@ -542,13 +547,15 @@ void GameReady_Draw(void)
         
         if (ready_text_visible)
         {
-            Font_DrawStringCentered(draw_buffer, "            PUSH BUTTON", 60, 17);   
-            Font_DrawStringCentered(draw_buffer, "            ONLY 1 PLAYER", 100, 17);  
+            Font_DrawStringCentered(draw_buffer, "       PUSH BUTTON", 60, 17);   
+            Font_DrawStringCentered(draw_buffer, "       ONLY 1 PLAYER", 100, 17);  
+            WaitBlit();
         }
         else
         {
             // Clear the "PUSH BUTTON" area
             Font_ClearArea(draw_buffer, 0, 60, SCREENWIDTH, 8);
+            WaitBlit();
         }
         
         Timer_Reset(&ready_blink_timer);
@@ -666,12 +673,41 @@ void Stage_Draw()
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
     }
-    else
+    else if (stage_state == STAGE_COMPLETE)
     {
         City_DrawRoad();
-    }
-    
 
+        if (Timer_HasElapsed(&stage_complete_timer))
+        {
+            Timer_Stop(&stage_complete_timer);
+            stage_state = STAGE_RANKING;
+
+            // Turn off Bike
+            Sprites_ClearLower();
+            Sprites_ClearHigher();
+
+            Ranking_Initialize();
+
+            Music_Stop();
+
+            LONG vpos = VBeamPos();
+            while (VBeamPos() - vpos < 32) ;
+            custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD2 ;
+            Music_LoadModule(MUSIC_RANKING);
+
+        }
+    }
+    else if (stage_state == STAGE_RANKING)
+    {
+        if (ranking_backdrop_y < 48)
+        {
+            Ranking_DrawCityBackdrop(ranking_backdrop_y);
+        }
+        else
+        {
+            Ranking_Draw(screen.bitplanes);
+        }
+    }   
 }
 
 void Stage_Update()
@@ -797,6 +833,7 @@ void Stage_Update()
         if (City_OncomingCarsIsComplete())
         {
             stage_state = STAGE_COMPLETE;
+            Timer_Start(&stage_complete_timer, 2);
             KPrintF("=== Stage 1 Complete! ===\n");
             return;
         }
@@ -896,6 +933,19 @@ void Stage_Update()
         else if (approach_state == CITY_STATE_INTO_HORIZON)
         {
             UpdateRoadScroll(bike_speed, game_frame_count);
+        }
+    }
+    else if (stage_state == STAGE_RANKING)
+    {
+        ranking_backdrop_y+=2;
+
+        if (ranking_backdrop_y >= 48)
+        {
+            ranking_backdrop_y = 48;    
+        }
+        else
+        {
+            Ranking_Draw(draw_buffer);
         }
     }
 }

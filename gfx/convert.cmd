@@ -8,6 +8,8 @@ kingcon skyline_nyc.iff ..\images\skyline_nyc -Interleaved -format=4
 kingcon skyline_lv.iff ..\images\skyline_lv -Interleaved -format=4
 kingcon skyline_lv2.iff ..\images\skyline_lv2 -Interleaved -format=4 
 
+kingcon amilogo.iff ..\images\amilogo -Interleaved -format=4
+
 kingcon Car0_0.iff ..\objects\car0_0 -Interleaved -format=4 -Mask -AW
 kingcon Car0_1.iff ..\objects\car0_1 -Interleaved -format=4 -Mask -AW
 kingcon Car1_0.iff ..\objects\car1_0 -Interleaved -format=4 -Mask -AW

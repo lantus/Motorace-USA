@@ -36,11 +36,15 @@
 #define ATTRACTMODE_TILES_HEIGHT 512
 #define NUM_ROAD_FRAMES 14
 
+#define AMI_LOGO_WIDTH 32
+#define AMI_LOGO_HEIGHT 32
+#define AMI_LOGO_WIDTH_WORDS 2
 
 extern volatile struct Custom *custom;
 
 BlitterObject zippy_logo;
- 
+BlitterObject ami_logo;
+
 APTR zippy_logo_restore_ptrs[4];
 APTR *zippy_logo_restore_ptr;
 
@@ -64,6 +68,7 @@ UBYTE title_state = TITLE_ATTRACT_INIT;
 void Title_LoadSprites()
 {
     zippy_logo.data = Disk_AllocAndLoadAsset(ZIPPY_LOGO, MEMF_CHIP);
+    ami_logo.data = Disk_AllocAndLoadAsset(AMIGA_LOGO, MEMF_CHIP);
 }
 
 void Title_Initialize(void)
@@ -203,6 +208,20 @@ void Title_Draw()
         }
  
     }  
+    else if (title_state == TITLE_ATTRACT_HIGHSCORE)
+    {
+        if (Timer_HasElapsed(&hiscore_timer) == TRUE)
+        {
+            Timer_Reset(&hiscore_timer);
+            title_state = TITLE_ATTRACT_CREDITS;
+
+            BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 64);
+            BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 64);
+            AttractMode_ShowCredits();
+           
+        }
+ 
+    }  
  
     // Apply vibration offset for distant sprites (ADD THIS)
     WORD vibration_x = MotorBike_GetVibrationOffset();
@@ -216,8 +235,7 @@ void AttractMode_DrawText(void)
 {
     Font_DrawStringCentered(draw_buffer, "PRESS FIRE BUTTON", 120, 12);  
 
-    Font_DrawString(draw_buffer, COPYRIGHT "1983 IREM CORP", 8, 188, 5);         
-    Font_DrawString(draw_buffer, "2026 AMIGA PORT BY MVG", 8, 198, 4);       
+    Font_DrawStringCentered(draw_buffer, COPYRIGHT "1983 IREM CORP", 148, 5);
 }
 
 void AttractMode_ShowHiScores(void)
@@ -226,7 +244,41 @@ void AttractMode_ShowHiScores(void)
     HiScore_Draw(draw_buffer, 10, 12);   
 }
 
+void AttractMode_ShowCredits(void)
+{
+    Font_DrawString(draw_buffer, "Amiga Conversion : ", 8, 30, 2);     
+    Font_DrawString(draw_buffer, "MVG", 12, 40, 5);     
+    Font_DrawString(draw_buffer, "Music/SFX Conversion :", 8, 50, 2);     
+    Font_DrawString(draw_buffer, "ESTRAYK", 12, 60, 5);     
+ 
+    Font_DrawString(draw_buffer, "Greetings To:", 8, 120, 2);     
+    Font_DrawString(draw_buffer, "EAB Forum - Amiga Bill - Tony Galvez", 12, 130, 3);   
+    Font_DrawString(draw_buffer, "McGeezer - h0ffman", 12, 140, 3);  
+    Font_DrawString(draw_buffer, "JOTD - Galahad", 12, 150, 3);  
+    Font_DrawString(draw_buffer, "Wei ju Wu - Bartman", 12, 160, 3);  
+    Font_DrawString(draw_buffer, "Toni Willen - Bartman", 12, 170, 3); 
+    
+    Font_DrawStringCentered(draw_buffer, "Amiga Forever", 200, 7);  
+
+    AttractMode_BlitAmiLogo();
+}
+
 void AttractMode_UpdateHiScores(void)
+{
+     if (Timer_HasElapsed(&hiscore_timer) == TRUE)
+     {
+        title_state = TITLE_ATTRACT_CREDITS;
+        Timer_Reset(&hiscore_timer);
+
+        BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 64);
+        BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 64);
+
+        AttractMode_ShowCredits();
+
+     }
+}
+
+void AttractMode_UpdateCredits(void)
 {
      if (Timer_HasElapsed(&hiscore_timer) == TRUE)
      {
@@ -239,6 +291,7 @@ void AttractMode_UpdateHiScores(void)
         Title_BlitLogo();
 
         AttractMode_DrawText();
+ 
      }
 }
 
@@ -413,6 +466,10 @@ void Title_Update()
     {
         AttractMode_UpdateHiScores();
     } 
+    else if (title_state == TITLE_ATTRACT_CREDITS)
+    {
+        AttractMode_UpdateCredits();
+    }
 
     if (road_tile_idx > NUM_ROAD_FRAMES)
     {
@@ -461,6 +518,24 @@ void Title_BlitLogo()
  
     BlitBob2(SCREENWIDTH/2, x, y, admod, bltsize, ZIPPY_LOGO_WIDTH, 
              zippy_logo_restore_ptrs, source, mask, dest);
+}
+
+void AttractMode_BlitAmiLogo()
+{
+    WORD x = 32;
+    WORD y = 180;
+
+    UWORD source_mod = 0;
+    UWORD dest_mod = (SCREENWIDTH / 8) - (2);
+    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+ 
+    UWORD bltsize = ((AMI_LOGO_HEIGHT<<2) << 6) | 2;
+    
+    UBYTE *source = (UBYTE*)&ami_logo.data[0];
+    
+    UBYTE *dest = draw_buffer;
+ 
+    BlitBobSimple(SCREENWIDTH/2, x, y, admod, bltsize, source, dest);
 }
 
 void Title_SaveBackground()

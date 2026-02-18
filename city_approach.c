@@ -161,7 +161,11 @@ void City_BlitHorizon()
    
     BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.bitplanes);
     BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.offscreen_bitplanes);
-    BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.pristine);
+
+    if (stage_state < STAGE_RANKING)
+    {
+        BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, screen.pristine);
+    }
 }
 
 void City_DrawRoad()
@@ -509,7 +513,7 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
         SFX_StopAll();
 
         LONG vpos = VBeamPos();
-        while (VBeamPos() - vpos < 6) ;
+        while (VBeamPos() - vpos < 8) ;
 
         city_state = CITY_STATE_COMPLETE;
 
