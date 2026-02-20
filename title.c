@@ -251,16 +251,17 @@ void AttractMode_ShowCredits(void)
     Font_DrawString(draw_buffer, "Music/SFX Conversion :", 8, 50, 2);     
     Font_DrawString(draw_buffer, "ESTRAYK", 12, 60, 5);     
  
-    Font_DrawString(draw_buffer, "Greetings To:", 8, 120, 2);     
-    Font_DrawString(draw_buffer, "EAB Forum - Amiga Bill - Tony Galvez", 12, 130, 3);   
-    Font_DrawString(draw_buffer, "McGeezer - h0ffman", 12, 140, 3);  
-    Font_DrawString(draw_buffer, "JOTD - Galahad", 12, 150, 3);  
-    Font_DrawString(draw_buffer, "Wei ju Wu - Bartman", 12, 160, 3);  
-    Font_DrawString(draw_buffer, "Toni Willen - Bartman", 12, 170, 3); 
+    Font_DrawString(draw_buffer, "Greetings :", 8, 110, 2);     
+    Font_DrawString(draw_buffer, "EAB Forum - Amiga Bill - Tony Galvez", 12, 120, 3);   
+    Font_DrawString(draw_buffer, "McGeezer - h0ffman", 12, 130, 3);  
+    Font_DrawString(draw_buffer, "JOTD - Galahad", 12, 140, 3);  
+    Font_DrawString(draw_buffer, "Wei ju Wu - Bartman", 12, 150, 3);  
+    Font_DrawString(draw_buffer, "Toni Willen - Photon", 12, 160, 3); 
     
+    
+    AttractMode_BlitAmiLogo();
     Font_DrawStringCentered(draw_buffer, "Amiga Forever", 200, 7);  
 
-    AttractMode_BlitAmiLogo();
 }
 
 void AttractMode_UpdateHiScores(void)
@@ -522,11 +523,11 @@ void Title_BlitLogo()
 
 void AttractMode_BlitAmiLogo()
 {
-    WORD x = 32;
+    WORD x = 28;
     WORD y = 180;
 
     UWORD source_mod = 0;
-    UWORD dest_mod = (SCREENWIDTH / 8) - (2);
+    UWORD dest_mod = (SCREENWIDTH - 32) / 8 ;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
     UWORD bltsize = ((AMI_LOGO_HEIGHT<<2) << 6) | 2;
