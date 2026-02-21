@@ -26,6 +26,7 @@
 #include "city_approach.h"
 #include "roadsystem.h"
 #include "ranking.h"
+#include "stageprogress.h"
 #include "fuel.h"
 
 #include "cars.h"
@@ -149,6 +150,7 @@ void Game_Initialize()
     MotorBike_Reset();
 
     Fuel_Initialize();
+    StageProgress_Initialize(); 
 
     KPrintF("Avail Chip  = %ld\n", Mem_GetFreeChip());
     KPrintF("Avail Fast  = %ld\n", Mem_GetFreeFast());
@@ -174,6 +176,7 @@ void Game_NewGame(UBYTE difficulty)
     
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT - 1;
     videoposy = mapposy % HALFBITMAPHEIGHT ;
+    stage_progress.mapsize = mapposy;
 
     Cars_ResetPositions();
 }
@@ -539,6 +542,8 @@ void GameReady_Initialize(void)
 
     Font_DrawStringCentered(draw_buffer, "       PUSH BUTTON", 60, 17);   
     Font_DrawStringCentered(draw_buffer, "       ONLY 1 PLAYER", 100, 17);  
+            
+ 
 }
 
 void GameReady_Draw(void)
@@ -586,14 +591,16 @@ void GameReady_Update(void)
         Game_ApplyPalette(city_colors,BLOCKSCOLORS);
 
         MotorBike_Reset();
+ 
+        StageProgress_DrawAllEmpty();
 
         HUD_SetSpritePositions();
         HUD_DrawAll();
-        
+ 
         Game_FillScreen();
 
         Stage_ShowInfo();
-
+        StageProgress_SetStage(0);
         Music_LoadModule(MUSIC_START);
     }    
  
@@ -660,6 +667,7 @@ void Stage_Draw()
         }
 
         Fuel_Draw(); 
+        StageProgress_Draw();
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         Game_HandleCollisions();
     }
@@ -844,6 +852,8 @@ void Stage_Update()
                 bike_state = BIKE_STATE_RIGHT;
             }
         }
+
+        StageProgress_UpdateOverhead(mapposy);
 
         Stage_CheckCompletion();
     }
@@ -1061,12 +1071,14 @@ void Game_HandleCollisions(void)
         {
             collision_car_index = hit_car;
             Timer_Start(&collision_recovery_timer, 2);  // 2 seconds recovery
+        
             Cars_HandleSpinout(hit_car);
             Music_Stop();
         }
         else if (collision_state == COLLISION_OFFROAD)
         {
             Timer_Start(&collision_recovery_timer, 2);  // 2 seconds recovery
+          
         }
     }
     
@@ -1096,11 +1108,13 @@ void Game_HandleCollisions(void)
         // Check if 2 seconds have elapsed
         if (Timer_HasElapsed(&collision_recovery_timer))
         {
+            MotorBike_CrashAndReposition();
+
             // Resume play
             collision_state = COLLISION_NONE;
             collision_car_index = -1;
             Timer_Stop(&collision_recovery_timer);
-          
+         
             Music_LoadModule(MUSIC_ONROAD);
 
             Fuel_Decrease(1);
@@ -1124,7 +1138,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (mapposy <= 12000)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= stage_progress.mapsize)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 

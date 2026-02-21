@@ -27,7 +27,7 @@ void Fuel_Initialize(void)
     fuel_gauge.fuel_empty = FALSE;
     fuel_gauge.needs_redraw = TRUE;   
     
-    Timer_Start(&fuel_timer, 4);
+    Timer_Start(&fuel_timer, 3);
     
     KPrintF("Fuel system initialized\n");
 }

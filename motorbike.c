@@ -546,3 +546,10 @@ CollisionState MotorBike_CheckCollision(int *hit_car_index)
     *hit_car_index = -1;
     return COLLISION_NONE;
 }
+
+void MotorBike_CrashAndReposition(void)
+{
+
+    
+    //KPrintF("Bike repositioned: world_y=%ld, mapposy=%ld\n", bike_world_y, mapposy);
+}

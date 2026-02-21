@@ -41,6 +41,7 @@
 #define FUEL_PIECE_EMPTY7 "\x20\x09"
 #define FUEL_PIECE_EMPTY8 "\x20\x08"
 
+
 typedef struct 
 {
     UWORD *sprite_data[4];  // Pointers to sprite data for sprites 4-7
@@ -67,5 +68,7 @@ void HUD_SetSpritePositions(void);
 void HUD_UpdateScore(ULONG score);
 void HUD_UpdateSpeed();
 void HUD_UpdateRank(UBYTE rank);
+void HUD_ClearSpriteBlock(int sprite_index, WORD y_start);
+
 char *GetOrdinalSuffix(UBYTE number);
 void ULongToString(ULONG value, char *buffer, int width, char pad_char);

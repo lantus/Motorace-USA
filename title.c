@@ -26,6 +26,7 @@
 #include "hiscore.h"
 #include "font.h"
 #include "city_approach.h"
+#include "stageprogress.h"
  
 #define ZIPPY_LOGO_WIDTH 80
 #define ZIPPY_LOGO_HEIGHT 48
@@ -117,8 +118,11 @@ void Title_Draw()
             City_PreDrawRoad();
             Title_SaveBackground();
             // Draw the hud
+            
             HUD_DrawAll();
-
+            StageProgress_FillAll();
+            StageProgress_DrawAll(); 
+            
             #if defined (DEBUG)
             char line_buffer[8] = {0};
             
@@ -128,6 +132,7 @@ void Title_Draw()
             Font_DrawString(draw_buffer, line_buffer, 32, 180, 10);
             #endif
 
+          
             title_state = TITLE_ATTRACT_ACCEL;            
 
         }
