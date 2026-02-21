@@ -26,6 +26,7 @@
 #include "disk.h"
 #include "font.h"
 #include "audio.h"
+#include "fuel.h"
 #include "city_approach.h"
 
 extern volatile struct Custom *custom;
@@ -467,6 +468,8 @@ void City_DrawOncomingCars(void)
         frontview_bike_crashed = FALSE;
         Timer_Stop(&crash_recovery_timer);
         Game_SetBackGroundColor(0x000);
+        Fuel_Decrease(1);
+        Fuel_DrawAll();
         Music_LoadModule(MUSIC_FRONTVIEW);
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
 

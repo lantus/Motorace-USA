@@ -7,6 +7,7 @@
 #include "hiscore.h"
 #include "hud.h"
 #include "timers.h"
+#include "fuel.h"
 #include "font.h"
 
 #define VALUE 1
@@ -70,71 +71,94 @@ void HUD_SetSpritePointers(void)
 
 void HUD_SetWhite(void)
 {
-   Copper_SetSpritePalette(9, 0xFFF);   // Color 25 - White (sprites 4&5)
-   Copper_SetSpritePalette(13, 0xFFF);  // Color 29 - White (sprites 6&7)  
+    Copper_SetSpritePalette(9, 0xFFF);   
+    Copper_SetSpritePalette(10, 0x55F);   
+    Copper_SetSpritePalette(11, 0xF53);   
+    Copper_SetSpritePalette(12, 0xFFF);   
+    Copper_SetSpritePalette(13, 0xFFF);  
+    Copper_SetSpritePalette(14, 0xF53);    
+    Copper_SetSpritePalette(15, 0xF53);
 }
 
-void HUD_SetRed(void)
-{
-   Copper_SetSpritePalette(9, 0xF00);   // Color 25 - White (sprites 4&5)
-   Copper_SetSpritePalette(13, 0xF00);  // Color 29 - White (sprites 6&7)  
-   Copper_SetSpritePalette(30, 0xF00);  // Color 29 - White (sprites 6&7)  
-}
  
 void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
 {
-    UBYTE char_data[8];
+    UBYTE char_data[2][8];  
+    Font_GetCharCol(c, char_data);
 
-    Font_GetChar(c, char_data);
-    
-    for (int row = 0; row < 8; row++) 
+    for (int row = 0; row < 8; row++) {
+    int sprite_line = y + row;
+    if (sprite_line >= HUD_HEIGHT) break; 
+
+    UBYTE font_row_p0 = char_data[0][row];  // Bitplane 0 from font
+    UBYTE font_row_p1 = char_data[1][row];  // Bitplane 1 from font
+    UWORD plane_a = 0, plane_b = 0;
+
+    for (int bit = 0; bit < 8; bit++) 
     {
-        int sprite_line = y + row;
-        if (sprite_line >= HUD_HEIGHT) break;
-        
-        UBYTE font_row = char_data[row];
-        UWORD plane_a = 0, plane_b = 0;
-        
-        for (int bit = 0; bit < 8; bit++) 
-        {
-            if (font_row & (0x80 >> bit)) 
-            {
-                // Use same bitplane pattern for all sprites to get consistent color
-                plane_a |= (0x8000 >> (x + bit));   // Set plane A
-                plane_b |= 0;                       // Clear plane B
-                // This gives color index "01" which maps to colors 25, 27, 29, 31
-            }
+     
+        if (font_row_p0 & (0x80 >> bit)) {
+            plane_a |= (0x8000 >> (x + bit));
         }
+        if (font_row_p1 & (0x80 >> bit)) {
+            plane_b |= (0x8000 >> (x + bit));
+        }
+    }
+
+    sprite_data[2 + sprite_line * 2] |= plane_a;
+    sprite_data[2 + sprite_line * 2 + 1] |= plane_b;
+    }
+}
+
+void Font_GetCharCol(char c, UBYTE char_data[2][8])  
+{
+    UBYTE char_index = (UBYTE)c;
+    
+    UBYTE char_x = char_index % game_font.chars_per_row;
+    UBYTE char_y = char_index / game_font.chars_per_row;
+    
+    UWORD sheet_width_bytes = (game_font.chars_per_row * game_font.char_width) / 8;
+    ULONG plane_size = sheet_width_bytes * 80;  // Total bytes in one plane
+    
+    for (UBYTE row = 0; row < 8; row++)
+    {
+        UWORD sheet_y = (char_y * 8) + row;
+        UWORD byte_offset = (sheet_y * sheet_width_bytes) + char_x;
         
-        sprite_data[2 + sprite_line * 2] |= plane_a;
-        sprite_data[2 + sprite_line * 2 + 1] |= plane_b;
+        // ✅ Read from BOTH bitplanes
+        char_data[0][row] = game_font.font_data[byte_offset];              // Plane 0
+        char_data[1][row] = game_font.font_data[plane_size + byte_offset]; // Plane 1
     }
 }
 
 void HUD_DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode)
 {
-    UBYTE char_data[8];
-    Font_GetChar(c, char_data);
+    UBYTE char_data[2][8];  
+    Font_GetCharCol(c, char_data);
     
     for (int row = 0; row < 8; row++) {
         int sprite_line = y + row;
-        if (sprite_line >= HUD_HEIGHT) break;
+        if (sprite_line >= HUD_HEIGHT) break; 
         
-        UBYTE font_row = char_data[row];
+        UBYTE font_row_p0 = char_data[0][row];   
+        UBYTE font_row_p1 = char_data[1][row]; 
         UWORD plane_a = 0, plane_b = 0;
         
         for (int bit = 0; bit < 8; bit++) {
-            if (font_row & (0x80 >> bit)) {
+            UBYTE bit0 = (font_row_p0 >> (7 - bit)) & 1;
+            UBYTE bit1 = (font_row_p1 >> (7 - bit)) & 1;
+            UBYTE pixel_value = (bit1 << 1) | bit0;  // 0-3
+            
+            if (pixel_value > 0) {  // Not transparent
+                // ✅ Use color_mode parameter to override font color
                 switch(color_mode) {
-                    case 0: // Transparent - don't set any bits
-                        break;
-                    case 1: // Color 1 of pair (plane B only)
+                    case 1: // Color 1 (plane B only)
                         plane_b |= (0x8000 >> (x + bit));
                         break;
-                    case 2: // Color 2 of pair (plane A only)  
+                    case 2: // Color 2 (plane A only)  
                         plane_a |= (0x8000 >> (x + bit));
                         break;
-                    case 3: // Color 3 of pair (both planes)
+                    case 3: // Color 3 (both planes)
                         plane_a |= (0x8000 >> (x + bit));
                         plane_b |= (0x8000 >> (x + bit));
                         break;
@@ -142,8 +166,8 @@ void HUD_DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int
             }
         }
         
-        sprite_data[2 + sprite_line * 2] |= plane_a;
-        sprite_data[2 + sprite_line * 2 + 1] |= plane_b;
+        sprite_data[2 + (sprite_line << 1)] |= plane_a;
+        sprite_data[2 + (sprite_line << 1) + 1] |= plane_b;
     }
 }
 
@@ -160,12 +184,26 @@ void HUD_DrawText(char *text, int sprite_col, int y_offset)
     
     for (int i = 0; text[i] && char_x + 8 <= 16; i++) 
     {
+        HUD_DrawCharToSprite(sprite, text[i], char_x, y_offset);
+        char_x += 8;  // Move 8 pixels right for next character
+      
+    }
+}
+
+void HUD_DrawTextWithColor(char *text, int sprite_col, int y_offset,int color_index)
+{
+    UWORD *sprite = hud_sprites.sprite_data[sprite_col];
+
+    int char_x = 0;  // Horizontal position within the 16-pixel sprite
+    
+    for (int i = 0; text[i] && char_x + 8 <= 16; i++) 
+    {
         if (IsValidChar(text[i])) 
         {
-            HUD_DrawCharToSprite(sprite, text[i], char_x, y_offset);
+            HUD_DrawCharToSpriteWithColor(sprite, text[i], char_x, y_offset, color_index);
             char_x += 8;  // Move 8 pixels right for next character
         }
-        // Invalid characters are simply skipped
+       
     }
 }
 
@@ -345,6 +383,16 @@ void HUD_DrawAll()
     HUD_DrawString(LASVEGAS , 3 , status_y+81);
     HUD_DrawString(LASANGELES , 3 , status_y+101);
 
+    // Fuel Text
+
+    HUD_DrawString("F" , 1 , status_y+12);
+    HUD_DrawString("U" , 1 , status_y+20);
+    HUD_DrawString("E" , 1 , status_y+28);
+    HUD_DrawString("L" , 1 , status_y+36);
+
+    // Fuel Gauge
+    Fuel_DrawAll(); 
+ 
     // Stages
 
     // NY -> STL
@@ -368,9 +416,7 @@ void HUD_DrawAll()
     HUD_DrawString(PROGRESS_PIECE3, 2, status_y+88);
     HUD_DrawString(PROGRESS_PIECE3, 2, status_y+96);
     HUD_DrawString(PROGRESS_PIECE1, 2, status_y+100);
-
-    // Fuel Gauge
-
+ 
     // Rank
     HUD_DrawString(BOX_TOP_LEFT_PIECE,0,160-8);
     HUD_DrawString(BOX_TOP_MIDDLE_PIECE,1,160-8);
@@ -440,3 +486,34 @@ void HUD_SetSpritePositions(void)
     
     HUD_SetSpritePointers();
 }
+
+void HUD_DrawStringWithColor(char *text, int start_sprite, int y_offset, int color_index)
+{
+    int text_len = strlen(text);
+    int sprite_index = start_sprite;
+    int char_pos = 0;
+ 
+    while (char_pos < text_len && sprite_index < 4) 
+    {
+        char sprite_text[3] = {0};
+        int chars_in_sprite = 0;
+        
+        while (chars_in_sprite < 2 && char_pos < text_len) 
+        {
+            if (IsValidChar(text[char_pos])) 
+            {
+                sprite_text[chars_in_sprite] = text[char_pos];
+                chars_in_sprite++;
+            }
+            char_pos++;
+        }
+        
+        if (chars_in_sprite > 0) 
+        {
+            HUD_DrawTextWithColor(sprite_text, sprite_index, y_offset, color_index);
+        }
+        
+        sprite_index++;
+    }
+}
+ 

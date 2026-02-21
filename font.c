@@ -25,7 +25,7 @@ BOOL Font_LoadSheet(const char *filename)
     }
     
     // Assuming font sheet is 128x80 pixels (16x16 characters)
-    LONG font_size = 128 * 80 / 8;  // 1 bitplane, packed
+    LONG font_size = (128 * 80 / 8) * 2;  // 2 bitplanes
     
     game_font.font_data = (UBYTE*)Mem_AllocChip(font_size);
     if (!game_font.font_data) {
@@ -43,6 +43,7 @@ BOOL Font_LoadSheet(const char *filename)
     game_font.chars_per_row = 16;
     game_font.char_width = 8;
     game_font.char_height = 8;
+    game_font.bitplanes = 2;
     
     Close(font_handle);
     return TRUE;
@@ -50,28 +51,24 @@ BOOL Font_LoadSheet(const char *filename)
 
 void Font_GetChar(char c, UBYTE *char_data)
 {
-    // Calculate character position in font sheet
     UBYTE char_index = (UBYTE)c;
     
-    WORD char_x = (char_index % game_font.chars_per_row) << 3;
-    WORD char_y = (char_index / game_font.chars_per_row) << 3;
+    // Calculate position in font sheet
+    UBYTE char_x = char_index % game_font.chars_per_row;
+    UBYTE char_y = char_index / game_font.chars_per_row;
     
-    // Font sheet is 128 pixels wide = 16 bytes per row
-    WORD bytes_per_row = 128 >> 3;
+    UWORD sheet_width_bytes = (game_font.chars_per_row * game_font.char_width) / 8;
     
-    // Extract 8x8 character
-    for (int row = 0; row < 8; row++) 
+    // For 2 bitplanes, data is stored as plane 0, then plane 1
+    ULONG plane_size = sheet_width_bytes * (game_font.chars_per_row * game_font.char_height);
+    
+    for (UBYTE row = 0; row < game_font.char_height; row++)
     {
-        WORD src_offset = ((char_y + row) * bytes_per_row) + (char_x >> 3);
-        char_data[row] = game_font.font_data[src_offset];
+        UWORD sheet_y = (char_y * game_font.char_height) + row;
+        UWORD byte_offset = (sheet_y * sheet_width_bytes) + char_x;
         
-        // If character spans byte boundary, handle bit shifting
-        if (char_x % 8 != 0) 
-        {
-            UBYTE shift = char_x % 8;
-            char_data[row] = (game_font.font_data[src_offset] << shift) |
-                            (game_font.font_data[src_offset + 1] >> (8 - shift));
-        }
+        // Read from plane 0 (for now, can be extended for multi-color fonts)
+        char_data[row] = game_font.font_data[byte_offset];
     }
 }
  

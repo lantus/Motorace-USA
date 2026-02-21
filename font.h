@@ -9,6 +9,7 @@ typedef struct
     WORD chars_per_row;   // Characters per row in font sheet
     WORD char_width;      // 8 pixels
     WORD char_height;     // 8 pixels
+    UBYTE bitplanes;
 } FontSheet;
 
 extern FontSheet game_font;

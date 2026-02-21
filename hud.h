@@ -30,6 +30,17 @@
 #define MPH_PIECE "\x8D\x8E"
 #define COPYRIGHT "\x8C"
 
+
+#define FUEL_PIECE_EMPTY0 "\x20\x2b"
+#define FUEL_PIECE_EMPTY1 "\x20\x0f"
+#define FUEL_PIECE_EMPTY2 "\x20\x0e"
+#define FUEL_PIECE_EMPTY3 "\x20\x0d"
+#define FUEL_PIECE_EMPTY4 "\x20\x0c"
+#define FUEL_PIECE_EMPTY5 "\x20\x0b"
+#define FUEL_PIECE_EMPTY6 "\x20\x0a"
+#define FUEL_PIECE_EMPTY7 "\x20\x09"
+#define FUEL_PIECE_EMPTY8 "\x20\x08"
+
 typedef struct 
 {
     UWORD *sprite_data[4];  // Pointers to sprite data for sprites 4-7
@@ -41,14 +52,15 @@ extern HUDSprites hud_sprites;
 void HUD_InitSprites(void);
 void HUD_InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height);
 void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y);
-void HUD_DrawCharToSpriteWithColor(UWORD *sprite_data, char c, int x, int y, int color_mode);
+ 
+void Font_GetCharCol(char c, UBYTE char_data[2][8]); 
 void HUD_SetSpritePointers(void);
 void HUD_SetHUDWhite(void);
  
 void HUD_DrawAll();
 void HUD_DrawText(char *text, int sprite_col, int y_offset);
 void HUD_DrawString(char *text, int start_sprite, int y_offset);
-void HUD_DrawStringWithColor(char *text, int start_sprite, int y_offset, int color_mode);
+ 
 void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset);
 void HUD_UpdateBikeSpeed(ULONG bike_speed);
 void HUD_SetSpritePositions(void);

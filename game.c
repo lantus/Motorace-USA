@@ -26,6 +26,7 @@
 #include "city_approach.h"
 #include "roadsystem.h"
 #include "ranking.h"
+#include "fuel.h"
 
 #include "cars.h"
 #include "audio.h"
@@ -146,6 +147,8 @@ void Game_Initialize()
     Game_SetMap(game_map);
 
     MotorBike_Reset();
+
+    Fuel_Initialize();
 
     KPrintF("Avail Chip  = %ld\n", Mem_GetFreeChip());
     KPrintF("Avail Fast  = %ld\n", Mem_GetFreeFast());
@@ -656,6 +659,7 @@ void Stage_Draw()
             Timer_Reset(&hud_update_timer);
         }
 
+        Fuel_Draw(); 
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         Game_HandleCollisions();
     }
@@ -670,6 +674,7 @@ void Stage_Draw()
         // Apply vibration offset for distant sprites (ADD THIS)
         WORD vibration_x = MotorBike_GetVibrationOffset();
 
+        Fuel_Draw(); 
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
     }
@@ -763,6 +768,20 @@ void Stage_Update()
     else if (stage_state == STAGE_PLAYING)
     {
       
+        // Update fuel gauge
+        Fuel_Update();
+        
+        // Check if fuel is empty
+        if (Fuel_IsEmpty())
+        {
+            // Slow bike to a stop
+            bike_speed = 0;
+            
+            // Transition to game over
+            stage_state = STAGE_GAMEOVER;
+            KPrintF("=== GAME OVER - OUT OF FUEL ===\n");
+            return;
+        }
         // === ACCELERATION LOGIC ===
 
         if (JoyFireHeld())
@@ -830,6 +849,21 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_FRONTVIEW)
     {
+         // Update fuel gauge
+        Fuel_Update();
+        
+        // Check if fuel is empty
+        if (Fuel_IsEmpty())
+        {
+            // Slow bike to a stop
+            bike_speed = 0;
+            
+            // Transition to game over
+            stage_state = STAGE_GAMEOVER;
+            KPrintF("=== GAME OVER - OUT OF FUEL ===\n");
+            return;
+        }
+
         if (City_OncomingCarsIsComplete())
         {
             stage_state = STAGE_COMPLETE;
@@ -1028,7 +1062,6 @@ void Game_HandleCollisions(void)
             collision_car_index = hit_car;
             Timer_Start(&collision_recovery_timer, 2);  // 2 seconds recovery
             Cars_HandleSpinout(hit_car);
-
             Music_Stop();
         }
         else if (collision_state == COLLISION_OFFROAD)
@@ -1069,6 +1102,9 @@ void Game_HandleCollisions(void)
             Timer_Stop(&collision_recovery_timer);
           
             Music_LoadModule(MUSIC_ONROAD);
+
+            Fuel_Decrease(1);
+            Fuel_DrawAll();
 
             bike_state = BIKE_STATE_MOVING;
         }
