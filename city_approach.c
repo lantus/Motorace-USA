@@ -27,6 +27,7 @@
 #include "font.h"
 #include "audio.h"
 #include "fuel.h"
+#include "stageprogress.h"
 #include "city_approach.h"
 
 extern volatile struct Custom *custom;
@@ -412,6 +413,8 @@ void City_DrawOncomingCars(void)
                 current_car->visible = FALSE;
                 cars_passed++;
                 
+                StageProgress_UpdateFrontview(cars_passed, TOTAL_CARS_TO_PASS);
+
                 KPrintF("Car passed! Total: %ld/%ld\n", cars_passed, TOTAL_CARS_TO_PASS);
                 
                 if (cars_passed >= TOTAL_CARS_TO_PASS)

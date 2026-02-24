@@ -81,21 +81,19 @@ void StageProgress_UpdateOverhead(LONG mapposy)
 
 void StageProgress_UpdateFrontview(UBYTE cars_passed, UBYTE total_cars)
 {
-    // Map cars passed to progress state (0-7)
-    // 0 cars = state 0, 8 cars = state 7
     if (total_cars == 0) return;
     
-    stage_progress.frontview_state = (cars_passed * PROGRESS_STATES) / total_cars;
+    stage_progress.frontview_state = (cars_passed * 5) / total_cars;
     
-    if (stage_progress.frontview_state >= PROGRESS_STATES)
+    if (stage_progress.frontview_state > 5)
     {
-        stage_progress.frontview_state = PROGRESS_STATES - 1;
+        stage_progress.frontview_state = 5;
     }
     
     stage_progress.needs_redraw = TRUE;
 }
 
-void StageProgress_Draw(void)
+void StageProgress_DrawOverhead(void)
 {
     static UBYTE last_overhead_state = 0xFF;  // Track previous state  
     static UBYTE last_overhead_block = 0xFF;
@@ -127,6 +125,41 @@ void StageProgress_Draw(void)
   
     HUD_DrawString((char*)piece, 1, y_offset);
  
+}
+
+void StageProgress_DrawFrontview(void)
+{
+    static UBYTE last_frontview_state = 0xFF;   
+    
+    if (!stage_progress.needs_redraw) return;
+    
+    // Only draw if state actually changed
+    if (stage_progress.frontview_state == last_frontview_state)
+    {
+        return;  // No change, skip drawing
+    }
+    
+    // State changed - update and draw
+    last_frontview_state = stage_progress.frontview_state;
+    
+    stage_progress.needs_redraw = FALSE;
+    
+    // Calculate base block for current stage
+    UBYTE stage_base_block = stage_progress.current_stage * PROGRESS_BLOCKS_PER_STAGE;
+    
+    WORD base_y = 140;  // LA marker position
+
+    // Frontview is always the 3rd block (index 2)
+    UBYTE block = stage_base_block + 2;
+    
+    const char *piece = progress_pieces[stage_progress.frontview_state];
+    
+    WORD y_offset = base_y - (block * 8);
+  
+    HUD_DrawString((char*)piece, 1, y_offset);
+
+    KPrintF("Frontview progress - Block %d, frontview_state=%d\n", 
+            block, stage_progress.frontview_state);
 }
 
 void StageProgress_DrawAllEmpty(void)

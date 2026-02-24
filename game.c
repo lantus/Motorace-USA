@@ -667,7 +667,7 @@ void Stage_Draw()
         }
 
         Fuel_Draw(); 
-        StageProgress_Draw();
+        StageProgress_DrawOverhead();
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         Game_HandleCollisions();
     }
@@ -683,6 +683,7 @@ void Stage_Draw()
         WORD vibration_x = MotorBike_GetVibrationOffset();
 
         Fuel_Draw(); 
+        StageProgress_DrawFrontview();
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
     }

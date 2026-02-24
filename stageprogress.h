@@ -27,10 +27,10 @@ void StageProgress_UpdateOverhead(LONG mapposy);
 // Update frontview progress based on cars passed
 void StageProgress_UpdateFrontview(UBYTE cars_passed, UBYTE total_cars);
 
-void StageProgress_Draw(void);
+void StageProgress_DrawOverhead(void);
 void StageProgress_DrawAll(void);
 void StageProgress_FillAll(void);
-
+void StageProgress_DrawFrontview(void);
 void StageProgress_DrawAllEmpty(void);
 
 #endif // STAGEPROGRESS_H
