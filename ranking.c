@@ -141,11 +141,21 @@ RankingData* Ranking_GetData(void)
 }
 
 
-void Ranking_DrawCityBackdrop(WORD y_offset)
+void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer)
 {
-    WORD x = city_horizon->x;
- 
     city_horizon->y = y_offset;
 
-    City_BlitHorizon();
+    WORD x = city_horizon->x;
+    WORD y = y_offset;
+
+    UWORD source_mod = 0; 
+    UWORD dest_mod = (SCREENWIDTH - CITYSKYLINE_WIDTH) / 8;
+    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+ 
+    UWORD bltsize = ((CITYSKYLINE_HEIGHT << 2) << 6) | CITYSKYLINE_WIDTH / 16;
+    
+    UBYTE *source = (UBYTE*)&city_horizon->data[0];
+   
+    //   Only blit to the specified buffer (not all 3 buffers)
+    BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, buffer);
 }

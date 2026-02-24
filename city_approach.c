@@ -311,57 +311,21 @@ void City_SpawnOncomingCar(void)
 
 void City_DrawOncomingCar(BlitterObject *car)
 {
-
-    
-    /* 32x32
-    Barrel Shifting is a pain...
-    bitplanes = 4
-    words per scanline - 3 words (48/16) 
-                       - 4 words with -AW padding (64/16)
-              
-    Bytes per scanline = (64/8) = 8 bytes + 8 bytes mask 
-    Total scanline = 48
-
-    BlitSize (48x4) << 6 | 3
- 
-    src mod = 4 words x 2 Bytes = 8
-    dst mod =  for 192 = 24 - 8 = 16
-    */
-
     if (!car->visible) return;
-    
-    // Draw car
-    WORD x = car->x;
-    WORD y = car->y;
 
-    UWORD source_mod = 8;
-    UWORD dest_mod = (SCREENWIDTH / 8) - (4 * 2);
-    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+    UBYTE *source = (car->id >= 4 && car->moved) 
+        ? (UBYTE*)&flipped_car[car->id - 4].data[0]
+        : (UBYTE*)&oncoming_car[car->id].data[0];
  
-    UWORD bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4;
-    
-    UBYTE *source;
-    if (car->id >= 4 && car->moved)
-    {
-        source = (UBYTE*)&flipped_car[car->id - 4].data[0];
-    }
-    else
-    {
-        source = (UBYTE*)&oncoming_car[car->id].data[0];
-    }
+    UBYTE *mask = source + CAR_SOURCE_MOD;
  
-    UBYTE *mask = source + source_mod;
-    UBYTE *dest = draw_buffer;
- 
-    BlitBob2(SCREENWIDTH/2, x, y, admod, bltsize, ONCOMING_CAR_WIDTH, 
-             oncoming_car_restore_ptrs, source, mask, dest);
+    BlitBob2(SCREEN_WIDTH_WORDS, car->x, car->y, CAR_ADMOD, CAR_BLTSIZE, 
+             ONCOMING_CAR_WIDTH, oncoming_car_restore_ptrs, source, mask, draw_buffer);
 
     car->prev_old_x = car->old_x;
     car->prev_old_y = car->old_y;
-    
-    car->old_x = x;
-    car->old_y = y;
-    
+    car->old_x = car->x;
+    car->old_y = car->y;
     car->needs_restore = TRUE;
 }
 
@@ -630,18 +594,13 @@ BOOL City_IsCityNameComplete(void)
 
 WORD City_CalculatePerspectiveX(WORD car_y, WORD target_x)
 {
-  
-    WORD center_y = car_y + 16;   
-    
-    WORD car_progress_y = center_y - HORIZON_Y;
+    WORD car_progress_y = (car_y + 16) - HORIZON_Y ;   
     
     if (car_progress_y <= 0) return HORIZON_VANISHING_X;
  
-    WORD total_y = 240 - HORIZON_Y; 
-    
     WORD delta_x = target_x - HORIZON_VANISHING_X;
  
-    LONG x = HORIZON_VANISHING_X + ((LONG)delta_x * car_progress_y) / total_y;
+    LONG x = HORIZON_VANISHING_X + (((LONG)delta_x * car_progress_y * 378) >> 16);
     
     return (WORD)x;
 }

@@ -32,6 +32,8 @@
 // Horizon vanishing point (center of road at top)
 #define HORIZON_VANISHING_X 72   // Center of 192-pixel screen
 #define HORIZON_Y 67             // Where cars spawn (scale_start_y[0])
+#define TOTAL_Y_DISTANCE (240 - HORIZON_Y)  // 173
+#define RECIPROCAL_Y ((1 << 16) / TOTAL_Y_DISTANCE)
 
 #define CITYSKYLINE_WIDTH   192
 #define CITYSKYLINE_HEIGHT   56
@@ -40,7 +42,13 @@
 
 #define ONCOMING_CAR_WIDTH 48
 #define ONCOMING_CAR_HEIGHT 32
-#define ONCOMING_CAR_WIDTH_WORDS 4           
+#define ONCOMING_CAR_WIDTH_WORDS 4      
+
+#define CAR_SOURCE_MOD 8
+#define CAR_DEST_MOD 16
+#define CAR_ADMOD 0x00100008  // (16 << 16) | 8
+#define CAR_BLTSIZE 8196      // (32 * 4) << 6 | 4
+#define SCREEN_WIDTH_WORDS 96 // 192 / 2
 
 #define NUM_CAR_SCALES 8
 #define TOTAL_CARS_TO_PASS 8

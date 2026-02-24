@@ -34,6 +34,6 @@ void Ranking_Draw(UBYTE *buffer);
 // Get current ranking data
 RankingData* Ranking_GetData(void);
 
-void Ranking_DrawCityBackdrop(WORD y_offset);
+void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer);
 
 #endif // RANKING_H

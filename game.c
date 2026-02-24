@@ -328,11 +328,13 @@ __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LO
  
 __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest)
 {
-    x = (x >> 3) & 0xFFFE;
-    y = (y << 4) + (y << 3); // y * 16 + y * 8 = y * 24
+   x = (x >> 3) & 0xFFFE;
+    y = (y << 4) + (y << 3);  // y * 24
 
-    UWORD mapx = (block % blocksperrow) << 1;
-    UWORD mapy = (block / blocksperrow) * (blockplanelines * blockbytesperrow);
+    // ✅ Assuming blocksperrow = 16
+    UWORD mapx = (block & 15) << 1;                          // block % 16
+    UWORD mapy = (block >> 4) * (blockplanelines * blockbytesperrow);  // block / 16
+    
     
     WaitBlit();
     
@@ -346,7 +348,7 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
     custom->bltdpt  = dest + y + x;
     
     // Blit width is count * BLOCKWIDTH
-    custom->bltsize = blockplanelines * 64 + (BLOCKWIDTH >> 4);
+    custom->bltsize = (blockplanelines << 6) + (BLOCKWIDTH >> 4);
 }
  
 static void ScrollUp(void)
@@ -713,14 +715,18 @@ void Stage_Draw()
     }
     else if (stage_state == STAGE_RANKING)
     {
+        BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+        
         if (ranking_backdrop_y < 48)
         {
-            Ranking_DrawCityBackdrop(ranking_backdrop_y);
+            Ranking_DrawCityBackdrop(ranking_backdrop_y,draw_buffer);
         }
         else
         {
-            Ranking_Draw(screen.bitplanes);
+           // Ranking_Draw(screen.bitplanes);
         }
+
+         Game_SwapBuffers();
     }   
 }
 
@@ -884,9 +890,11 @@ void Stage_Update()
         }
 
         CityApproachState approach_state = City_GetApproachState();
- 
+        static BikeFrame prev_bike_state = -1;
+          
         if (frontview_bike_crashed == FALSE && approach_state < CITY_STATE_INTO_HORIZON )
         {
+              
             if (JoyFireHeld())
             {
                 // Fire button held - accelerate to max speed
@@ -942,7 +950,7 @@ void Stage_Update()
             else
             {
                 static UBYTE frontview_bike_anim_frame = 0;   
-                UWORD anim_speed = 8 - (bike_speed / 30);
+                UWORD anim_speed = 8 - (bike_speed >> 4);
                 
                 if (anim_speed < 2) anim_speed = 2;
                 
@@ -967,7 +975,17 @@ void Stage_Update()
         else
         {
             // Normal gameplay - use the bike_state set above
-            MotorBike_SetFrame(bike_state);
+            if (bike_state != prev_bike_state)
+            {
+                if (bike_state == BIKE_STATE_FRONTVIEW_LEFT)
+                    MotorBike_SetFrame(BIKE_FRAME_APPROACH1_LEFT);
+                else if (bike_state == BIKE_STATE_FRONTVIEW_RIGHT)
+                    MotorBike_SetFrame(BIKE_FRAME_APPROACH1_RIGHT);
+                else
+                    MotorBike_SetFrame(bike_state);
+                    
+                prev_bike_state = bike_state;
+            }
         }
 
         // Update road scrolling
@@ -990,7 +1008,7 @@ void Stage_Update()
         }
         else
         {
-            Ranking_Draw(draw_buffer);
+           // Ranking_Draw(draw_buffer);
         }
     }
 }
@@ -1139,7 +1157,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (stage_progress.current_map_pos >= stage_progress.mapsize)  // Near the top/end of map
+    //if (stage_progress.current_map_pos >= stage_progress.mapsize)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 

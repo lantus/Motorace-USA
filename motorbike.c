@@ -73,8 +73,10 @@ UWORD bike_position_x;
 UWORD bike_position_y;
 LONG  bike_world_y = 0;
 ULONG bike_anim_frames = 0;
+
 static ULONG bike_anim_lr_frames = 0;
 static UBYTE bike_frame = 0;
+static BikeFrame current_bike_frame = -1;
 
 // Add these to your global variables
 WORD bike_speed = 42;        // Current speed in mph (starts at idle)
@@ -303,6 +305,10 @@ void BrakeMotorBike()
 void MotorBike_SetFrame(BikeFrame frame)
 {
     UBYTE num_sprites;
+
+    if (current_bike_frame == frame) return;
+    
+    current_bike_frame = frame;
     
     switch(frame)
     {

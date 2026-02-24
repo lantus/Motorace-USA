@@ -447,7 +447,7 @@ int main(void)
   
 	HUD_DrawAll();
  
-	while(!MouseLeft()) 
+	while(1) 
     {		 
 		WaitLine(0x13);
 
