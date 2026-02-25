@@ -481,16 +481,16 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
         Music_Stop();
         
         SFX_StopAll();
-
-        LONG vpos = VBeamPos();
-        while (VBeamPos() - vpos < 8) ;
-
+ 
         city_state = CITY_STATE_COMPLETE;
 
         Sprites_ClearLower();
         Sprites_ClearHigher();
 
-        custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD2 ;
+        custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3;
+
+        LONG vpos = VBeamPos();
+        while (VBeamPos() - vpos < 8) ;
 
         Music_LoadModule(MUSIC_CHECKPOINT);
     }

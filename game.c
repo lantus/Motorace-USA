@@ -702,12 +702,14 @@ void Stage_Draw()
             Sprites_ClearLower();
             Sprites_ClearHigher();
 
+            LONG vpos = VBeamPos();
+            while (VBeamPos() - vpos < 32) ;
+
             Ranking_Initialize();
 
             Music_Stop();
 
-            LONG vpos = VBeamPos();
-            while (VBeamPos() - vpos < 32) ;
+ 
             custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD2 ;
             Music_LoadModule(MUSIC_RANKING);
 
@@ -715,18 +717,9 @@ void Stage_Draw()
     }
     else if (stage_state == STAGE_RANKING)
     {
-        BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
-        
-        if (ranking_backdrop_y < 48)
-        {
-            Ranking_DrawCityBackdrop(ranking_backdrop_y,draw_buffer);
-        }
-        else
-        {
-           // Ranking_Draw(screen.bitplanes);
-        }
-
-         Game_SwapBuffers();
+        Ranking_DrawCityBackdrop(ranking_backdrop_y,draw_buffer);
+        Ranking_Draw(draw_buffer);
+        Game_SwapBuffers();
     }   
 }
 
@@ -1157,7 +1150,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    //if (stage_progress.current_map_pos >= stage_progress.mapsize)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= stage_progress.mapsize)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 
