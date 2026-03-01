@@ -994,16 +994,16 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_RANKING)
     {
-        ranking_backdrop_y+=2;
-
-        if (ranking_backdrop_y >= 48)
+        if (ranking_backdrop_y < 48)
         {
-            ranking_backdrop_y = 48;    
+            ranking_backdrop_y += 2;
+            
+            if (ranking_backdrop_y >= 48)
+            {
+                ranking_backdrop_y = 48;
+            }
         }
-        else
-        {
-            Ranking_Update();
-        }
+        Ranking_Update();
     }
 }
  

@@ -168,3 +168,47 @@ BOOL Fuel_IsEmpty(void)
 {
     return fuel_gauge.fuel_empty;
 }
+
+BOOL Fuel_IsFull(void)
+{
+    return (fuel_gauge.current_block == 0 && fuel_gauge.current_state == 0);
+}
+
+void Fuel_AddPoints(UWORD points)
+{
+    // 100 points = 1 fuel state
+    UBYTE states_to_add = points / 100;
+    
+    if (states_to_add == 0) return;
+    
+    while (states_to_add > 0 && !Fuel_IsFull())
+    {
+        if (fuel_gauge.current_state > 0)
+        {
+            // Move back one state in current block
+            fuel_gauge.current_state--;
+            states_to_add--;
+        }
+        else
+        {
+            // At state 0, need to move to previous block
+            if (fuel_gauge.current_block > 0)
+            {
+                fuel_gauge.current_block--;
+                fuel_gauge.current_state = FUEL_STATES - 1;  // Move to last state of previous block
+                states_to_add--;
+            }
+            else
+            {
+                // Already at full (block 0, state 0)
+                break;
+            }
+        }
+    }
+    
+    fuel_gauge.fuel_empty = FALSE;
+    fuel_gauge.needs_redraw = TRUE;
+    
+    KPrintF("Added %d points to fuel (now block=%d, state=%d)\n", 
+            points, fuel_gauge.current_block, fuel_gauge.current_state);
+}

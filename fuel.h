@@ -35,4 +35,8 @@ void Fuel_Add(UBYTE blocks);
 void Fuel_DrawAll(void);  // Draw all blocks initially
 void Fuel_Draw(void);     // Update current block only
 void Fuel_Decrease(UBYTE blocks);  // Decrease fuel by N blocks (for collisions)
+
+BOOL Fuel_IsFull(void);            
+void Fuel_AddPoints(UWORD points);  
+
 #endif // FUEL_H

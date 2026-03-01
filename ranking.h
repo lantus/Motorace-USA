@@ -10,6 +10,14 @@ typedef struct {
     UBYTE max_rank;
 } RankingTier;
 
+typedef enum {
+    RANKING_STATE_SCROLLING,      // Scrolling to position
+    RANKING_STATE_FLASHING,       // Flash red for 2 seconds
+    RANKING_STATE_SOLID_RED,      // Line stays red, prepare bonus
+    RANKING_STATE_BONUS_DEPLETING, // Transfer points to fuel/score
+    RANKING_STATE_COMPLETE        // Show final stats
+} RankingState;
+
 typedef struct {
     UBYTE checkpoint_number;
     char city_name[16];
@@ -23,6 +31,8 @@ typedef struct {
     UBYTE player_tier_index;  
     BOOL flash_state;         
     BOOL scrolling_complete; 
+    UWORD bonus_remaining;
+    RankingState rankingstate;   
 } RankingData;
 
 // Initialize ranking system
@@ -39,5 +49,7 @@ void Ranking_Draw(UBYTE *buffer);
 RankingData* Ranking_GetData(void);
 void Ranking_Update(void); 
 void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer);
+
+BOOL Ranking_IsComplete(void);
 
 #endif // RANKING_H

@@ -6,6 +6,7 @@
 #include "blitter.h"
 #include "hud.h"
 #include "city_approach.h"
+#include "fuel.h"
 #include "game.h"
 
 static RankingData current_ranking;
@@ -13,26 +14,32 @@ static GameTimer flash_timer;
 
 #define TOTAL_RANKING_TIERS 18
 #define VISIBLE_RANKINGS 7
+#define PADDING_TIERS 4
 
-static const RankingTier all_rankings[TOTAL_RANKING_TIERS] = {
+static const RankingTier all_rankings[TOTAL_RANKING_TIERS+PADDING_TIERS] = {
     {"1", 20000, 1, 1},
     {"2", 14000, 2, 2},
     {"3", 12000, 3, 3},
     {"4", 10000, 4, 4},
     {"5", 8000, 5, 5},
     {"6", 6000, 6, 6},
-    {"7\x4010", 3000, 7, 10},    
-    {"11\x4015", 2400, 11, 15},
-    {"16\x4020", 2200, 16, 20},
-    {"21\x4030", 2000, 21, 30},
-    {"31\x4040", 1800, 31, 40},
-    {"41\x4050", 1600, 41, 50},
-    {"51\x4060", 1400, 51, 60},
-    {"61\x4070", 1200, 61, 70},
-    {"71\x4080", 1000, 71, 80},
-    {"81\x4090", 800, 81, 90},
-    {"91\x4098", 600, 91, 98},
-    {"99\x40", 0, 99, 99}
+    {"7" TILDE_PIECE "10", 3000, 7, 10},    
+    {"11" TILDE_PIECE "15", 2400, 11, 15},
+    {"16" TILDE_PIECE "20", 2200, 16, 20},
+    {"21" TILDE_PIECE "30", 2000, 21, 30},
+    {"31" TILDE_PIECE "40", 1800, 31, 40},
+    {"41" TILDE_PIECE "50", 1600, 41, 50},
+    {"51" TILDE_PIECE "60", 1400, 51, 60},
+    {"61" TILDE_PIECE "70", 1200, 61, 70},
+    {"71" TILDE_PIECE "80", 1000, 71, 80},
+    {"81" TILDE_PIECE "90", 800, 81, 90},
+    {"91" TILDE_PIECE "98", 600, 91, 98},
+    {"99" TILDE_PIECE "", 0, 99, 99}, 
+    // Padding
+    {"", 0, 100, 100},
+    {"", 0, 101, 101},
+    {"", 0, 102, 102},
+    {"", 0, 103, 103}
 };
 
  
@@ -59,10 +66,10 @@ void Ranking_Initialize(void)
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
 
     // Calculate ranking data based on gameplay
-    UBYTE player_rank = 68;  // Calculate based on time/performance
+    UBYTE player_rank = 99;  // Calculate based on time/performance
     UWORD points_earned = 0; // Points based on rank tier
     UWORD avg_speed = 205;   // Track during gameplay
-    UBYTE best_rank = 68;    // Load from saved records
+    UBYTE best_rank = 2;    // Load from saved records
     BOOL new_record = TRUE;  // Check if beat previous best
 
     //  Set ranking data
@@ -111,17 +118,22 @@ void Ranking_SetData(UBYTE checkpoint, const char *city, UBYTE rank, UWORD point
     current_ranking.scroll_offset = 0;
     current_ranking.scrolling_complete = FALSE;
     
-    // Calculate target scroll position (player as 3rd item)
-    current_ranking.target_scroll_offset = 0;
-    
-    if (current_ranking.player_tier_index >= 2)
+     if (current_ranking.player_tier_index < 2)
     {
+        current_ranking.target_scroll_offset = 0;
+        current_ranking.scrolling_complete = TRUE;  // No scroll needed
+    }
+    //  Rank 3 and everything below: scroll to appear as 3rd line
+    else
+    {
+        // Position player as 3rd visible item (index 2)
         current_ranking.target_scroll_offset = current_ranking.player_tier_index - 2;
         
-        // Don't scroll past the end
-        if (current_ranking.target_scroll_offset + VISIBLE_RANKINGS > TOTAL_RANKING_TIERS)
+        // Cap at max scroll (includes padding for rank 99)
+        UBYTE max_offset = (TOTAL_RANKING_TIERS + PADDING_TIERS) - VISIBLE_RANKINGS;
+        if (current_ranking.target_scroll_offset > max_offset)
         {
-            current_ranking.target_scroll_offset = TOTAL_RANKING_TIERS - VISIBLE_RANKINGS;
+            current_ranking.target_scroll_offset = max_offset;
         }
     }
     
@@ -141,7 +153,6 @@ void Ranking_Update(void)
         else
         {
             current_ranking.scrolling_complete = TRUE;
-            KPrintF("Ranking scroll complete at offset %d\n", current_ranking.scroll_offset);
         }
     }
     
@@ -151,7 +162,7 @@ void Ranking_Update(void)
         static UWORD flash_counter = 0;
         flash_counter++;
         
-        if (flash_counter >= 30)  // Flash at 2Hz
+        if (flash_counter >= 1)   
         {
             flash_counter = 0;
             current_ranking.flash_state = !current_ranking.flash_state;
@@ -166,10 +177,10 @@ void Ranking_Draw(UBYTE *buffer)
 
     // Draw checkpoint title
     y = 8;
-    Font_DrawStringCentered(buffer, "CHECKPOINT #", y, 15);
+    Font_DrawStringCentered(buffer, "CHECKPOINT #", y, 13);
 
     ULongToString(current_ranking.checkpoint_number, line_buffer, 2, ' ');
-    Font_DrawString(buffer, line_buffer, 136, y, 15);
+    Font_DrawString(buffer, line_buffer, 136, y, 13);
 
     // Draw city name
     y = 20;
@@ -185,58 +196,66 @@ void Ranking_Draw(UBYTE *buffer)
     for (UBYTE i = 0; i < VISIBLE_RANKINGS; i++)
     {
         UBYTE tier_index = current_ranking.scroll_offset + i;
-        if (tier_index >= TOTAL_RANKING_TIERS) break;
+        if (tier_index >= TOTAL_RANKING_TIERS + PADDING_TIERS) break;
         
         const RankingTier *tier = &all_rankings[tier_index];
         
+        if (tier_index >= TOTAL_RANKING_TIERS)
+        {
+            break;  // Hit padding, stop drawing
+        }
+
         // Determine color - flash red if this is player's tier
-        UBYTE color = 15;  // White
+        UBYTE color = 13;  // White
         if (tier_index == current_ranking.player_tier_index && current_ranking.flash_state)
         {
             color = 12;  // Red (flash)
         }
         
-        // Format line: "RANK-------POINTS PTS" (19 chars total)
-        // Example: "7 ~ 10------3000 PTS"
         char formatted_line[20];
         UBYTE pos = 0;
 
         // Build points string
         char points_str[10];
-        ULongToString(tier->points, points_str, 4, ' ');
+        ULongToString(tier->points, points_str, 5, ' ');
 
         // Calculate dash count
         UBYTE rank_len = strlen(tier->rank_text);
-        UBYTE points_len = strlen(points_str) + 4;  // " PTS"
-        UBYTE dash_count = 19 - rank_len - points_len;
+        UBYTE points_len = strlen(points_str);
  
-        // Copy rank text
-        for (UBYTE r = 0; r < rank_len; r++)
+        WORD points_x = 120;  // Fixed X position for points (15 chars * 8 = 120)
+        WORD rank_end_x = 20 + (rank_len * 8);
+        UBYTE dash_count = (points_x - rank_end_x) / 8;
+
+
+        if (tier_index > 3)   
         {
-            formatted_line[pos++] = tier->rank_text[r];
+            dash_count += 1;
+        }
+        if (tier_index > 14)  
+        {
+            dash_count += 1;
+        }
+        if (tier_index == 17)  
+        {
+            dash_count += 2;
         }
 
-        // Add dashes
+        WORD x = 20;
+
+        // Draw rank text
+        Font_DrawString(buffer, (char*)tier->rank_text, x, y, color);
+        x += rank_len * 8;
+
+        // Draw dashes up to fixed points position
         for (UBYTE d = 0; d < dash_count; d++)
         {
-            formatted_line[pos++] = DASH_PIECE[0];  // First char of DASH_PIECE
+            Font_DrawString(buffer, DASH_PIECE, x, y, color);
+            x += 8;
         }
-
-        // Add points
-        for (UBYTE p = 0; points_str[p] != '\0'; p++)
-        {
-            formatted_line[pos++] = points_str[p];
-        }
-
-        // Add " PTS"
-        formatted_line[pos++] = ' ';
-        formatted_line[pos++] = 'P';
-        formatted_line[pos++] = 'T';
-        formatted_line[pos++] = 'S';
-        formatted_line[pos] = '\0';
-
-        //Font_RestoreFromPristine(buffer, 20, y, 192, 8);
-        Font_DrawString(buffer, formatted_line, 20, y, color);
+ 
+        Font_DrawString(buffer, points_str, points_x, y, color);
+        Font_DrawString(buffer, " PTS", points_x + (points_len * 8), y, color);
 
         y += 16;
     }
