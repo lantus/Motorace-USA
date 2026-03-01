@@ -438,6 +438,7 @@ void City_DrawOncomingCars(void)
         Fuel_Decrease(1);
         Fuel_DrawAll();
         Music_LoadModule(MUSIC_FRONTVIEW);
+
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
 
         if (!current_car->visible && cars_passed < TOTAL_CARS_TO_PASS)

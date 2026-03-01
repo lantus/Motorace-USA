@@ -51,7 +51,7 @@
 #define SCREEN_WIDTH_WORDS 96 // 192 / 2
 
 #define NUM_CAR_SCALES 8
-#define TOTAL_CARS_TO_PASS 8
+#define TOTAL_CARS_TO_PASS 1
 #define CAR_SPAWN_TIMER 1 // 1 sec
 
 // City approach states

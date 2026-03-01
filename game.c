@@ -717,9 +717,10 @@ void Stage_Draw()
     }
     else if (stage_state == STAGE_RANKING)
     {
-        Ranking_DrawCityBackdrop(ranking_backdrop_y,draw_buffer);
+         BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+     //   Ranking_DrawCityBackdrop(ranking_backdrop_y,draw_buffer);
         Ranking_Draw(draw_buffer);
-        Game_SwapBuffers();
+        Game_ResetBitplanePointer();
     }   
 }
 
@@ -1001,7 +1002,7 @@ void Stage_Update()
         }
         else
         {
-           // Ranking_Draw(draw_buffer);
+            Ranking_Update();
         }
     }
 }
@@ -1150,7 +1151,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (stage_progress.current_map_pos >= stage_progress.mapsize)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= 1000)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 
@@ -1192,4 +1193,6 @@ void Stage_InitializeFrontView(void)
 
     Music_Stop();
     Music_LoadModule(MUSIC_FRONTVIEW);
+
+    MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
 }

@@ -3,22 +3,26 @@
 
 #include <exec/types.h>
 
-// Ranking tier structure
 typedef struct {
-    UBYTE rank_min;
-    UBYTE rank_max;
+    char rank_text[10];  // "1", "7~10", "41~50", etc.
     UWORD points;
+    UBYTE min_rank;
+    UBYTE max_rank;
 } RankingTier;
 
-// Ranking data for a checkpoint
 typedef struct {
-    UBYTE checkpoint_number;     // 1-6
-    char city_name[16];          // "LAS VEGAS", "CHICAGO", etc.
-    UBYTE player_rank;           // Player's achieved rank (1-99)
-    UWORD player_points;         // Points earned
-    UWORD average_speed;         // Average speed in km/h
-    UBYTE todays_best_rank;      // Today's best ranking
-    BOOL new_record;             // Did player set a new record?
+    UBYTE checkpoint_number;
+    char city_name[16];
+    UBYTE player_rank;
+    UWORD player_points;
+    UWORD average_speed;
+    UBYTE todays_best_rank;
+    BOOL new_record;
+    UBYTE scroll_offset;       
+    UBYTE target_scroll_offset; 
+    UBYTE player_tier_index;  
+    BOOL flash_state;         
+    BOOL scrolling_complete; 
 } RankingData;
 
 // Initialize ranking system
@@ -33,7 +37,7 @@ void Ranking_Draw(UBYTE *buffer);
 
 // Get current ranking data
 RankingData* Ranking_GetData(void);
-
+void Ranking_Update(void); 
 void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer);
 
 #endif // RANKING_H

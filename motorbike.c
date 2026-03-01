@@ -181,13 +181,14 @@ void MotorBike_Reset()
         game_map == MAP_FRONTVIEW_LASVEGAS)
     {
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+        Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
     }
     else
     {
-        MotorBike_SetFrame(BIKE_FRAME_MOVING1);  
+        MotorBike_SetFrame(BIKE_FRAME_MOVING1);
+        Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
     }
  
-    Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
 }
 
 void MotorBike_Draw(WORD x, UWORD y, UBYTE state)

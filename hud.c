@@ -72,8 +72,9 @@ void HUD_SetSpritePointers(void)
 void HUD_SetWhite(void)
 {
     Copper_SetSpritePalette(9, 0xFFF);   
-    Copper_SetSpritePalette(10, 0x55F);   
-    Copper_SetSpritePalette(11, 0xF53);   
+    Copper_SetSpritePalette(10, 0x00F);   
+    Copper_SetSpritePalette(11, 0xde0);   
+    
     Copper_SetSpritePalette(12, 0xFFF);   
     Copper_SetSpritePalette(13, 0xFFF);  
     Copper_SetSpritePalette(14, 0xF53);    

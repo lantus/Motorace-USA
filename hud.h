@@ -30,6 +30,8 @@
 #define MPH_PIECE "\x8D\x8E"
 #define COPYRIGHT "\x8C"
 
+#define DASH_PIECE "\x2d"
+#define TILDE_PIECE "\x40"
 
 #define FUEL_PIECE_EMPTY0 "\x20\x2b"
 #define FUEL_PIECE_EMPTY1 "\x20\x0f"
