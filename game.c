@@ -662,8 +662,8 @@ void Stage_Draw()
         // === PERIODIC HUD UPDATE ===
         if (Timer_HasElapsed(&hud_update_timer))
         {
-            //HUD_UpdateScore(player_score);     // Use actual score variable
-            //HUD_UpdateRank(player_rank);       // Use actual rank variable
+            HUD_UpdateScore(game_score);         // Use actual score variable
+            HUD_UpdateRank(game_rank);           // Use actual rank variable
             HUD_UpdateBikeSpeed(bike_speed);
             Timer_Reset(&hud_update_timer);
         }

@@ -11,6 +11,8 @@
 
 static RankingData current_ranking;
 static GameTimer flash_timer;
+static GameTimer bonus_timer;
+static GameTimer scroll_timer;
 
 #define TOTAL_RANKING_TIERS 18
 #define VISIBLE_RANKINGS 7
@@ -66,7 +68,7 @@ void Ranking_Initialize(void)
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
 
     // Calculate ranking data based on gameplay
-    UBYTE player_rank = 99;  // Calculate based on time/performance
+    UBYTE player_rank = 68;  // Calculate based on time/performance
     UWORD points_earned = 0; // Points based on rank tier
     UWORD avg_speed = 205;   // Track during gameplay
     UBYTE best_rank = 2;    // Load from saved records
@@ -114,6 +116,11 @@ void Ranking_SetData(UBYTE checkpoint, const char *city, UBYTE rank, UWORD point
         }
     }
     
+    current_ranking.bonus_remaining = current_ranking.player_points;
+    current_ranking.rankingstate = RANKING_STATE_SCROLLING;
+
+    Timer_StartMs(&scroll_timer, 250);
+
     // Start scroll at top
     current_ranking.scroll_offset = 0;
     current_ranking.scrolling_complete = FALSE;
@@ -142,31 +149,91 @@ void Ranking_SetData(UBYTE checkpoint, const char *city, UBYTE rank, UWORD point
 
 void Ranking_Update(void)
 {
-    static UWORD scroll_counter = 0;
-    
-    if (!current_ranking.scrolling_complete)
+    switch (current_ranking.rankingstate)
     {
-        if (current_ranking.scroll_offset < current_ranking.target_scroll_offset)
+        case RANKING_STATE_SCROLLING:
         {
-            current_ranking.scroll_offset++;
+            if (Timer_HasElapsed(&scroll_timer))
+            {
+                Timer_Reset(&scroll_timer);
+                
+                if (current_ranking.scroll_offset < current_ranking.target_scroll_offset)
+                {
+                    current_ranking.scroll_offset++;
+                }
+                else
+                {
+                    // Scroll complete - start flashing
+                    Timer_Stop(&scroll_timer);
+                    current_ranking.rankingstate = RANKING_STATE_FLASHING;
+                    Timer_Start(&flash_timer, 2); 
+                    KPrintF("=== Ranking scroll complete - flashing for 2s ===\n");
+                }
+            }
+            
+            break;
         }
-        else
-        {
-            current_ranking.scrolling_complete = TRUE;
-        }
-    }
-    
-    // Handle flashing (only after scroll completes)
-    if (current_ranking.scrolling_complete)
-    {
-        static UWORD flash_counter = 0;
-        flash_counter++;
         
-        if (flash_counter >= 1)   
+        case RANKING_STATE_FLASHING:
         {
-            flash_counter = 0;
-            current_ranking.flash_state = !current_ranking.flash_state;
+            // Flash the line
+            static UWORD flash_counter = 0;
+            flash_counter++;
+            
+            if (flash_counter >= 1)
+            {
+                flash_counter = 0;
+                current_ranking.flash_state = !current_ranking.flash_state;
+            }
+            
+            // After 2 seconds, stop flashing
+            if (Timer_HasElapsed(&flash_timer))
+            {
+                Timer_Stop(&flash_timer);
+                current_ranking.flash_state = TRUE;  // Keep it red
+                current_ranking.rankingstate = RANKING_STATE_SOLID_RED;
+                Timer_Start(&bonus_timer, 0);  // Start bonus depletion immediately
+              
+            }
+            break;
         }
+        
+        case RANKING_STATE_SOLID_RED:
+        {
+            // Line stays solid red (no flashing)
+            current_ranking.flash_state = TRUE;
+            
+          
+            current_ranking.rankingstate = RANKING_STATE_BONUS_DEPLETING;
+            break;
+        }
+        
+        case RANKING_STATE_BONUS_DEPLETING:
+        {
+            static UWORD bonus_counter = 0;
+            bonus_counter++;
+            
+            // ✅ Deplete 100 points every 2 frames (30 times per second)
+            if (bonus_counter >= 8 && current_ranking.bonus_remaining > 0)
+            {
+                bonus_counter = 0;
+                UWORD amount = (current_ranking.bonus_remaining >= 100) ? 100 : current_ranking.bonus_remaining;
+                current_ranking.bonus_remaining -= amount;
+                game_score += amount;
+            }
+            
+            // When bonus depleted, show final stats
+            if (current_ranking.bonus_remaining == 0)
+            {
+                current_ranking.rankingstate = RANKING_STATE_COMPLETE;
+                KPrintF("=== Bonus complete - showing final stats ===\n");
+            }
+            break;
+        }
+        
+        case RANKING_STATE_COMPLETE:
+            // Nothing to update - just display final stats
+            break;
     }
 }
 
@@ -175,89 +242,132 @@ void Ranking_Draw(UBYTE *buffer)
     char line_buffer[32];
     UWORD y;
 
-    // Draw checkpoint title
-    y = 8;
-    Font_DrawStringCentered(buffer, "CHECKPOINT #", y, 13);
-
-    ULongToString(current_ranking.checkpoint_number, line_buffer, 2, ' ');
-    Font_DrawString(buffer, line_buffer, 136, y, 13);
-
-    // Draw city name
-    y = 20;
-    Font_DrawStringCentered(buffer, current_ranking.city_name, y, 12);
-
-    // Draw headers
-    y = 80;
-    Font_DrawString(buffer, "RANK", 20, y, 12);
-    Font_DrawString(buffer, "POINTS", 120, y, 12);
- 
-    // Draw 7 visible ranking tiers
-    y = 100;
-    for (UBYTE i = 0; i < VISIBLE_RANKINGS; i++)
+    if (current_ranking.rankingstate < RANKING_STATE_BONUS_DEPLETING)
     {
-        UBYTE tier_index = current_ranking.scroll_offset + i;
-        if (tier_index >= TOTAL_RANKING_TIERS + PADDING_TIERS) break;
-        
-        const RankingTier *tier = &all_rankings[tier_index];
-        
-        if (tier_index >= TOTAL_RANKING_TIERS)
+        // Draw checkpoint title
+        y = 8;
+        Font_DrawStringCentered(buffer, "CHECKPOINT #", y, 13);
+
+        ULongToString(current_ranking.checkpoint_number, line_buffer, 2, ' ');
+        Font_DrawString(buffer, line_buffer, 136, y, 13);
+
+        // Draw city name
+        y = 20;
+        Font_DrawStringCentered(buffer, current_ranking.city_name, y, 12);
+
+        // Draw headers
+        y = 80;
+        Font_DrawString(buffer, "RANK", 20, y, 12);
+        Font_DrawString(buffer, "POINTS", 120, y, 12);
+    
+        // Draw 7 visible ranking tiers
+        y = 100;
+        for (UBYTE i = 0; i < VISIBLE_RANKINGS; i++)
         {
-            break;  // Hit padding, stop drawing
+            UBYTE tier_index = current_ranking.scroll_offset + i;
+            if (tier_index >= TOTAL_RANKING_TIERS + PADDING_TIERS) break;
+            
+            const RankingTier *tier = &all_rankings[tier_index];
+            
+            if (tier_index >= TOTAL_RANKING_TIERS)
+            {
+                break;  // Hit padding, stop drawing
+            }
+
+            // Determine color - flash red if this is player's tier
+            UBYTE color = 13;  // White
+            if (tier_index == current_ranking.player_tier_index && current_ranking.flash_state)
+            {
+                color = 12;  // Red (flash)
+            }
+            
+            char formatted_line[20];
+            UBYTE pos = 0;
+
+            // Build points string
+            char points_str[10];
+            ULongToString(tier->points, points_str, 5, ' ');
+
+            // Calculate dash count
+            UBYTE rank_len = strlen(tier->rank_text);
+            UBYTE points_len = strlen(points_str);
+    
+            WORD points_x = 120;  // Fixed X position for points (15 chars * 8 = 120)
+            WORD rank_end_x = 20 + (rank_len * 8);
+            UBYTE dash_count = (points_x - rank_end_x) / 8;
+
+            if (tier_index > 3)   
+            {
+                dash_count += 1;
+            }
+            if (tier_index > 14)  
+            {
+                dash_count += 1;
+            }
+            if (tier_index == 17)  
+            {
+                dash_count += 2;
+            }
+
+            WORD x = 20;
+
+            // Draw rank text
+            Font_DrawString(buffer, (char*)tier->rank_text, x, y, color);
+            x += rank_len * 8;
+
+            // Draw dashes up to fixed points position
+            for (UBYTE d = 0; d < dash_count; d++)
+            {
+                Font_DrawString(buffer, DASH_PIECE, x, y, color);
+                x += 8;
+            }
+    
+            Font_DrawString(buffer, points_str, points_x, y, color);
+            Font_DrawString(buffer, " PTS", points_x + (points_len * 8), y, color);
+
+            y += 16;
+        }
+    }
+    else if (current_ranking.rankingstate == RANKING_STATE_BONUS_DEPLETING)
+    {
+        if (current_ranking.bonus_remaining  > 0)
+        {
+            UWORD amount = (current_ranking.bonus_remaining >= 100) ? 100 : current_ranking.bonus_remaining;
+            current_ranking.bonus_remaining -= amount;
+
+            if (!Fuel_IsFull())
+            {
+                Fuel_AddPoints(amount);   
+                Fuel_DrawAll();
+            }
+            else
+            {
+                HUD_UpdateScore(game_score); 
+            }
         }
 
-        // Determine color - flash red if this is player's tier
-        UBYTE color = 13;  // White
-        if (tier_index == current_ranking.player_tier_index && current_ranking.flash_state)
+    }
+    else if (current_ranking.rankingstate == RANKING_STATE_COMPLETE)
+    {
+        // Draw average speed
+        y = 200;
+        Font_DrawString(buffer, "AVERAGE SPEED", 20, y, 15);
+        ULongToString(current_ranking.average_speed, line_buffer, 5, ' ');
+        Font_DrawString(buffer, line_buffer, 128, y, 15);
+        Font_DrawString(buffer, "Km/h", 168, y, 15);
+
+        // Draw today's best
+        y = 220;
+        Font_DrawString(buffer, "TODAY'S BEST", 20, y, 15);
+        ULongToString(current_ranking.todays_best_rank, line_buffer, 3, ' ');
+        Font_DrawString(buffer, line_buffer, 128, y, 15);
+        Font_DrawString(buffer, "th", 152, y, 15);
+
+        if (current_ranking.new_record)
         {
-            color = 12;  // Red (flash)
-        }
-        
-        char formatted_line[20];
-        UBYTE pos = 0;
-
-        // Build points string
-        char points_str[10];
-        ULongToString(tier->points, points_str, 5, ' ');
-
-        // Calculate dash count
-        UBYTE rank_len = strlen(tier->rank_text);
-        UBYTE points_len = strlen(points_str);
- 
-        WORD points_x = 120;  // Fixed X position for points (15 chars * 8 = 120)
-        WORD rank_end_x = 20 + (rank_len * 8);
-        UBYTE dash_count = (points_x - rank_end_x) / 8;
-
-
-        if (tier_index > 3)   
-        {
-            dash_count += 1;
-        }
-        if (tier_index > 14)  
-        {
-            dash_count += 1;
-        }
-        if (tier_index == 17)  
-        {
-            dash_count += 2;
-        }
-
-        WORD x = 20;
-
-        // Draw rank text
-        Font_DrawString(buffer, (char*)tier->rank_text, x, y, color);
-        x += rank_len * 8;
-
-        // Draw dashes up to fixed points position
-        for (UBYTE d = 0; d < dash_count; d++)
-        {
-            Font_DrawString(buffer, DASH_PIECE, x, y, color);
-            x += 8;
-        }
- 
-        Font_DrawString(buffer, points_str, points_x, y, color);
-        Font_DrawString(buffer, " PTS", points_x + (points_len * 8), y, color);
-
-        y += 16;
+            y = 240;
+            Font_DrawStringCentered(buffer, "YOU SET A NEW RECORD", y, 12);
+        }  
     }
 
     /* 
@@ -287,6 +397,10 @@ RankingData* Ranking_GetData(void)
     return &current_ranking;
 }
 
+BOOL Ranking_IsComplete(void)
+{
+    return current_ranking.rankingstate == RANKING_STATE_COMPLETE;
+}
 
 void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer)
 {

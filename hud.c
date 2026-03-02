@@ -87,6 +87,8 @@ void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
     UBYTE char_data[2][8];  
     Font_GetCharCol(c, char_data);
 
+    UWORD mask = 0xFF00 >> x;  // Mask for 8 bits starting at position x
+
     for (int row = 0; row < 8; row++) {
     int sprite_line = y + row;
     if (sprite_line >= HUD_HEIGHT) break; 
@@ -106,8 +108,11 @@ void HUD_DrawCharToSprite(UWORD *sprite_data, char c, int x, int y)
         }
     }
 
-    sprite_data[2 + sprite_line * 2] |= plane_a;
-    sprite_data[2 + sprite_line * 2 + 1] |= plane_b;
+        sprite_data[2 + sprite_line * 2] &= ~mask;      // Clear old bits
+        sprite_data[2 + sprite_line * 2] |= plane_a;     // Set new bits
+
+        sprite_data[2 + sprite_line * 2 + 1] &= ~mask;  // Clear old bits
+        sprite_data[2 + sprite_line * 2 + 1] |= plane_b; // Set new bits
     }
 }
 
@@ -219,11 +224,8 @@ void HUD_DrawScore(ULONG score, int start_sprite, int y_offset)
     if (score > 999999) score = 999999;
     
     // Format as 6-digit right-justified string with leading spaces
-    ULongToString(score, score_string, 6, ' ');
-    
-    // Clear the sprite area first
-    HUD_ClearSpriteArea(start_sprite, 3, y_offset, 8);
-    
+    ULongToString(score, score_string, 5, '\x20');
+
     // Draw the formatted score
     HUD_DrawString(score_string, start_sprite, y_offset);
 }
@@ -233,9 +235,6 @@ void HUD_DrawRank(UBYTE rank, int start_sprite, int y_offset)
     char rank_string[3];  
     
     ULongToString(rank, rank_string, 2, NULL);
-    
-    // Clear the sprite area first
-    HUD_ClearSpriteArea(start_sprite, 3, y_offset, 8);
     
     // Draw the formatted score
     HUD_DrawString(rank_string, start_sprite, y_offset);
@@ -247,21 +246,14 @@ void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset)
  
     ULongToString(speed, speed_string, 3, ' ');
     
-    // Clear the sprite area first
-    HUD_ClearSpriteArea(start_sprite, 3, y_offset, 8);
-    
     // Draw the bike speed
     HUD_DrawString(speed_string, start_sprite, y_offset);
 }
 
 void HUD_UpdateScore(ULONG score)
 {
-    if (counter % 4 == 0)
-    {
-        game_score = score;
-        HUD_DrawScore(game_score, 0, 24);
-    }
-    counter++;
+    game_score = score;
+    HUD_DrawScore(game_score, 1, 24);
 }
 
 void HUD_UpdateBikeSpeed(ULONG bike_speed)
@@ -333,8 +325,7 @@ void HUD_DrawAll()
    
 
     HUD_DrawString("1UP", 0, 16);
-    HUD_DrawString("00", 2, 24);
-
+    HUD_UpdateScore(0);
     HUD_DrawString(NEW_YORK , 3 , status_y+3);
     HUD_DrawString(CHICAGO , 3 , status_y+21);
     HUD_DrawString(ST_LOUIS , 3 , status_y+41);
@@ -383,7 +374,7 @@ void HUD_DrawAll()
     HUD_DrawString(BOX_TOP_RIGHT_PIECE,3,160-8);
  
     HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,168-8);
-    HUD_DrawString(" RANK", 0, 168-8);
+
     HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,168-8);
     HUD_DrawString(BOX_LEFT_SIDE_PIECE,0,176-8);
     HUD_DrawString(BOX_RIGHT_SIDE_PIECE,3,176-8);
@@ -398,6 +389,7 @@ void HUD_DrawAll()
     HUD_DrawString("000", 1, 192);
     HUD_DrawString(g_is_pal ? KMH_PIECE : MPH_PIECE, 3,192);
 
+    HUD_DrawString("\x13""RANK", 0, 168-8);
     HUD_UpdateRank(90);
 }
 

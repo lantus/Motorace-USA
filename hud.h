@@ -32,6 +32,7 @@
 
 #define DASH_PIECE "\x2d"
 #define TILDE_PIECE "\x40"
+#define BLANK_SCORE "\x20\x20\x20\x20\x20\x20"
 
 #define FUEL_PIECE_EMPTY0 "\x20\x2b"
 #define FUEL_PIECE_EMPTY1 "\x20\x0f"

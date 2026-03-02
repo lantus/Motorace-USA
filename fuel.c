@@ -92,12 +92,10 @@ void Fuel_Decrease(UBYTE blocks)
 
 void Fuel_Draw(void)
 {
-    
     if (!fuel_gauge.needs_redraw) return;
     
     fuel_gauge.needs_redraw = FALSE;
     
- 
     WORD status_y = 40;
     WORD y_offset = status_y + 8 + (fuel_gauge.current_block * 8);
     
@@ -209,6 +207,6 @@ void Fuel_AddPoints(UWORD points)
     fuel_gauge.fuel_empty = FALSE;
     fuel_gauge.needs_redraw = TRUE;
     
-    KPrintF("Added %d points to fuel (now block=%d, state=%d)\n", 
+    KPrintF("Added %ld points to fuel (now block=%ld, state=%ld)\n", 
             points, fuel_gauge.current_block, fuel_gauge.current_state);
 }
