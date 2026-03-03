@@ -14,7 +14,7 @@ void BlitClearScreenWithColor(APTR buffer, UWORD bltsize, UBYTE color);
 void BlitBob2(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
              UWORD width_pixels, APTR *restore_ptrs, APTR src, APTR mask, APTR dest);
 void BlitClearBob(UBYTE *restore_ptr, UBYTE *screen_ptr, UWORD modulo, UWORD bltsize);
-
+void BlitClearArea(APTR buffer, WORD x, WORD y, UWORD width, UWORD height);
 // A->D stuff
 void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
                     APTR src, APTR dest);

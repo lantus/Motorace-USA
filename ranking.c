@@ -13,6 +13,8 @@ static RankingData current_ranking;
 static GameTimer flash_timer;
 static GameTimer bonus_timer;
 static GameTimer scroll_timer;
+static GameTimer horizon_timer;
+static GameTimer horizon_anim_timer;
 
 #define TOTAL_RANKING_TIERS 18
 #define VISIBLE_RANKINGS 7
@@ -68,7 +70,7 @@ void Ranking_Initialize(void)
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
 
     // Calculate ranking data based on gameplay
-    UBYTE player_rank = 68;  // Calculate based on time/performance
+    UBYTE player_rank = 81;  // Calculate based on time/performance
     UWORD points_earned = 0; // Points based on rank tier
     UWORD avg_speed = 205;   // Track during gameplay
     UBYTE best_rank = 2;    // Load from saved records
@@ -117,9 +119,12 @@ void Ranking_SetData(UBYTE checkpoint, const char *city, UBYTE rank, UWORD point
     }
     
     current_ranking.bonus_remaining = current_ranking.player_points;
-    current_ranking.rankingstate = RANKING_STATE_SCROLLING;
+    current_ranking.backdrop_drawn_both = FALSE; 
+    current_ranking.rankingstate = RANKING_STATE_DRAWHORIZON;
 
     Timer_StartMs(&scroll_timer, 250);
+    Timer_StartMs(&horizon_timer, 120);
+    Timer_StartMs(&horizon_anim_timer, 400);
 
     // Start scroll at top
     current_ranking.scroll_offset = 0;
@@ -143,6 +148,9 @@ void Ranking_SetData(UBYTE checkpoint, const char *city, UBYTE rank, UWORD point
             current_ranking.target_scroll_offset = max_offset;
         }
     }
+
+    Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.bitplanes);
+    Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.offscreen_bitplanes);
     
     Timer_Start(&flash_timer, 0);
 }
@@ -151,6 +159,38 @@ void Ranking_Update(void)
 {
     switch (current_ranking.rankingstate)
     {
+        case RANKING_STATE_DRAWHORIZON:
+        {
+            if (Timer_HasElapsed(&horizon_timer))
+            {
+                Timer_Reset(&horizon_timer);
+                if (current_ranking.backdrop_y < 30)
+                {
+                    // Draw backdrop to BOTH buffers
+                    if (!current_ranking.backdrop_drawn_both)
+                    {
+                        Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.bitplanes);
+                        Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.offscreen_bitplanes);
+                    }
+                    
+                    current_ranking.backdrop_y += 2;
+                }
+                else
+                {
+                    current_ranking.backdrop_y = 30;
+
+                    Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.bitplanes);
+                    Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.offscreen_bitplanes);
+
+                    current_ranking.rankingstate = RANKING_STATE_SCROLLING;
+                    current_ranking.backdrop_drawn_both = TRUE;
+
+                    Timer_StartMs(&scroll_timer, 250);
+                }
+            }
+
+            break;
+        }
         case RANKING_STATE_SCROLLING:
         {
             if (Timer_HasElapsed(&scroll_timer))
@@ -242,6 +282,13 @@ void Ranking_Draw(UBYTE *buffer)
     char line_buffer[32];
     UWORD y;
 
+    if (current_ranking.rankingstate == RANKING_STATE_DRAWHORIZON && 
+        !current_ranking.backdrop_drawn_both)
+    {
+        Ranking_DrawCityBackdrop(current_ranking.backdrop_y, buffer);
+        return;
+    }
+
     if (current_ranking.rankingstate < RANKING_STATE_BONUS_DEPLETING)
     {
         // Draw checkpoint title
@@ -252,16 +299,16 @@ void Ranking_Draw(UBYTE *buffer)
         Font_DrawString(buffer, line_buffer, 136, y, 13);
 
         // Draw city name
-        y = 20;
+        y = 16;
         Font_DrawStringCentered(buffer, current_ranking.city_name, y, 12);
 
         // Draw headers
-        y = 80;
+        y = 96;
         Font_DrawString(buffer, "RANK", 20, y, 12);
-        Font_DrawString(buffer, "POINTS", 120, y, 12);
+        Font_DrawString(buffer, "POINTS", 130, y, 12);
     
         // Draw 7 visible ranking tiers
-        y = 100;
+        y = 110;
         for (UBYTE i = 0; i < VISIBLE_RANKINGS; i++)
         {
             UBYTE tier_index = current_ranking.scroll_offset + i;
@@ -325,7 +372,7 @@ void Ranking_Draw(UBYTE *buffer)
             Font_DrawString(buffer, points_str, points_x, y, color);
             Font_DrawString(buffer, " PTS", points_x + (points_len * 8), y, color);
 
-            y += 16;
+            y += 15;
         }
     }
     else if (current_ranking.rankingstate == RANKING_STATE_BONUS_DEPLETING)
@@ -350,46 +397,26 @@ void Ranking_Draw(UBYTE *buffer)
     else if (current_ranking.rankingstate == RANKING_STATE_COMPLETE)
     {
         // Draw average speed
-        y = 200;
-        Font_DrawString(buffer, "AVERAGE SPEED", 20, y, 15);
-        ULongToString(current_ranking.average_speed, line_buffer, 5, ' ');
-        Font_DrawString(buffer, line_buffer, 128, y, 15);
-        Font_DrawString(buffer, "Km/h", 168, y, 15);
+        y = 160;
+        Font_DrawString(buffer, "AVERAGE SPEED", 24, y, 15);
+       // ULongToString(current_ranking.average_speed, line_buffer, 5, ' ');
+       // Font_DrawString(buffer, line_buffer, 128, y, 15);
+        //Font_DrawString(buffer, "", 168, y, 15);
 
         // Draw today's best
-        y = 220;
-        Font_DrawString(buffer, "TODAY'S BEST", 20, y, 15);
+        y = 180;
+        Font_DrawString(buffer, "TODAYS BEST", 20, y, 15);
         ULongToString(current_ranking.todays_best_rank, line_buffer, 3, ' ');
         Font_DrawString(buffer, line_buffer, 128, y, 15);
         Font_DrawString(buffer, "th", 152, y, 15);
 
         if (current_ranking.new_record)
         {
-            y = 240;
+            y = 200;
             Font_DrawStringCentered(buffer, "YOU SET A NEW RECORD", y, 12);
         }  
     }
-
-    /* 
-    // Draw average speed
-    y = 200;
-    Font_DrawString(buffer, "AVERAGE SPEED", 20, y, 15);
-    ULongToString(current_ranking.average_speed, line_buffer, 5, ' ');
-    Font_DrawString(buffer, line_buffer, 128, y, 15);
-    Font_DrawString(buffer, "Km/h", 168, y, 15);
-
-    // Draw today's best
-    y = 220;
-    Font_DrawString(buffer, "TODAY'S BEST", 20, y, 15);
-    ULongToString(current_ranking.todays_best_rank, line_buffer, 3, ' ');
-    Font_DrawString(buffer, line_buffer, 128, y, 15);
-    Font_DrawString(buffer, "th", 152, y, 15);
-
-    if (current_ranking.new_record)
-    {
-        y = 240;
-        Font_DrawStringCentered(buffer, "YOU SET A NEW RECORD", y, 12);
-    } */
+ 
 }
 
 RankingData* Ranking_GetData(void)
@@ -415,8 +442,31 @@ void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer)
  
     UWORD bltsize = ((CITYSKYLINE_HEIGHT << 2) << 6) | CITYSKYLINE_WIDTH / 16;
     
-    UBYTE *source = (UBYTE*)&city_horizon->data[0];
-   
+    if (game_map == MAP_FRONTVIEW_LASVEGAS)
+    {
+        if (Timer_HasElapsed(&horizon_anim_timer))
+        {
+            use_alt_frame = !use_alt_frame;
+            Timer_Reset(&horizon_anim_timer); 
+        }
+    }   
+
+    UBYTE *source;
+
+    if (use_alt_frame == TRUE)
+    {
+        source = (UBYTE*)&city_horizon->data_frame2[0];
+    }
+    else
+    {
+        source = (UBYTE*)&city_horizon->data[0];
+    }
+ 
     //   Only blit to the specified buffer (not all 3 buffers)
     BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, buffer);
+}
+
+RankingState Ranking_GetState(void)
+{
+    return current_ranking.rankingstate;
 }

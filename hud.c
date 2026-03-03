@@ -120,20 +120,55 @@ void Font_GetCharCol(char c, UBYTE char_data[2][8])
 {
     UBYTE char_index = (UBYTE)c;
     
-    UBYTE char_x = char_index % game_font.chars_per_row;
-    UBYTE char_y = char_index / game_font.chars_per_row;
+    // Optimize: 16 chars per row (power of 2)
+    UBYTE char_x = char_index & 15;        // char_index % 16
+    UBYTE char_y = char_index >> 4;        // char_index / 16
     
-    UWORD sheet_width_bytes = (game_font.chars_per_row * game_font.char_width) / 8;
-    ULONG plane_size = sheet_width_bytes * 80;  // Total bytes in one plane
+    // Pre-calculated constants
+    // sheet_width_bytes = (16 * 8) / 8 = 16
+    // plane_size = 16 * 80 = 1280
+    #define SHEET_WIDTH_BYTES 16
+    #define PLANE_SIZE 1280
     
-    for (UBYTE row = 0; row < 8; row++)
-    {
-        UWORD sheet_y = (char_y * 8) + row;
-        UWORD byte_offset = (sheet_y * sheet_width_bytes) + char_x;
- 
-        char_data[0][row] = game_font.font_data[byte_offset];              // Plane 0
-        char_data[1][row] = game_font.font_data[plane_size + byte_offset]; // Plane 1
-    }
+    // Calculate base offset for this character's row
+    UWORD base_y = char_y << 3;  // char_y * 8
+    
+    // Pre-calculate plane 1 base pointer
+    UBYTE *plane0 = game_font.font_data;
+    UBYTE *plane1 = game_font.font_data + PLANE_SIZE;
+    
+    // Unrolled loop for 8 rows 
+    UWORD offset0 = (base_y << 4) + char_x;
+    char_data[0][0] = plane0[offset0];
+    char_data[1][0] = plane1[offset0];
+    
+    offset0 += SHEET_WIDTH_BYTES;
+    char_data[0][1] = plane0[offset0];
+    char_data[1][1] = plane1[offset0];
+    
+    offset0 += SHEET_WIDTH_BYTES;
+    char_data[0][2] = plane0[offset0];
+    char_data[1][2] = plane1[offset0];
+    
+    offset0 += SHEET_WIDTH_BYTES;
+    char_data[0][3] = plane0[offset0];
+    char_data[1][3] = plane1[offset0];
+    
+    offset0 += SHEET_WIDTH_BYTES;
+    char_data[0][4] = plane0[offset0];
+    char_data[1][4] = plane1[offset0];
+    
+    offset0 += SHEET_WIDTH_BYTES;
+    char_data[0][5] = plane0[offset0];
+    char_data[1][5] = plane1[offset0];
+    
+    offset0 += SHEET_WIDTH_BYTES;
+    char_data[0][6] = plane0[offset0];
+    char_data[1][6] = plane1[offset0];
+    
+    offset0 += SHEET_WIDTH_BYTES;
+    char_data[0][7] = plane0[offset0];
+    char_data[1][7] = plane1[offset0];
 }
  
  
@@ -174,24 +209,28 @@ int counter = 0;
 
 void ULongToString(ULONG value, char *buffer, int width, char pad_char)
 {
-    // Work from right to left
-    int pos = width - 1;
+    int pos = width;
+    buffer[pos] = '\0';  // Null terminate once at start
+    pos--;
     
-    // Write digits right to left
+    // Fast path for zero
     if (value == 0)
     {
         buffer[pos--] = '0';
     }
     else
     {
-        while (value > 0)
+        // Optimized digit extraction
+        ULONG q;
+        while (value > 0 && pos >= 0)
         {
-            buffer[pos--] = '0' + (value % 10);
-            value /= 10;
+            q = value / 10;
+            buffer[pos--] = '0' + (value - (q * 10));
+            value = q;
         }
     }
     
-    // Fill padding from left (if pad_char is not null)
+    // Fill padding (if any)
     if (pad_char != '\0')
     {
         while (pos >= 0)
@@ -199,8 +238,6 @@ void ULongToString(ULONG value, char *buffer, int width, char pad_char)
             buffer[pos--] = pad_char;
         }
     }
-    
-    buffer[width] = '\0';  // Null terminate
 }
 
 void HUD_ClearSpriteArea(int start_sprite, int end_sprite, int y_offset, int height)

@@ -11,6 +11,7 @@ typedef struct {
 } RankingTier;
 
 typedef enum {
+    RANKING_STATE_DRAWHORIZON,
     RANKING_STATE_SCROLLING,      // Scrolling to position
     RANKING_STATE_FLASHING,       // Flash red for 2 seconds
     RANKING_STATE_SOLID_RED,      // Line stays red, prepare bonus
@@ -29,7 +30,9 @@ typedef struct {
     UBYTE scroll_offset;       
     UBYTE target_scroll_offset; 
     UBYTE player_tier_index;  
-    BOOL flash_state;         
+    BOOL flash_state;     
+    WORD backdrop_y;
+    BOOL backdrop_drawn_both;    
     BOOL scrolling_complete; 
     UWORD bonus_remaining;
     RankingState rankingstate;   
@@ -51,5 +54,6 @@ void Ranking_Update(void);
 void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer);
 
 BOOL Ranking_IsComplete(void);
+RankingState Ranking_GetState(void);
 
 #endif // RANKING_H

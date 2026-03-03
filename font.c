@@ -53,23 +53,30 @@ void Font_GetChar(char c, UBYTE *char_data)
 {
     UBYTE char_index = (UBYTE)c;
     
-    // Calculate position in font sheet
-    UBYTE char_x = char_index % game_font.chars_per_row;
-    UBYTE char_y = char_index / game_font.chars_per_row;
+    UBYTE char_x = char_index & 15;
+    UBYTE char_y = char_index >> 4;
     
-    UWORD sheet_width_bytes = (game_font.chars_per_row * game_font.char_width) / 8;
+    // Base offset: char_y * 128 + char_x
+    UWORD offset = ((char_y << 7)) + char_x;  // char_y << 7 = char_y * 128
     
-    // For 2 bitplanes, data is stored as plane 0, then plane 1
-    ULONG plane_size = sheet_width_bytes * (game_font.chars_per_row * game_font.char_height);
+    UBYTE *font_ptr = game_font.font_data;
     
-    for (UBYTE row = 0; row < game_font.char_height; row++)
-    {
-        UWORD sheet_y = (char_y * game_font.char_height) + row;
-        UWORD byte_offset = (sheet_y * sheet_width_bytes) + char_x;
-        
-        // Read from plane 0 (for now, can be extended for multi-color fonts)
-        char_data[row] = game_font.font_data[byte_offset];
-    }
+    // Unrolled loop 
+    char_data[0] = font_ptr[offset];
+    offset += 16;
+    char_data[1] = font_ptr[offset];
+    offset += 16;
+    char_data[2] = font_ptr[offset];
+    offset += 16;
+    char_data[3] = font_ptr[offset];
+    offset += 16;
+    char_data[4] = font_ptr[offset];
+    offset += 16;
+    char_data[5] = font_ptr[offset];
+    offset += 16;
+    char_data[6] = font_ptr[offset];
+    offset += 16;
+    char_data[7] = font_ptr[offset];
 }
  
 // Draw single character to bitplane buffer

@@ -341,3 +341,35 @@ void BlitBobSimpleSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsiz
     custom->bltdpt = dest;
     custom->bltsize = bltsize;
 }
+
+void BlitClearArea(APTR buffer, WORD x, WORD y, UWORD width, UWORD height)
+{
+    // Calculate Y offset (interleaved: y * bytes_per_row)
+    ULONG y_offset = ((ULONG)y << 6) + ((ULONG)y << 5);  // y * 96 (BITMAPBYTESPERROW * 4)
+    
+    // Calculate X byte offset
+    WORD x_byte_offset = x >> 3;
+    
+    // Calculate destination pointer
+    UBYTE *dest = (UBYTE *)buffer + y_offset + x_byte_offset;
+    
+    // Calculate width in words (round up)
+    UWORD width_words = (width + 15) >> 4;
+    
+    // Calculate modulo (bytes to skip per line)
+    UWORD modulo = BITMAPBYTESPERROW - (width_words << 1);
+    
+    // Set up blitter for clearing
+    WaitBlit();
+    
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+    custom->bltcon0 = 0x0100;  // D only, clear
+    custom->bltcon1 = 0;
+    custom->bltadat = 0;       // Clear with 0s
+    custom->bltdmod = modulo;
+    custom->bltdpt = dest;
+    
+    // Blit size: (height * 4 bitplanes) << 6 | width_words
+    custom->bltsize = ((height << 2) << 6) | width_words;
+}

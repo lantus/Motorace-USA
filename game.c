@@ -717,8 +717,17 @@ void Stage_Draw()
     }
     else if (stage_state == STAGE_RANKING)
     {
-         BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
-     //   Ranking_DrawCityBackdrop(ranking_backdrop_y,draw_buffer);
+        if (Ranking_GetState() > RANKING_STATE_DRAWHORIZON)
+        {
+            // Clear only the ranking area (Y: 0-200, full width)
+            BlitClearArea(draw_buffer, 0, 88, VIEWPORT_WIDTH, 200);
+        }
+        else
+        {
+            // During backdrop scroll, clear entire screen
+            BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+        }
+       
         Ranking_Draw(draw_buffer);
         Game_ResetBitplanePointer();
     }   
@@ -994,15 +1003,6 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_RANKING)
     {
-        if (ranking_backdrop_y < 48)
-        {
-            ranking_backdrop_y += 2;
-            
-            if (ranking_backdrop_y >= 48)
-            {
-                ranking_backdrop_y = 48;
-            }
-        }
         Ranking_Update();
     }
 }
