@@ -156,6 +156,31 @@ void Game_Initialize()
     KPrintF("Avail Fast  = %ld\n", Mem_GetFreeFast());
 }
 
+void Game_Reset(void)
+{
+    title_state = TITLE_ATTRACT_INIT;
+
+    // Reset Positions
+    Title_Reset();
+
+    Game_ResetBitplanePointer();
+
+    title_state = TITLE_ATTRACT_START;
+    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
+    Game_SetBackGroundColor(0x125);
+ 
+    game_state = TITLE_SCREEN;
+    game_map = MAP_ATTRACT_INTRO;
+
+    Game_SetMap(game_map);
+
+    MotorBike_Reset();
+
+    Fuel_Initialize();
+    StageProgress_Initialize(); 
+
+}
+
 void Game_NewGame(UBYTE difficulty)
 {
     game_stage = STAGE_LASANGELES;
@@ -733,17 +758,7 @@ void Stage_Draw()
             case RANKING_STATE_COMPLETE:   
 
         }
-       // if (Ranking_GetState() > RANKING_STATE_DRAWHORIZON)
-       // {
-       //     // Clear only the ranking area (Y: 0-200, full width)
-//     /       BlitClearArea(draw_buffer, 0, 88, VIEWPORT_WIDTH, 200);
-      //  }
-      //  else
-      //  {
-       //     // During backdrop scroll, clear entire screen
-        //    BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
-       // }
-       
+ 
         Ranking_Draw(draw_buffer);
         Game_ResetBitplanePointer();
     }   

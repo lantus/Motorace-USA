@@ -183,6 +183,7 @@ void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors);
 void Game_ApplyPalette(UWORD *palette, int num_colors);
 void Game_SetMap(UBYTE maptype);
 void Game_HandleCollisions(void);
+void Game_Reset(void);
 
 void GameReady_Initialize(void);
 void GameReady_Draw(void);

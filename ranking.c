@@ -327,7 +327,7 @@ void Ranking_Update(void)
         {
             if (Timer_HasElapsed(&display_timer))
             {
-                Timer_Stop(&display_timer);
+                Timer_Start(&display_timer, 2);
                 
                 // Clear everything and show thank you message
                 BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
@@ -342,8 +342,13 @@ void Ranking_Update(void)
         }
         
         case RANKING_STATE_DEMO_END:
+            if (Timer_HasElapsed(&display_timer))
+            {
+                Game_Reset();
+            }
+            break;
         case RANKING_STATE_COMPLETE:
-            // Nothing to update
+            
             break;
   
     }

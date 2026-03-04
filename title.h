@@ -4,7 +4,8 @@
 
 extern RawMap *city_attract_map;
 extern BitMapEx *city_attract_tiles;
- 
+extern UBYTE title_state;
+
 #define ATTRACTMODE_Y_OFFSET 192
 
 enum TitleState {
