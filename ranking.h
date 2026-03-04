@@ -16,6 +16,11 @@ typedef enum {
     RANKING_STATE_FLASHING,       // Flash red for 2 seconds
     RANKING_STATE_SOLID_RED,      // Line stays red, prepare bonus
     RANKING_STATE_BONUS_DEPLETING, // Transfer points to fuel/score
+    RANKING_STATE_SHOW_SPEED,      // Show average speed
+    RANKING_STATE_SHOW_BEST,       // Show today's best
+    RANKING_STATE_SHOW_RECORD,     // Show new record
+    RANKING_STATE_FINAL_WAIT,      // Wait 2 seconds
+    RANKING_STATE_DEMO_END,        // TODO: change this
     RANKING_STATE_COMPLETE        // Show final stats
 } RankingState;
 

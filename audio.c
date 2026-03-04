@@ -68,7 +68,7 @@ INCBIN_CHIP(mod_ranking, "mus/P61.ranking")
 //INCBIN_CHIP(mod_offroad,"" )
 INCBIN_CHIP(mod_frontview,"mus/P61.frontview" )
 //INCBIN_CHIP(mod_vivany,"" )
-//INCBIN_CHIP(mod_gameover,"" )
+INCBIN_CHIP(mod_gameover,"mus/P61.gameover" )
  
 int p61Init(const void* module) { // returns 0 if success, non-zero otherwise
 	register volatile const void* _a0 ASM("a0") = module;
@@ -136,7 +136,7 @@ void Music_LoadModule(BYTE track)
         //p61Init(mod_vivany);
         break;
     case MUSIC_GAMEOVER:
-        //p61Init(mod_gameover);
+        p61Init(mod_gameover);
         break;
     }
     custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB | INTF_EXTER;

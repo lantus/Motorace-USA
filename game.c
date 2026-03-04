@@ -717,16 +717,32 @@ void Stage_Draw()
     }
     else if (stage_state == STAGE_RANKING)
     {
-        if (Ranking_GetState() > RANKING_STATE_DRAWHORIZON)
+        RankingState ranking_state = Ranking_GetState();
+
+        switch (ranking_state)
         {
-            // Clear only the ranking area (Y: 0-200, full width)
-            BlitClearArea(draw_buffer, 0, 88, VIEWPORT_WIDTH, 200);
+            case RANKING_STATE_DRAWHORIZON:
+                BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+                break;
+            case RANKING_STATE_SCROLLING:     
+            case RANKING_STATE_FLASHING:     
+            case RANKING_STATE_SOLID_RED:
+                 BlitClearArea(draw_buffer, 0, 88, VIEWPORT_WIDTH, 200);
+                 break;
+            case RANKING_STATE_BONUS_DEPLETING: 
+            case RANKING_STATE_COMPLETE:   
+
         }
-        else
-        {
-            // During backdrop scroll, clear entire screen
-            BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
-        }
+       // if (Ranking_GetState() > RANKING_STATE_DRAWHORIZON)
+       // {
+       //     // Clear only the ranking area (Y: 0-200, full width)
+//     /       BlitClearArea(draw_buffer, 0, 88, VIEWPORT_WIDTH, 200);
+      //  }
+      //  else
+      //  {
+       //     // During backdrop scroll, clear entire screen
+        //    BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+       // }
        
         Ranking_Draw(draw_buffer);
         Game_ResetBitplanePointer();

@@ -4,6 +4,7 @@
 #include "ranking.h"
 #include "font.h"
 #include "blitter.h"
+#include "audio.h"
 #include "hud.h"
 #include "city_approach.h"
 #include "fuel.h"
@@ -15,6 +16,7 @@ static GameTimer bonus_timer;
 static GameTimer scroll_timer;
 static GameTimer horizon_timer;
 static GameTimer horizon_anim_timer;
+static GameTimer display_timer;
 
 #define TOTAL_RANKING_TIERS 18
 #define VISIBLE_RANKINGS 7
@@ -73,7 +75,7 @@ void Ranking_Initialize(void)
     UBYTE player_rank = 81;  // Calculate based on time/performance
     UWORD points_earned = 0; // Points based on rank tier
     UWORD avg_speed = 205;   // Track during gameplay
-    UBYTE best_rank = 2;    // Load from saved records
+    UBYTE best_rank = 49;    // Load from saved records
     BOOL new_record = TRUE;  // Check if beat previous best
 
     //  Set ranking data
@@ -253,7 +255,7 @@ void Ranking_Update(void)
             static UWORD bonus_counter = 0;
             bonus_counter++;
             
-            // ✅ Deplete 100 points every 2 frames (30 times per second)
+            //  Deplete 100 points every 2 frames (30 times per second)
             if (bonus_counter >= 8 && current_ranking.bonus_remaining > 0)
             {
                 bonus_counter = 0;
@@ -265,15 +267,85 @@ void Ranking_Update(void)
             // When bonus depleted, show final stats
             if (current_ranking.bonus_remaining == 0)
             {
-                current_ranking.rankingstate = RANKING_STATE_COMPLETE;
-                KPrintF("=== Bonus complete - showing final stats ===\n");
+                BlitClearArea(screen.bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
+                BlitClearArea(screen.offscreen_bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
+
+                current_ranking.rankingstate = RANKING_STATE_SHOW_SPEED;
+                Timer_Start(&display_timer, 1);  // Show for 1 second
+            }
+            break;
+        }
+        case RANKING_STATE_SHOW_SPEED:
+        {
+            if (Timer_HasElapsed(&display_timer))
+            {
+                Timer_Stop(&display_timer);
+                current_ranking.rankingstate = RANKING_STATE_SHOW_BEST;
+                Timer_Start(&display_timer, 1);  // Show for 1 second
+                
+                KPrintF("=== Showing today's best ===\n");
+            }
+            break;
+        }
+        case RANKING_STATE_SHOW_BEST:
+        {
+            if (Timer_HasElapsed(&display_timer))
+            {
+                Timer_Stop(&display_timer);
+                
+                // Show record if applicable, otherwise skip to final wait
+                if (current_ranking.new_record)
+                {
+                    current_ranking.rankingstate = RANKING_STATE_SHOW_RECORD;
+                    Timer_Start(&display_timer, 1);  // Show for 1 second
+                    KPrintF("=== Showing new record ===\n");
+                }
+                else
+                {
+                    current_ranking.rankingstate = RANKING_STATE_FINAL_WAIT;
+                    Timer_Start(&display_timer, 2);  // Wait 2 seconds
+                    KPrintF("=== Final wait ===\n");
+                }
             }
             break;
         }
         
-        case RANKING_STATE_COMPLETE:
-            // Nothing to update - just display final stats
+        case RANKING_STATE_SHOW_RECORD:
+        {
+            if (Timer_HasElapsed(&display_timer))
+            {
+                Timer_Stop(&display_timer);
+                current_ranking.rankingstate = RANKING_STATE_FINAL_WAIT;
+                Timer_Start(&display_timer, 2);  // Wait 2 seconds
+                
+                KPrintF("=== Final wait ===\n");
+            }
             break;
+        }
+        
+        case RANKING_STATE_FINAL_WAIT:
+        {
+            if (Timer_HasElapsed(&display_timer))
+            {
+                Timer_Stop(&display_timer);
+                
+                // Clear everything and show thank you message
+                BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+                BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+                
+                current_ranking.rankingstate = RANKING_STATE_DEMO_END;
+
+                Music_LoadModule(MUSIC_GAMEOVER);
+          
+            }
+            break;
+        }
+        
+        case RANKING_STATE_DEMO_END:
+        case RANKING_STATE_COMPLETE:
+            // Nothing to update
+            break;
+  
     }
 }
 
@@ -304,8 +376,8 @@ void Ranking_Draw(UBYTE *buffer)
 
         // Draw headers
         y = 96;
-        Font_DrawString(buffer, "RANK", 20, y, 12);
-        Font_DrawString(buffer, "POINTS", 130, y, 12);
+        Font_DrawString(buffer, "RANK", 10, y, 12);
+        Font_DrawString(buffer, "POINTS", 120, y, 12);
     
         // Draw 7 visible ranking tiers
         y = 110;
@@ -339,8 +411,8 @@ void Ranking_Draw(UBYTE *buffer)
             UBYTE rank_len = strlen(tier->rank_text);
             UBYTE points_len = strlen(points_str);
     
-            WORD points_x = 120;  // Fixed X position for points (15 chars * 8 = 120)
-            WORD rank_end_x = 20 + (rank_len * 8);
+            WORD points_x = 100;  // Fixed X position for points (15 chars * 8 = 120)
+            WORD rank_end_x = 10 + (rank_len * 8);
             UBYTE dash_count = (points_x - rank_end_x) / 8;
 
             if (tier_index > 3)   
@@ -356,7 +428,7 @@ void Ranking_Draw(UBYTE *buffer)
                 dash_count += 2;
             }
 
-            WORD x = 20;
+            WORD x = 10;
 
             // Draw rank text
             Font_DrawString(buffer, (char*)tier->rank_text, x, y, color);
@@ -394,27 +466,48 @@ void Ranking_Draw(UBYTE *buffer)
         }
 
     }
+    else if (current_ranking.rankingstate >= RANKING_STATE_SHOW_SPEED && 
+             current_ranking.rankingstate <= RANKING_STATE_FINAL_WAIT)
+    {
+        // Show average speed (always visible once shown)
+        if (current_ranking.rankingstate >= RANKING_STATE_SHOW_SPEED)
+        {
+            y = 154;
+            Font_DrawString(buffer, "AVERAGE SPEED", 10, y, 13);
+            ULongToString(current_ranking.average_speed, line_buffer, 5, ' ');
+            Font_DrawString(buffer, line_buffer, 118, y, 13);
+            Font_DrawString(buffer, KMH_PIECE, 158, y, 13);
+        }
+        
+        // Show today's best (visible once shown)
+        if (current_ranking.rankingstate >= RANKING_STATE_SHOW_BEST)
+        {
+            y = 174;
+            char *suffix = GetOrdinalSuffix(current_ranking.todays_best_rank);
+            Font_DrawString(buffer, "TODAYS BEST", 20, y, 13);
+            ULongToString(current_ranking.todays_best_rank, line_buffer, 3, ' ');
+            Font_DrawString(buffer, line_buffer, 108, y, 15);
+            Font_DrawString(buffer, suffix, 132, y, 15);
+        }
+        
+        // Show new record (visible once shown)
+        if (current_ranking.rankingstate >= RANKING_STATE_SHOW_RECORD && 
+            current_ranking.new_record)
+        {
+            y = 194;
+            Font_DrawStringCentered(buffer, "YOU SET A NEW RECORD", y, 12);
+        }
+    }
     else if (current_ranking.rankingstate == RANKING_STATE_COMPLETE)
     {
-        // Draw average speed
-        y = 160;
-        Font_DrawString(buffer, "AVERAGE SPEED", 24, y, 15);
-       // ULongToString(current_ranking.average_speed, line_buffer, 5, ' ');
-       // Font_DrawString(buffer, line_buffer, 128, y, 15);
-        //Font_DrawString(buffer, "", 168, y, 15);
-
-        // Draw today's best
-        y = 180;
-        Font_DrawString(buffer, "TODAYS BEST", 20, y, 15);
-        ULongToString(current_ranking.todays_best_rank, line_buffer, 3, ' ');
-        Font_DrawString(buffer, line_buffer, 128, y, 15);
-        Font_DrawString(buffer, "th", 152, y, 15);
-
-        if (current_ranking.new_record)
-        {
-            y = 200;
-            Font_DrawStringCentered(buffer, "YOU SET A NEW RECORD", y, 12);
-        }  
+         
+    }
+    else if (current_ranking.rankingstate == RANKING_STATE_DEMO_END)
+    {
+        Font_DrawStringCentered(buffer, "Thank you for playing", 80, 15);
+        Font_DrawStringCentered(buffer, "Zippy Race A500 Edition", 100, 15);
+        Font_DrawStringCentered(buffer, "1 Level Demo", 120, 15);
+        Font_DrawStringCentered(buffer, "Full Game Coming Soon..", 140, 15);
     }
  
 }
