@@ -721,7 +721,7 @@ void Stage_Draw()
 
         Fuel_Draw(); 
         StageProgress_DrawFrontview();
-        MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
+ 
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
     }
     else if (stage_state == STAGE_COMPLETE)
@@ -938,7 +938,18 @@ void Stage_Update()
           
         if (frontview_bike_crashed == FALSE && approach_state < CITY_STATE_INTO_HORIZON )
         {
-              
+            static UBYTE frontview_bike_anim_frame = 0;   
+   
+            UWORD anim_speed = 15 - (bike_speed >> 4);  // Faster bike = smaller number
+            if (anim_speed < 2) anim_speed = 2;  
+ 
+            if (game_frame_count % anim_speed == 0)
+            {
+                frontview_bike_anim_frame ^= 1;
+            }
+
+            bike_state = frontview_bike_anim_frame ? BIKE_FRAME_APPROACH2 : BIKE_FRAME_APPROACH1;  
+
             if (JoyFireHeld())
             {
                 // Fire button held - accelerate to max speed
@@ -947,7 +958,7 @@ void Stage_Update()
                 {
                     bike_speed = MAX_SPEED;
                 }
-                bike_state = BIKE_FRAME_APPROACH1;
+                
             }
             else
             {
@@ -960,7 +971,6 @@ void Stage_Update()
                     {
                         bike_speed = MIN_CRUISING_SPEED;
                     }
-                    bike_state = BIKE_FRAME_APPROACH1;
                 }
                 else if (bike_speed > MIN_CRUISING_SPEED)
                 {
@@ -970,14 +980,8 @@ void Stage_Update()
                     {
                         bike_speed = MIN_CRUISING_SPEED;
                     }
-                    bike_state = BIKE_FRAME_APPROACH1;
+                   
                 }
-                else
-                {
-                    // Maintain cruising speed
-                    bike_state = BIKE_FRAME_APPROACH1;
-                }
-    
             }        
     
             // === LEFT/RIGHT MOVEMENT ===
@@ -991,20 +995,7 @@ void Stage_Update()
                 bike_position_x += 2;
                 bike_state = BIKE_STATE_FRONTVIEW_RIGHT;
             }
-            else
-            {
-                static UBYTE frontview_bike_anim_frame = 0;   
-                UWORD anim_speed = 8 - (bike_speed >> 4);
-                
-                if (anim_speed < 2) anim_speed = 2;
-                
-                if (game_frame_count % anim_speed == 0)
-                {
-                    frontview_bike_anim_frame ^= 1;
-                }
-                
-                bike_state = frontview_bike_anim_frame ? BIKE_FRAME_APPROACH2 : BIKE_FRAME_APPROACH1;
-            }
+            
         }
 
         if (approach_state == CITY_STATE_INTO_HORIZON)
@@ -1021,12 +1012,7 @@ void Stage_Update()
             // Normal gameplay - use the bike_state set above
             if (bike_state != prev_bike_state)
             {
-                if (bike_state == BIKE_STATE_FRONTVIEW_LEFT)
-                    MotorBike_SetFrame(BIKE_FRAME_APPROACH1_LEFT);
-                else if (bike_state == BIKE_STATE_FRONTVIEW_RIGHT)
-                    MotorBike_SetFrame(BIKE_FRAME_APPROACH1_RIGHT);
-                else
-                    MotorBike_SetFrame(bike_state);
+                MotorBike_SetFrame(bike_state);
                     
                 prev_bike_state = bike_state;
             }
@@ -1198,7 +1184,7 @@ void Stage_CheckCompletion(void)
 
         // clear screens and initialize frontview
         Stage_InitializeFrontView();
- 
+
         // pass the current speed to the frontvie
         HUD_UpdateBikeSpeed(bike_speed);
     }

@@ -346,8 +346,15 @@ void City_DrawOncomingCars(void)
     {
         if (current_car->visible)
         {
+            WORD speed_modifier = 0;
+            
+            if (bike_speed < 100)
+            {
+                speed_modifier = 1;  
+            }
+        
 
-            current_car->y += current_car->speed;
+            current_car->y += current_car->speed + speed_modifier;
             current_car->x = City_CalculatePerspectiveX(current_car->y, current_car->anim_counter);
       
             if (!frontview_bike_crashed && City_CheckCarCollision(current_car))
