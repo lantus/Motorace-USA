@@ -163,6 +163,7 @@ void Game_Reset(void)
     // Reset Positions
     Title_Reset();
 
+    current_buffer = 0;
     Game_ResetBitplanePointer();
 
     title_state = TITLE_ATTRACT_START;
@@ -171,6 +172,17 @@ void Game_Reset(void)
  
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
+
+    nyc_horizon.visible = TRUE;
+    nyc_horizon.off_screen = FALSE;
+    nyc_horizon.x = 0;
+    nyc_horizon.y = 0;
+    nyc_horizon.data_frame2 = NULL;
+
+    lv_horizon.visible = TRUE;
+    lv_horizon.off_screen = FALSE;
+    lv_horizon.x = 0;
+    lv_horizon.y = 0;
 
     Game_SetMap(game_map);
 
@@ -706,11 +718,13 @@ void Stage_Draw()
         City_DrawRoad();
         City_DrawOncomingCars();
 
+        WORD vibration_x = MotorBike_GetVibrationOffset();
+        MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
+
+        WaitBlit();
+ 
         Game_ResetBitplanePointer();
  
-        // Apply vibration offset for distant sprites (ADD THIS)
-        WORD vibration_x = MotorBike_GetVibrationOffset();
-
         if (Timer_HasElapsed(&hud_update_timer))
         {
             //HUD_UpdateScore(game_score);         // Use actual score variable
@@ -721,8 +735,7 @@ void Stage_Draw()
 
         Fuel_Draw(); 
         StageProgress_DrawFrontview();
- 
-        MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
+      
     }
     else if (stage_state == STAGE_COMPLETE)
     {
@@ -738,7 +751,7 @@ void Stage_Draw()
             Sprites_ClearHigher();
 
             Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
-            
+
             LONG vpos = VBeamPos();
             while (VBeamPos() - vpos < 32) ;
 

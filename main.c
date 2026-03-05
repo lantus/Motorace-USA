@@ -154,8 +154,8 @@ static void InitCopperlist(void)
 	Copper_SetBitplanePointer(BLOCKSDEPTH,planes , 0);
 
 	custom->intena = 0x7FFF;
-	custom->dmacon = DMAF_AUD2 | DMAF_AUD3;
-	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1;
+ 
+	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3;
 	custom->cop2lc = (ULONG)CopperList;	
  
 };
@@ -340,58 +340,53 @@ __attribute__((always_inline)) inline static void UpdateCopperlist(void)
 
 static __attribute__((interrupt)) void interruptHandlerLvl4() 
 {
- 	const UWORD intreq = custom->intreqr;
+    const UWORD intreq = custom->intreqr;
     
-	const UBYTE sample_oneshot_count = 2;
-    // Check which audio channels triggered interrupt
+    // Early exit optimization
+    if (!(intreq & (INTF_AUD0 | INTF_AUD1 | INTF_AUD2 | INTF_AUD3)))
+        return;
+    
+    const UBYTE sample_oneshot_count = 2;
+    
+    // Channel 0
     if (intreq & INTF_AUD0)
     {
-		channel_play_count[0]++;
-
-		if ( channel_play_count[0] == sample_oneshot_count )
-		{
-			custom->dmacon = DMAF_AUD0;  // Stop channel 0
-		}
- 
-		custom->intreq = INTF_AUD0;  // Clear interrupt
+        if (++channel_play_count[0] == sample_oneshot_count)
+        {
+            custom->dmacon = DMAF_AUD0;
+        }
+        custom->intreq = INTF_AUD0;
     }
     
+    // Channel 1
     if (intreq & INTF_AUD1)
     {
-		channel_play_count[1]++;
-
-		if ( channel_play_count[1] == sample_oneshot_count )
-		{
-			custom->dmacon = DMAF_AUD1;  // Stop channel 1
-		}
- 
-		custom->intreq = INTF_AUD1;  // Clear interrupt
+        if (++channel_play_count[1] == sample_oneshot_count)
+        {
+            custom->dmacon = DMAF_AUD1;
+        }
+        custom->intreq = INTF_AUD1;
     }
     
+    // Channel 2
     if (intreq & INTF_AUD2)
     {
-		channel_play_count[2]++;
-
-		if ( channel_play_count[2] == sample_oneshot_count )
-		{
-			custom->dmacon = DMAF_AUD2;  // Stop channel 2
-		}
- 
-		custom->intreq = INTF_AUD2;  // Clear interrupt
+        if (++channel_play_count[2] == sample_oneshot_count)
+        {
+            custom->dmacon = DMAF_AUD2;
+        }
+        custom->intreq = INTF_AUD2;
     }
     
+    // Channel 3
     if (intreq & INTF_AUD3)
     {
-		channel_play_count[3]++;
-
-		if ( channel_play_count[3] == sample_oneshot_count )
-		{
-			custom->dmacon = DMAF_AUD3;  // Stop channel 3
-		}
- 
-		custom->intreq = INTF_AUD3;  // Clear interrupt
+        if (++channel_play_count[3] == sample_oneshot_count)
+        {
+            custom->dmacon = DMAF_AUD3;
+        }
+        custom->intreq = INTF_AUD3;
     }
- 
 }
 
 static __attribute__((interrupt)) void interruptHandler() 

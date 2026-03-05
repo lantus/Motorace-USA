@@ -270,27 +270,26 @@ void SFX_PlayEffect(SFXHandle *sfx, SFXChannel channel, UWORD volume)
   
     UWORD period = 3579545UL / sfx->sample_rate;
  
-    custom->intena = INTF_SETCLR | (1 << 7 + channel);
-    volatile struct AudChannel *chan = (struct AudChannel *)&custom->aud[channel];
+    // Use proper interrupt flag constant
+    custom->intena = INTF_SETCLR | (INTF_AUD0 << channel);
+    
+    volatile struct AudChannel *chan = &custom->aud[channel];
  
-    // One-shot setup
+    // Silent buffer trick prevents clicks
     chan->ac_ptr = (UWORD *)silent_buffer;
     chan->ac_len = 1;
     chan->ac_per = period;
     chan->ac_vol = volume;
 
-    LONG vpos = VBeamPos();
-    while (VBeamPos() - vpos < 6) ;
 
-    // Set real sample
+    // Now set the real sample
     chan->ac_ptr = (UWORD *)sfx->sample_data;
     chan->ac_len = sfx->sample_length >> 1;
 
     channel_play_count[channel] = 0;
 
-    // Enable DMA
-    custom->dmacon = DMAF_SETCLR | (1 << channel);
- 
+    // Start playback
+    custom->dmacon = DMAF_SETCLR | (DMAF_AUD0 << channel);
 }
 
 void SFX_Stop(SFXChannel channel)

@@ -322,6 +322,8 @@ void City_DrawOncomingCar(BlitterObject *car)
     BlitBob2(SCREEN_WIDTH_WORDS, car->x, car->y, CAR_ADMOD, CAR_BLTSIZE, 
              ONCOMING_CAR_WIDTH, oncoming_car_restore_ptrs, source, mask, draw_buffer);
 
+    WaitBlit();
+    
     car->prev_old_x = car->old_x;
     car->prev_old_y = car->old_y;
     car->old_x = car->x;
@@ -495,7 +497,7 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
         Sprites_ClearLower();
         Sprites_ClearHigher();
 
-        custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3;
+        custom->dmacon = DMAF_SETCLR | DMAF_AUD3;
 
         LONG vpos = VBeamPos();
         while (VBeamPos() - vpos < 8) ;
@@ -527,6 +529,8 @@ void City_RestoreOncomingCars(void)
 
         City_CopyPristineBackground(current_car);
         
+        WaitBlit();
+        
         current_car->old_x = temp_x;
         current_car->old_y = temp_y;
     }
@@ -534,17 +538,16 @@ void City_RestoreOncomingCars(void)
 
 void City_CopyPristineBackground(BlitterObject *car)
 {
-  if (!car->needs_restore) return;
- 
-    WORD old_screen_y = car->prev_old_y;
- 
-    ULONG y_offset = ((ULONG)old_screen_y << 6) + ((ULONG)old_screen_y << 5);
- 
+    if (!car->needs_restore) return;
+
+    ULONG y_offset = ((ULONG)car->prev_old_y << 6) + ((ULONG)car->prev_old_y << 5);
     WORD x_word_aligned = (car->old_x >> 3) & 0xFFFE;
     
     UBYTE *pristine_ptr = screen.pristine + y_offset + x_word_aligned;
     UBYTE *screen_ptr = draw_buffer + y_offset + x_word_aligned;
     
+    #define CAR_BLTSIZE_RESTORE 8196   
+
     WaitBlit();
     
     custom->bltcon0 = 0x9F0;
@@ -559,7 +562,7 @@ void City_CopyPristineBackground(BlitterObject *car)
     custom->bltapt = pristine_ptr;
     custom->bltdpt = screen_ptr;
  
-    custom->bltsize = ((ONCOMING_CAR_HEIGHT << 2) << 6) | 4;
+    custom->bltsize = CAR_BLTSIZE_RESTORE;
 }
  
 void City_ShowCityName(const char *city_name)
@@ -615,35 +618,30 @@ WORD City_CalculatePerspectiveX(WORD car_y, WORD target_x)
 
 BOOL City_CheckCarCollision(BlitterObject *car)
 {
-    // Only check collision for closest scales (large cars)
     if (car->id < 6) return FALSE;
     
-    // Car bounding box (x is center, y is top)
-    WORD car_width = 48;  // ONCOMING_CAR_WIDTH
-    WORD car_left = car->x - (car_width >> 1);
-    WORD car_right = car->x + (car_width >> 1);
-    WORD car_bottom = car->y + ONCOMING_CAR_HEIGHT;  // Bottom edge
+    // Pre-calculate constants 
+    #define CAR_WIDTH 48
+    #define CAR_HALF_WIDTH 24  // 48 >> 1
+    #define BIKE_WIDTH 32
+    #define BIKE_HALF_WIDTH 16  // 32 >> 1
+    #define BIKE_HEIGHT 32
     
-    // Bike bounding box (estimate - adjust if needed)
-    WORD bike_width = 32;
-    WORD bike_height = 32;
-    WORD bike_left = bike_position_x - (bike_width >> 1);
-    WORD bike_right = bike_position_x + (bike_width >> 1);
-    WORD bike_top = bike_position_y;
-    WORD bike_bottom = bike_position_y + bike_height;
+    // Use shifts instead of division
+    WORD car_left = car->x - CAR_HALF_WIDTH;
+    WORD car_right = car->x + CAR_HALF_WIDTH;
+    WORD car_bottom = car->y + ONCOMING_CAR_HEIGHT;
     
-    // Check X overlap
-    BOOL x_overlap = (car_right > bike_left) && (car_left < bike_right);
+    WORD bike_left = bike_position_x - BIKE_HALF_WIDTH;
+    WORD bike_right = bike_position_x + BIKE_HALF_WIDTH;
+    WORD bike_bottom = bike_position_y + BIKE_HEIGHT;
     
-    // Check if car bottom edge overlaps bike
-    BOOL y_overlap = (car_bottom >= bike_top) && (car->y < bike_bottom);
+    // Combined early exit - most collisions fail on X
+    if (car_right <= bike_left || car_left >= bike_right)
+        return FALSE;
     
-    if (x_overlap && y_overlap)
-    {
-        return TRUE;
-    }
-    
-    return FALSE;
+    // Then check Y
+    return (car_bottom >= bike_position_y) && (car->y < bike_bottom);
 }
 
 void City_UpdateBikeCrashAnimation(void)
