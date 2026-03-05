@@ -737,6 +737,8 @@ void Stage_Draw()
             Sprites_ClearLower();
             Sprites_ClearHigher();
 
+            Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
+            
             LONG vpos = VBeamPos();
             while (VBeamPos() - vpos < 32) ;
 
