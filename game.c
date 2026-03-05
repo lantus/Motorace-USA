@@ -179,6 +179,8 @@ void Game_Reset(void)
     Fuel_Initialize();
     StageProgress_Initialize(); 
 
+    game_frame_count = 0;
+
 }
 
 void Game_NewGame(UBYTE difficulty)
@@ -356,7 +358,7 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
    x = (x >> 3) & 0xFFFE;
     y = (y << 4) + (y << 3);  // y * 24
 
-    // ✅ Assuming blocksperrow = 16
+    // Assuming blocksperrow = 16
     UWORD mapx = (block & 15) << 1;                          // block % 16
     UWORD mapy = (block >> 4) * (blockplanelines * blockbytesperrow);  // block / 16
     
@@ -708,6 +710,14 @@ void Stage_Draw()
  
         // Apply vibration offset for distant sprites (ADD THIS)
         WORD vibration_x = MotorBike_GetVibrationOffset();
+
+        if (Timer_HasElapsed(&hud_update_timer))
+        {
+            //HUD_UpdateScore(game_score);         // Use actual score variable
+            //HUD_UpdateRank(game_rank);           // Use actual rank variable
+            HUD_UpdateBikeSpeed(bike_speed);
+            Timer_Reset(&hud_update_timer);
+        }
 
         Fuel_Draw(); 
         StageProgress_DrawFrontview();
@@ -1188,7 +1198,9 @@ void Stage_CheckCompletion(void)
 
         // clear screens and initialize frontview
         Stage_InitializeFrontView();
-        
+ 
+        // pass the current speed to the frontvie
+        HUD_UpdateBikeSpeed(bike_speed);
     }
 }
 

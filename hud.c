@@ -295,12 +295,9 @@ void HUD_UpdateScore(ULONG score)
 
 void HUD_UpdateBikeSpeed(ULONG bike_speed)
 {
-    if (bike_speed != last_speed)
-    {
-        last_speed = bike_speed;
-        HUD_DrawBikeSpeed(last_speed, 1, 192); 
-        HUD_DrawString(g_is_pal ? KMH_PIECE : MPH_PIECE, 3,192);
-    }
+    last_speed = bike_speed;
+    HUD_DrawBikeSpeed(last_speed, 1, 192); 
+    HUD_DrawString(g_is_pal ? KMH_PIECE : MPH_PIECE, 3,192);
 }
 
  
