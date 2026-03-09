@@ -231,6 +231,7 @@ void Audio_Initialize(void)
     SFX_LoadRaw("sfx/honk.8svx", &sfx_honk, 22050);
     SFX_LoadRaw("sfx/skid.8svx", &sfx_skid, 22050);
     SFX_LoadRaw("sfx/fvovertake.8svx", &sfx_fvovertake, 22050);
+    SFX_LoadRaw("sfx/overtake.8svx", &sfx_overtake, 22050);
 
     SFX_StopAll();
 
@@ -261,6 +262,9 @@ void SFX_Play(UBYTE effect)
         case SFX_FRONTVIEWOVERTAKE:
             SFX_PlayEffect(&sfx_fvovertake, SFX_CHANNEL_3, 64);  
             break;
+        case SFX_OVERHEADOVERTAKE:
+            SFX_PlayEffect(&sfx_overtake, SFX_CHANNEL_3, 64);  
+            break;    
         case SFX_CRASHSKID:
             SFX_PlayEffect(&sfx_crash, SFX_CHANNEL_3, 0); 
             SFX_PlayEffect(&sfx_skid, SFX_CHANNEL_2, 0);   

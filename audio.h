@@ -20,7 +20,8 @@ enum SoundEffect
     SFX_SKID = 1,
     SFX_HONK = 2,
     SFX_CRASHSKID = 3,
-    SFX_FRONTVIEWOVERTAKE = 4
+    SFX_FRONTVIEWOVERTAKE = 4,
+    SFX_OVERHEADOVERTAKE = 5
 } ;
 
 // Audio channels (Amiga has 4 hardware channels)

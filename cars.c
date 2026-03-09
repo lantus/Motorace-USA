@@ -21,6 +21,7 @@
 #include "roadsystem.h"
 #include "motorbike.h"
 #include "cars.h"
+#include "audio.h"
 
 #define CAR_BG_SIZE 768
 extern volatile struct Custom *custom;
@@ -32,7 +33,11 @@ WORD respawn_distance = 400;
 WORD last_respawned_id = -1;  // -1 = none respawned yet
 
 BlitterObject car[MAX_CARS];
- 
+
+static LONG car_last_y[MAX_CARS];
+static BOOL car_was_ahead[MAX_CARS];
+static BOOL passing_initialized = FALSE;
+
 /* Restore pointers */
 APTR restore_ptrs[MAX_CARS * 4];
 APTR *restore_ptr;
@@ -137,6 +142,14 @@ void Cars_ResetPositions(void)
     car[4].anim_counter = 0;
     car[4].has_blocked_bike = FALSE;
     car[4].block_timer = 0;
+
+    // Reset passing tracking
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        car_last_y[i] = car[i].y;
+        car_was_ahead[i] = TRUE;
+    }
+    passing_initialized = TRUE;
 }
  
 void Cars_RenderBOB(BlitterObject *car)
@@ -311,22 +324,19 @@ void Cars_PreDraw(void)
 
 void Cars_Update(void)
 {
-
     bike_world_y = mapposy + bike_position_y;
-
     Cars_CheckForRespawn();
 
     for (int i = 0; i < MAX_CARS; i++)
     {
         if (!car[i].visible) continue;
- 
-        // Check if car should block bike
-        Cars_CheckBikeOvertake(&car[i], bike_position_x);
         
-        // Update and draw car
+        // Just pass the car pointer
+        Cars_CheckPassing(&car[i]);
+        
+        Cars_CheckBikeOvertake(&car[i], bike_position_x);
         Cars_Tick(&car[i]);
     }  
- 
 }
 
 void Cars_CopyPristineBackground(BlitterObject *car)
@@ -709,3 +719,33 @@ void Cars_CheckForRespawn(void)
         respawn_timer = respawn_interval;
     }
 }
+
+void Cars_CheckPassing(BlitterObject *c)
+{
+     if (stage_state != STAGE_PLAYING) return;
+    
+    LONG car_world_y = c->y;
+    BOOL car_is_ahead = (car_world_y < bike_world_y);
+    
+    // Use c->id instead of passing index
+    if (car_was_ahead[c->id] && !car_is_ahead)
+    {
+        SFX_Play(SFX_OVERHEADOVERTAKE);
+        game_score += 500;
+        
+        if (game_rank > 1)
+            game_rank--;
+        
+        KPrintF("=== PASSED CAR #%d! Rank: %d ===\n", c->id, game_rank);
+    }
+    else if (!car_was_ahead[c->id] && car_is_ahead)
+    {
+        if (game_rank < 99)
+            game_rank++;
+        
+        KPrintF("=== GOT PASSED BY CAR #%d! Rank: %d ===\n", c->id, game_rank);
+    }
+    
+    car_was_ahead[c->id] = car_is_ahead;
+}
+
