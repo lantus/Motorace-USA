@@ -373,7 +373,9 @@ static __attribute__((interrupt)) void interruptHandlerLvl4()
     {
         if (++channel_play_count[2] == sample_oneshot_count)
         {
-            custom->dmacon = DMAF_AUD2;
+			custom->dmacon = DMAF_AUD2;
+			custom->intena = INTF_AUD2;      //  DISABLE the interrupt
+			channel_play_count[2] = 0;       // Reset the counter
         }
         custom->intreq = INTF_AUD2;
     }
@@ -381,11 +383,13 @@ static __attribute__((interrupt)) void interruptHandlerLvl4()
     // Channel 3
     if (intreq & INTF_AUD3)
     {
-        if (++channel_play_count[3] == sample_oneshot_count)
-        {
-            custom->dmacon = DMAF_AUD3;
-        }
-        custom->intreq = INTF_AUD3;
+		if (++channel_play_count[3] == sample_oneshot_count)
+		{
+			custom->dmacon = DMAF_AUD3;
+			custom->intena = INTF_AUD3;      // DISABLE the interrupt
+			channel_play_count[3] = 0;       // Reset the counter
+		}
+		custom->intreq = INTF_AUD3;
     }
 }
 

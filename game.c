@@ -752,15 +752,14 @@ void Stage_Draw()
 
             Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
 
-            LONG vpos = VBeamPos();
-            while (VBeamPos() - vpos < 32) ;
-
             Ranking_Initialize();
 
             Music_Stop();
 
- 
-            custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD2 ;
+            WaitVBL();
+
+            custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD2 ;
+
             Music_LoadModule(MUSIC_RANKING);
 
         }
@@ -810,6 +809,7 @@ void Stage_Update()
                 countdown_value--;
                 Timer_Reset(&countdown_timer);  // Reset for next second
                 current_countdown_spr = spr_countdown[countdown_value];
+                WaitVBL();
                 Sprites_SetPointers(current_countdown_spr, 2, SPRITEPTR_TWO_AND_THREE);
                 Sprites_SetScreenPosition((UWORD *)current_countdown_spr[0],96,120,32);
                 Sprites_SetScreenPosition((UWORD *)current_countdown_spr[1],96,120,32);
@@ -1193,7 +1193,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (stage_progress.current_map_pos >= 1000)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= 4000)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 

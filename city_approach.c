@@ -323,7 +323,7 @@ void City_DrawOncomingCar(BlitterObject *car)
              ONCOMING_CAR_WIDTH, oncoming_car_restore_ptrs, source, mask, draw_buffer);
 
     WaitBlit();
-    
+
     car->prev_old_x = car->old_x;
     car->prev_old_y = car->old_y;
     car->old_x = car->x;
@@ -385,7 +385,7 @@ void City_DrawOncomingCars(void)
             {
                 current_car->visible = FALSE;
                 cars_passed++;
-                
+ 
                 StageProgress_UpdateFrontview(cars_passed, TOTAL_CARS_TO_PASS);
 
                 KPrintF("Car passed! Total: %ld/%ld\n", cars_passed, TOTAL_CARS_TO_PASS);
@@ -398,6 +398,7 @@ void City_DrawOncomingCars(void)
                 {
                     if (frontview_bike_crashed == FALSE)
                     {
+                        SFX_Play(SFX_FRONTVIEWOVERTAKE);
                         Timer_Start(&spawn_timer, CAR_SPAWN_TIMER);
                     }
                 }
@@ -497,11 +498,9 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
         Sprites_ClearLower();
         Sprites_ClearHigher();
 
-        custom->dmacon = DMAF_SETCLR | DMAF_AUD3;
-
         LONG vpos = VBeamPos();
-        while (VBeamPos() - vpos < 8) ;
-
+        while (VBeamPos() - vpos < 4) ;   // brief settle
+        
         Music_LoadModule(MUSIC_CHECKPOINT);
     }
 }

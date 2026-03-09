@@ -30,7 +30,7 @@ extern volatile struct Custom *custom;
 
 static UWORD master_volume = 64;
  
-static BYTE silent_buffer[2] = {0, 0};
+static BYTE __attribute__((chip)) silent_buffer[2] = {0, 0};
 
 static ULONG SwapLong(ULONG v)
 {
@@ -49,6 +49,7 @@ SFXHandle sfx_crash;
 SFXHandle sfx_skid;
 SFXHandle sfx_honk;
 SFXHandle sfx_overtake;
+SFXHandle sfx_fvovertake;
 
 BOOL g_is_music_ready = FALSE;
 
@@ -229,8 +230,12 @@ void Audio_Initialize(void)
     SFX_LoadRaw("sfx/crash.8svx", &sfx_crash, 22050);
     SFX_LoadRaw("sfx/honk.8svx", &sfx_honk, 22050);
     SFX_LoadRaw("sfx/skid.8svx", &sfx_skid, 22050);
+    SFX_LoadRaw("sfx/fvovertake.8svx", &sfx_fvovertake, 22050);
 
     SFX_StopAll();
+
+    LONG vpos = VBeamPos();
+    while (VBeamPos() - vpos < 4) ;   // brief settle
     
     // Clear all channel states
     for (int i = 0; i < 4; i++)
@@ -252,6 +257,9 @@ void SFX_Play(UBYTE effect)
             break;
         case SFX_HONK:
             SFX_PlayEffect(&sfx_honk, SFX_CHANNEL_3, 0);  
+            break;
+        case SFX_FRONTVIEWOVERTAKE:
+            SFX_PlayEffect(&sfx_fvovertake, SFX_CHANNEL_3, 64);  
             break;
         case SFX_CRASHSKID:
             SFX_PlayEffect(&sfx_crash, SFX_CHANNEL_3, 0); 
@@ -302,7 +310,12 @@ void SFX_Stop(SFXChannel channel)
 
 void SFX_StopAll(void)
 {
+   void SFX_StopAll(void)
+{
     custom->dmacon = DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3;
+    custom->intena = INTF_AUD0 | INTF_AUD1 | INTF_AUD2 | INTF_AUD3;  // disable all audio ints
+    for (int i = 0; i < 4; i++) channel_play_count[i] = 0;
+}
 }
 
 void SFX_SetMasterVolume(UWORD volume)
