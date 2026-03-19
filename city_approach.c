@@ -170,54 +170,81 @@ void City_BlitHorizon()
     }
 }
 
+static BYTE last_road_tile_idx = -1;
+static UBYTE road_draw_count = 0;
+
 void City_DrawRoad()
 {
+    if (road_tile_idx != last_road_tile_idx)
+    {
+        last_road_tile_idx = road_tile_idx;
+        road_draw_count = 2;
+    }
+    
+    if (road_draw_count == 0)
+        return;
+    
+    road_draw_count--;
+
     const UBYTE blocksperrow = 16;
     const UBYTE blockbytesperrow = 32;
     const UBYTE blockplanelines = 64;
 
-    WORD a, b, x, y;
-    WORD b_offset = 1;
+    UWORD tile_offset = road_tile_idx << 5;
+    UWORD *row_ptr = mapdata + mapwidth;  // Skip row 0
+    WORD y = 64;
 
-    //if (stage_state == STAGE_FRONTVIEW)
-    //    b_offset = 0;
- 
-    for (b = b_offset; b < 10; b++)
+    for (WORD b = 1; b < 10; b++)
     {
-        a = 0;
+        // Quick scan: does this row have ANY animated tiles?
+        BOOL has_animated = FALSE;
+        for (WORD c = 0; c < 12; c++)
+        {
+            if (row_ptr[c] >= 32) { has_animated = TRUE; break; }
+        }
+        
+        // Skip entirely static rows — zero blitter cost
+        if (!has_animated)
+        {
+            row_ptr += mapwidth;
+            y += 64;
+            continue;
+        }
+
+        WORD a = 0;
         while (a < 12)
         {
-            UWORD block = mapdata[b * mapwidth + a];
+            UWORD block = row_ptr[a];
             WORD run_length = 1;
 
             if (block >= 32)
             {
-                block += road_tile_idx << 5;
+                block += tile_offset;
 
-                // Count how many consecutive tiles are the same
-                while (a + run_length < 12)
+                WORD check = a + 1;
+                while (check < 12)
                 {
-                    UWORD next_block = mapdata[b * mapwidth + a + run_length];
-                    next_block += road_tile_idx << 5;
+                    UWORD next_block = row_ptr[check] + tile_offset;
                     if (next_block != block) break;
-                    run_length++;
+                    check++;
                 }
+                run_length = check - a;
             
-                x = a << 4;
-                y = b << 6;
+                WORD x = a << 4;
                 
-                // Blit 'run_length' tiles in one operation
                 DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
                             blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
-                DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
-                            blocksperrow, blockbytesperrow, blockplanelines, screen.pristine);
+                //DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
+                //            blocksperrow, blockbytesperrow, blockplanelines, screen.pristine);
             }
 
             a += run_length;
         }
+        
+        row_ptr += mapwidth;
+        y += 64;
     }
 
-    // City Horizon Animation. Some stages dont use it
     if (game_map == MAP_FRONTVIEW_LASVEGAS)
     {
         if (Timer_HasElapsed(&city_skyline_anim_timer))
@@ -228,7 +255,6 @@ void City_DrawRoad()
         }
     }   
 }
-
 void City_PreDrawRoad()
 {
     const UBYTE blocksperrow = 16;

@@ -7,6 +7,12 @@
 
 #include "memory.h"
 #include "bitplanes.h"
+ 
+#ifdef DEBUG
+#define GamePrintF(...) KPrintF(__VA_ARGS__)
+#else
+#define GamePrintF(...) ((void)0)
+#endif
 
 // Math
 #define ABS(x) ((x)<0 ? -(x) : (x))
@@ -30,8 +36,16 @@
 
 #define BITMAPWIDTH SCREENWIDTH
 #define BITMAPBYTESPERROW (BITMAPWIDTH / 8)
-#define BITMAPHEIGHT ((SCREENHEIGHT + EXTRAHEIGHT) * 2)
-#define HALFBITMAPHEIGHT (BITMAPHEIGHT / 2)
+
+
+#ifdef USE_YUNLIMITED2
+#define BITMAPHEIGHT       (SCREENHEIGHT + EXTRAHEIGHT)         // 288
+#define EFFECTIVE_HEIGHT   BITMAPHEIGHT
+#else
+#define BITMAPHEIGHT       ((SCREENHEIGHT + EXTRAHEIGHT) * 2)   // 576
+#define HALFBITMAPHEIGHT   (BITMAPHEIGHT / 2)                   // 288
+#define EFFECTIVE_HEIGHT   HALFBITMAPHEIGHT                     // 288
+#endif
 
 #define BLOCKSWIDTH 320
 #define BLOCKSHEIGHT 320
@@ -167,6 +181,7 @@ extern void DrawBlocks(LONG x,LONG y,
                         UBYTE tile_idx, UBYTE *dest);               // tile_idx = tileset we want to pull from
 
 extern void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest);
+
 
 void Game_Initialize(void);
 void Game_NewGame(UBYTE difficulty);

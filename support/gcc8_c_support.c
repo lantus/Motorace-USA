@@ -91,6 +91,7 @@ void KPutCharX();
 void PutChar();
 
 __attribute__((noinline)) __attribute__((optimize("O1")))
+#if defined(DEBUG)
 void KPrintF(const char* fmt, ...) {
 	va_list vl;
 	va_start(vl, fmt);
@@ -103,6 +104,9 @@ void KPrintF(const char* fmt, ...) {
 		RawDoFmt((CONST_STRPTR)fmt, vl, KPutCharX, 0);
 	}
 }
+#else
+void KPrintF(const char* fmt, ...) {}
+#endif
 
 int main();
 

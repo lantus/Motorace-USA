@@ -449,7 +449,7 @@ int main(void)
 	while(1) 
     {		 
 		WaitLine(0x13);
-
+		//custom->color[0] = 0xF00;  // RED = game work starts
 		Game_Update();
 		Game_Draw();
 
@@ -460,6 +460,8 @@ int main(void)
 		{
 			current_buffer = 1 - current_buffer;
 		}
+
+		//custom->color[0] = 0x00F;  // BLUE = game work done, waiting
 
 		// Swap pointers
 		draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;

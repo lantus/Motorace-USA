@@ -57,6 +57,24 @@ const UWORD scroll_speed_table[MAX_SPEED_TABLE] = {
     1536, 1536, 1536, 1536, 1536, 1536
 };
 
+// PAL (50fps) — each NTSC value * 1.2 to match game feel
+const UWORD scroll_speed_table_pal[MAX_SPEED_TABLE] = {
+    0, 14, 29, 43, 58, 72, 88, 102, 116, 131, 145, 160, 175, 190, 204, 218, 233, 248, 263, 277, 292, 307,
+    322, 336, 350, 365, 380, 395, 409, 424, 438, 452, 468, 482, 497, 511, 526, 541, 556, 570, 584, 599, 614,
+    624, 634, 644, 654, 664, 673, 683, 692, 703, 713, 722, 732, 742, 751, 762, 772, 781, 791, 800, 810, 821,
+    830, 840, 850, 859, 869, 880, 889, 899, 908, 918, 928, 938, 948, 958, 967, 977, 986, 997, 1007, 1016, 1026,
+    1036, 1045, 1056, 1066, 1075, 1085, 1094, 1104, 1115, 1124, 1134, 1144, 1153, 1163, 1174, 1183, 1193, 1202, 1212, 1222, 1229,
+    1234, 1240, 1246, 1250, 1256, 1262, 1268, 1273, 1279, 1285, 1291, 1296, 1302, 1308, 1314, 1319, 1325, 1331,
+    1337, 1342, 1348, 1354, 1360, 1365, 1370, 1376, 1382, 1387, 1393, 1399, 1405, 1410, 1416, 1422, 1428, 1433,
+    1439, 1445, 1451, 1456, 1462, 1468, 1474, 1478, 1484, 1490, 1496, 1501, 1507, 1513, 1519, 1524, 1530, 1536,
+    1542, 1547, 1553, 1559, 1565, 1570, 1576, 1582, 1588, 1592, 1598, 1604, 1610, 1616, 1621, 1627, 1633, 1638,
+    1644, 1650, 1656, 1661, 1667, 1673, 1679, 1684, 1690, 1696, 1702, 1706, 1712, 1718, 1724, 1729, 1735, 1741,
+    1747, 1752, 1758, 1764, 1770, 1775, 1781, 1787, 1793, 1798, 1804, 1810, 1816, 1821, 1827, 1833, 1838, 1843,
+    1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843,
+    1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843, 1843,
+    1843, 1843, 1843, 1843, 1843, 1843
+};
+
 UBYTE stage_state = STAGE_BEGIN;
 UBYTE stage_complete = 0;
 
@@ -113,6 +131,8 @@ UBYTE countdown_idx = 0;
 static GameTimer stage_complete_timer;
 static WORD ranking_backdrop_y = 0;   
 
+const UWORD *scroll_speed_table_active;
+
 void Game_Initialize()
 {
     Timer_Init();           // Detect PAL/NTSC and initialize
@@ -149,6 +169,8 @@ void Game_Initialize()
 
     Fuel_Initialize();
     StageProgress_Initialize(); 
+ 
+    scroll_speed_table_active = g_is_pal ? scroll_speed_table_pal : scroll_speed_table;
 
     KPrintF("Avail Chip  = %ld\n", Mem_GetFreeChip());
     KPrintF("Avail Fast  = %ld\n", Mem_GetFreeFast());
@@ -292,10 +314,11 @@ void Game_SetMap(UBYTE maptype)
 __attribute__((always_inline)) WORD GetScrollAmount(WORD speed)
 {
     if (speed >= MAX_SPEED_TABLE)
-        return scroll_speed_table[MAX_SPEED_TABLE - 1];
+        return scroll_speed_table_active[MAX_SPEED_TABLE - 1];
     
-    return scroll_speed_table[speed];
+    return scroll_speed_table_active[speed];
 }
+
 
 static void SmoothScroll(void)
 {
@@ -318,7 +341,10 @@ static void SmoothScroll(void)
     
     // Advance all at once — no per-pixel loop
     mapposy -= pixels;
-    videoposy = mapposy % HALFBITMAPHEIGHT;
+   
+    videoposy = mapposy;
+    while (videoposy >= HALFBITMAPHEIGHT)
+        videoposy -= HALFBITMAPHEIGHT;
     
     // Figure out which tile columns need drawing.
     // Columns are drawn round-robin: column = mapposy & 15
@@ -336,20 +362,24 @@ static void SmoothScroll(void)
         WORD col = pos & (NUMSTEPS - 1);
         
         if (col >= 12) continue;
-        if (drawn_cols & (1 << col)) continue;  // Already drew this column
+        if (drawn_cols & (1 << col)) continue;
         drawn_cols |= (1 << col);
         
         WORD mapy = pos >> 4;
-        WORD y = ROUND2BLOCKHEIGHT(pos % HALFBITMAPHEIGHT) << 2;
+        WORD y = ROUND2BLOCKHEIGHT(pos % EFFECTIVE_HEIGHT) << 2;
         WORD x = col << 4;
-        UWORD yoff = y + (HALFBITMAPHEIGHT << 2);
         
-        DrawBlock(x, y,    col, mapy, screen.bitplanes);
+        DrawBlock(x, y, col, mapy, screen.bitplanes);
+        DrawBlock(x, y, col, mapy, screen.offscreen_bitplanes);
+        DrawBlock(x, y, col, mapy, screen.pristine);
+        
+#ifndef USE_YUNLIMITED2
+        // Double-height: duplicate blit to lower half
+        UWORD yoff = y + (HALFBITMAPHEIGHT << 2);
         DrawBlock(x, yoff, col, mapy, screen.bitplanes);
-        DrawBlock(x, y,    col, mapy, screen.offscreen_bitplanes);
         DrawBlock(x, yoff, col, mapy, screen.offscreen_bitplanes);
-        DrawBlock(x, y,    col, mapy, screen.pristine);
         DrawBlock(x, yoff, col, mapy, screen.pristine);
+#endif
     }
 }
 
@@ -431,27 +461,29 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
  
 void Game_FillScreen(void)
 {
-	WORD a, b, x, y;
-	WORD start_tile_y = mapposy / BLOCKHEIGHT;
+    WORD a, b, x, y;
+    WORD start_tile_y = mapposy / BLOCKHEIGHT;
+    WORD rows = EFFECTIVE_HEIGHT / BLOCKHEIGHT;
 
-	for (b = 0; b < HALFBITMAPBLOCKSPERCOL; b++)
-	{
-		for (a = 0; a < 12; a++)  // 12 tiles for 192 pixel width
-		{
-			x = a * BLOCKWIDTH;
-			y = b * BLOCKPLANELINES;
-			DrawBlock(x, y, a, start_tile_y + b, screen.bitplanes);
-			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.bitplanes);
-
-           	DrawBlock(x, y, a, start_tile_y + b, screen.offscreen_bitplanes);
-			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.offscreen_bitplanes); 
-
+    for (b = 0; b < rows; b++)
+    {
+        for (a = 0; a < 12; a++)
+        {
+            x = a * BLOCKWIDTH;
+            y = b * BLOCKPLANELINES;
+            
+            DrawBlock(x, y, a, start_tile_y + b, screen.bitplanes);
+            DrawBlock(x, y, a, start_tile_y + b, screen.offscreen_bitplanes);
             DrawBlock(x, y, a, start_tile_y + b, screen.pristine);
-			DrawBlock(x, y + HALFBITMAPHEIGHT * BLOCKSDEPTH, a, start_tile_y + b,screen.pristine);       
-
-   
-		}
-	} 
+            
+#ifndef USE_YUNLIMITED2
+            UWORD yoff = y + (HALFBITMAPHEIGHT * BLOCKSDEPTH);
+            DrawBlock(x, yoff, a, start_tile_y + b, screen.bitplanes);
+            DrawBlock(x, yoff, a, start_tile_y + b, screen.offscreen_bitplanes);
+            DrawBlock(x, yoff, a, start_tile_y + b, screen.pristine);
+#endif
+        }
+    }
  
 }
  
