@@ -23,25 +23,36 @@
 #define TILEATTRIB_MAP_HEIGHT 18   // 288 / 16
 #define TILEATTRIB_MAP_SIZE 360    // 20 * 18
 
-typedef enum 
-{
-    TILEATTRIB_ROAD = 0,
-    TILEATTRIB_CRASH = 1,
-    TILEATTRIB_WATER = 2,
-    TILEATTRIB_ROAD_LEFT_HALF = 3,
-    TILEATTRIB_ROAD_RIGHT_HALF = 4,
-    TILEATTRIB_SLOW = 5,
-    TILEATTRIB_BOOST = 6,
-    TILEATTRIB_WHEELIE = 7,
-    TILEATTRIB_JUMP = 8
-} TileAttribute;
+/* Packed collision byte: [LLLL SSSS] */
+/* Lane = high nibble, Surface = low nibble */
 
- extern BYTE road_tile_idx;
+#define LANE_OFFROAD      0
+#define LANE_SHOULDER_L   1
+#define LANE_1            2
+#define LANE_2            3
+#define LANE_3            4
+#define LANE_4            5
+#define LANE_SHOULDER_R   6
+#define LANE_MERGE        7
 
- void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count);
+#define SURFACE_NORMAL    0
+#define SURFACE_PUDDLE    1
+#define SURFACE_WATER     2
+#define SURFACE_WHEELIE   3
+#define SURFACE_OIL       4
+#define SURFACE_GRAVEL    5
+#define SURFACE_BOOST     6
+#define SURFACE_JUMP      7
 
- extern UBYTE tile_attrib_map[TILEATTRIB_MAP_SIZE];
+#define GET_LANE(packed)    ((packed) >> 4)
+#define GET_SURFACE(packed) ((packed) & 0x0F)
+#define IS_DRIVABLE(packed) (GET_LANE(packed) >= LANE_SHOULDER_L)
+#define IS_LANE(packed)     (GET_LANE(packed) >= LANE_1 && GET_LANE(packed) <= LANE_4)
 
-void TileAttrib_Load(void);
-BOOL TileAttrib_IsDrivable(WORD tile_x, WORD tile_y);
-TileAttribute Tile_GetAttrib(WORD world_x, WORD world_y);
+extern BYTE road_tile_idx;
+
+void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count);
+UBYTE Collision_Get(WORD world_x, WORD world_y);
+UBYTE Collision_GetLane(WORD world_x, WORD world_y);
+UBYTE Collision_GetSurface(WORD world_x, WORD world_y);
+void CollisionMap_Load(void);

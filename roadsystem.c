@@ -31,8 +31,11 @@ typedef struct {
 } RoadScroll;
 
 RoadScroll road_scroll = {0, 0};
-
-UBYTE stage1_tile_attrib_map[TILEATTRIB_MAP_SIZE];
+ 
+/* collision.dat is now mapwidth * mapheight bytes, one per cell */
+UBYTE *collision_map = NULL;   /* Loaded from disk, MEMF_ANY is fine */
+WORD   col_map_width;
+WORD   col_map_height;
 
 void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count)
 {
@@ -72,75 +75,53 @@ void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count)
     // Use road_scroll.tile_idx for rendering
     road_tile_idx = road_scroll.tile_idx;
 }
-
-void TileAttrib_Load(void)
+ 
+void CollisionMap_Load(void)
 {
-    // Load collision.dat from disk
-    UBYTE *data = Disk_AllocAndLoadAsset("stages/lasvegas/collision.dat", MEMF_ANY);
+    collision_map = Disk_AllocAndLoadAsset("stages/lasvegas/collision.dat", MEMF_ANY);
+    col_map_width = mapwidth;    /* Same dimensions as tilemap */
+    col_map_height = mapheight;
     
-    if (data)
-    {
-        // Copy collision data
-        for (int i = 0; i < TILEATTRIB_MAP_SIZE; i++)
-        {
-            stage1_tile_attrib_map[i] = data[i];
-        }
-        
-        FreeMem(data, TILEATTRIB_MAP_SIZE);
-        KPrintF("Collision map loaded (%ld tiles)\n", TILEATTRIB_MAP_SIZE);
-    }
+    if (collision_map)
+        KPrintF("Collision map loaded: %ldx%ld\n", col_map_width, col_map_height);
     else
-    {
-        // Default to all crash if file not found
-        for (int i = 0; i < TILEATTRIB_MAP_SIZE; i++)
-        {
-            stage1_tile_attrib_map[i] = TILEATTRIB_CRASH;
-        }
-        KPrintF("Warning: collision.dat not found, using defaults\n");
-    }
+        KPrintF("WARNING: collision.dat not found!\n");
 }
 
-BOOL TileAttrib_IsDrivable(WORD tile_x, WORD tile_y)
+/* 
+ * Single lookup — no tile index indirection needed.
+ * 
+ * Old way (2 lookups):
+ *   tile_idx = mapdata[y * width + x]     ; 1st read (word)
+ *   attrib = attrib_table[tile_idx]        ; 2nd read (byte) + add
+ *
+ * New way (1 lookup):
+ *   packed = collision_map[y * width + x]  ; 1 read (byte)
+ *   lane = packed >> 4                     ; shift
+ *   surface = packed & 0x0F                ; mask
+ */
+__attribute__((always_inline)) 
+UBYTE Collision_Get(WORD world_x, WORD world_y)
 {
-    // Debug counter - only output every 30 frames
-    static int debug_frame = 0;
-    debug_frame++;
+    WORD tx = world_x >> 4;  /* / 16 */
+    WORD ty = world_y >> 4;
     
-
-     // Get tile coordinates in the map
-    WORD map_tile_x = tile_x / BLOCKWIDTH;
-    WORD map_tile_y = tile_y / BLOCKHEIGHT;
+    if (tx < 0 || tx >= col_map_width || ty < 0 || ty >= col_map_height)
+        return 0;  /* LANE_OFFROAD | SURFACE_NORMAL = crash */
     
-    // Bounds check
-    if (map_tile_x < 0 || map_tile_x >= mapwidth ||
-        map_tile_y < 0 || map_tile_y >= mapheight)
-    {
-        return FALSE;
-    }
-    
-    UWORD tile_number = mapdata[map_tile_y * mapwidth + map_tile_x];
- 
- 
-    TileAttribute type = stage1_tile_attrib_map[tile_number];
-
-    return (type != TILEATTRIB_CRASH);
+    return collision_map[ty * col_map_width + tx];
 }
 
-__attribute__((always_inline)) TileAttribute Tile_GetAttrib(WORD world_x, WORD world_y)
+/* Convenience: just the lane */
+__attribute__((always_inline))
+UBYTE Collision_GetLane(WORD world_x, WORD world_y)
 {
-     // Get tile coordinates in the map
-    WORD map_tile_x = world_x >> 4;
-    WORD map_tile_y = world_y >> 4;
-    
-    // Bounds check
-    if (map_tile_x < 0 || map_tile_x >= mapwidth ||
-        map_tile_y < 0 || map_tile_y >= mapheight)
-    {
-        return TILEATTRIB_CRASH;
-    }
-    
-    UWORD tile_number = mapdata[map_tile_y * mapwidth + map_tile_x];
+    return GET_LANE(Collision_Get(world_x, world_y));
+}
 
-    TileAttribute type = stage1_tile_attrib_map[tile_number];
-    return type;
+/* Convenience: just the surface */
+__attribute__((always_inline))
+UBYTE Collision_GetSurface(WORD world_x, WORD world_y)
+{
+    return GET_SURFACE(Collision_Get(world_x, world_y));
 }

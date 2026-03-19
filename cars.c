@@ -441,106 +441,111 @@ void Cars_HandleSpinout(UBYTE car_index)
 void Cars_CheckLaneAndSteer(BlitterObject *car)
 {
     if (!car->visible || car->crashed) return;
- 
-    // Look ahead distance in pixels
-    WORD lookahead = 32;  // Check 3 tiles ahead
-    WORD check_y = car->y - lookahead;
     
-    // sample left , center and right points of the bob
-    WORD center_x = car->x + 16;
-    WORD center_y = check_y;
-   
-    TileAttribute leftside_tile = Tile_GetAttrib(center_x-16, center_y);
-    TileAttribute rightside_tile = Tile_GetAttrib(center_x+16, center_y);
-    TileAttribute center_tile = Tile_GetAttrib(center_x, center_y);
-
-    if (center_tile == TILEATTRIB_ROAD_RIGHT_HALF && leftside_tile == TILEATTRIB_CRASH)
+    WORD lookahead = 32;
+    WORD check_y = car->y - lookahead;
+    WORD cx = car->x + 16;  /* Center of 32px wide BOB */
+    
+    /* Read lane at center, left and right */
+    UBYTE center = Collision_GetLane(cx, check_y);
+    UBYTE left   = Collision_GetLane(cx - 16, check_y);
+    UBYTE right  = Collision_GetLane(cx + 16, check_y);
+    
+    /* Core rule: stay in a drivable lane (1-7), avoid offroad (0) */
+    
+    if (center == LANE_OFFROAD)
     {
-       // slide car left
-       car->x += 1;  
-    }
-    else if (center_tile == TILEATTRIB_ROAD && leftside_tile == TILEATTRIB_ROAD_RIGHT_HALF)
-    {
-       // slide car left
-       car->x += 1;  
-    }
-    else if (center_tile == TILEATTRIB_ROAD_LEFT_HALF && rightside_tile == TILEATTRIB_CRASH)
-    {
-       // slide right left
-       car->x -= 1;  
-    }
-    else if (center_tile == TILEATTRIB_ROAD && rightside_tile == TILEATTRIB_ROAD_LEFT_HALF)
-    {
-       // slide right left
-       car->x -= 1;  
-    }
-    else if (center_tile == TILEATTRIB_CRASH)
-    {
-        if (rightside_tile == TILEATTRIB_CRASH)
-        {
-            car->x -= 2;
-        }
-        else if (leftside_tile == TILEATTRIB_CRASH)
-        {
+        /* Emergency: we're off-road, steer toward any lane */
+        if (right >= LANE_SHOULDER_L)
             car->x += 2;
-        }
+        else if (left >= LANE_SHOULDER_L)
+            car->x -= 2;
     }
- 
+    else if (center == LANE_SHOULDER_L || center == LANE_SHOULDER_R)
+    {
+        /* On shoulder: drift toward center lanes */
+        if (center == LANE_SHOULDER_L && right >= LANE_1)
+            car->x += 1;
+        else if (center == LANE_SHOULDER_R && left >= LANE_1)
+            car->x -= 1;
+    }
+    else
+    {
+        /* In a proper lane — check if we're about to drive off */
+        if (left == LANE_OFFROAD)
+            car->x += 1;  /* Push away from left edge */
+        else if (right == LANE_OFFROAD)
+            car->x -= 1;  /* Push away from right edge */
+    }
 }
 
 void Cars_UpdatePosition(BlitterObject *c)
 {
     if (!c->visible) return;
     
-    // Handle crash state
+    /* Handle crash state (unchanged) */
     if (c->crashed)
     {
-        if (c->crash_timer > 0)
-        {
-            c->crash_timer--;
-            c->speed = 0;
-            return;
-        }
-        else
-        {
-            c->crashed = FALSE;
-            c->speed = 20;
-        }
+        if (c->crash_timer > 0) { c->crash_timer--; c->speed = 0; return; }
+        else { c->crashed = FALSE; c->speed = 20; }
     }
     
     c->old_x = c->x;
     c->old_y = c->y;
     c->moved = TRUE;
- 
-    // Normal movement
+    
+    /* Normal movement (unchanged) */
     WORD car_movement = -GetScrollAmount(c->speed);
     c->accumulator += car_movement;
-
-    if (c->accumulator >= 256)
-    {
-        WORD pixels = c->accumulator >> 8;  
+    if (c->accumulator >= 256) {
+        WORD pixels = c->accumulator >> 8;
         c->y += pixels;
-        c->accumulator &= 0xFF;  
-    }
-    else if (c->accumulator <= -256)
-    {
-        WORD pixels = (-c->accumulator) >> 8;  
+        c->accumulator &= 0xFF;
+    } else if (c->accumulator <= -256) {
+        WORD pixels = (-c->accumulator) >> 8;
         c->y -= pixels;
         c->accumulator += (pixels << 8);
     }
- 
-    // AI steering - check ahead and adjust lane
+    
+    /* AI steering */
     Cars_CheckLaneAndSteer(c);
-
-    // Car Wheel Animation  
-    c->anim_counter++;
-    WORD threshold = (c->speed < 84) ? 8 : 
-                    (c->speed < 126) ? 4 : 2;
-
-    if (c->anim_counter >= threshold)
+    
+    /* Surface effects — one byte read */
+    UBYTE surface = Collision_GetSurface(c->x + 16, c->y + 16);
+    
+    switch (surface)
     {
+        case SURFACE_PUDDLE:
+            /* Random slight slip */
+            if ((c->anim_counter & 7) == 0)
+                c->x += (c->anim_counter & 1) ? 1 : -1;
+            break;
+            
+        case SURFACE_OIL:
+            /* Slow down */
+            if (c->speed > 40) c->speed -= 2;
+            break;
+            
+        case SURFACE_BOOST:
+            /* Speed up */
+            if (c->speed < 200) c->speed += 4;
+            break;
+            
+        case SURFACE_GRAVEL:
+            /* Slight slowdown */
+            if (c->speed > 60) c->speed -= 1;
+            break;
+            
+        default:
+            break;
+    }
+    
+    /* Wheel animation (unchanged) */
+    c->anim_counter++;
+    WORD threshold = (c->speed < 84) ? 8 : (c->speed < 126) ? 4 : 2;
+    if (c->anim_counter >= threshold) {
         c->anim_counter = 0;
-        c->anim_frame ^= 1;  
+        c->anim_frame ^= 1;
     }
 }
 

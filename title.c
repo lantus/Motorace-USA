@@ -119,9 +119,11 @@ void Title_Draw()
             Title_SaveBackground();
             // Draw the hud
             
-            HUD_DrawAll();
+
             StageProgress_FillAll();
             StageProgress_DrawAll(); 
+
+            HUD_DrawAll();
             
             #if defined (DEBUG)
             char line_buffer[8] = {0};

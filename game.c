@@ -89,9 +89,7 @@ UBYTE *frontbuffer,*blocksbuffer;
 UWORD *mapdata;
 
 struct BitMapEx *BlocksBitmap,*ScreenBitmap;
-
-static void ScrollUp(void);
-
+ 
 // Tiles and TileMaps
 
 RawMap *la_map;
@@ -140,7 +138,7 @@ void Game_Initialize()
 
     // Stage Tiles and TileMaps
     Stage_Initialize();
-    TileAttrib_Load();
+    CollisionMap_Load();
  
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
@@ -301,18 +299,59 @@ __attribute__((always_inline)) WORD GetScrollAmount(WORD speed)
 
 static void SmoothScroll(void)
 {
-    
     WORD scroll_speed = GetScrollAmount(bike_speed);
     
     scroll_accumulator += scroll_speed;
     
-    while (scroll_accumulator >= 256) 
+    // How many whole pixels to scroll this frame
+    WORD pixels = scroll_accumulator >> 8;
+    if (pixels == 0) return;
+    scroll_accumulator &= 0xFF;
+    
+    // Clamp to top of map
+    if (mapposy - pixels < 1)
+        pixels = mapposy - 1;
+    if (pixels <= 0) return;
+    
+    // Remember old position to figure out which columns need drawing
+    WORD old_mapposy = mapposy;
+    
+    // Advance all at once — no per-pixel loop
+    mapposy -= pixels;
+    videoposy = mapposy % HALFBITMAPHEIGHT;
+    
+    // Figure out which tile columns need drawing.
+    // Columns are drawn round-robin: column = mapposy & 15
+    // We need to draw every column index between old and new position.
+    
+    WORD old_col = old_mapposy & (NUMSTEPS - 1);
+    WORD new_col = mapposy & (NUMSTEPS - 1);
+    
+    // Track which columns we already drew this frame
+    UWORD drawn_cols = 0;  // Bitmask
+    
+    for (WORD p = 1; p <= pixels; p++)
     {
-        ScrollUp();
-        scroll_accumulator -= 256;
+        WORD pos = old_mapposy - p;
+        WORD col = pos & (NUMSTEPS - 1);
+        
+        if (col >= 12) continue;
+        if (drawn_cols & (1 << col)) continue;  // Already drew this column
+        drawn_cols |= (1 << col);
+        
+        WORD mapy = pos >> 4;
+        WORD y = ROUND2BLOCKHEIGHT(pos % HALFBITMAPHEIGHT) << 2;
+        WORD x = col << 4;
+        UWORD yoff = y + (HALFBITMAPHEIGHT << 2);
+        
+        DrawBlock(x, y,    col, mapy, screen.bitplanes);
+        DrawBlock(x, yoff, col, mapy, screen.bitplanes);
+        DrawBlock(x, y,    col, mapy, screen.offscreen_bitplanes);
+        DrawBlock(x, yoff, col, mapy, screen.offscreen_bitplanes);
+        DrawBlock(x, y,    col, mapy, screen.pristine);
+        DrawBlock(x, yoff, col, mapy, screen.pristine);
     }
 }
- 
 
 __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest)
 {
@@ -390,39 +429,6 @@ __attribute__((always_inline)) inline void DrawBlockRun(LONG x, LONG y, UWORD bl
     custom->bltsize = (blockplanelines << 6) + (BLOCKWIDTH >> 4);
 }
  
-static void ScrollUp(void)
-{
-    WORD mapx, mapy, x, y;
-
-    if (mapposy < 1) return;  // Stop at top of map
-
-    mapposy--;
-    videoposy = mapposy % HALFBITMAPHEIGHT;
-
-	mapx = mapposy & (NUMSTEPS - 1);
-	mapy = mapposy >> 4;
-	
-	y = ROUND2BLOCKHEIGHT(videoposy) << 2;
-
-   // Only draw if within the 12-tile display width
-    if (mapx < 12) 
-    {  
-        UWORD yoff = y + (HALFBITMAPHEIGHT << 2);
-        // Limit to 192 pixels (12 tiles)
-        x = mapx << 4;
-        
-        DrawBlock(x, y, mapx, mapy, screen.bitplanes);
-        DrawBlock(x, yoff, mapx, mapy,screen.bitplanes);
-
-        DrawBlock(x, y, mapx, mapy, screen.offscreen_bitplanes);
-        DrawBlock(x, yoff, mapx, mapy,screen.offscreen_bitplanes);    
- 
-        DrawBlock(x, y, mapx, mapy, screen.pristine);
-        DrawBlock(x, yoff, mapx, mapy,screen.pristine);    
- 
-    }
-}
-
 void Game_FillScreen(void)
 {
 	WORD a, b, x, y;
@@ -1193,7 +1199,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (stage_progress.current_map_pos >= 4000)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= 16128-32)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 
