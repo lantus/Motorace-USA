@@ -16,6 +16,8 @@
 #include "cars.h"
 #include "memory.h"
 #include "roadsystem.h"
+#include "hardware.h"
+#include "copper.h"
 #include "motorbike.h"
 
 static Sprite spr_rsrc_bike_moving1;
@@ -583,7 +585,143 @@ CollisionState MotorBike_CheckCollision(int *hit_car_index)
 
 void MotorBike_CrashAndReposition(void)
 {
-
     
-    //KPrintF("Bike repositioned: world_y=%ld, mapposy=%ld\n", bike_world_y, mapposy);
+    Game_ApplyPalette((UWORD *)black_palette, BLOCKSCOLORS);
+    WaitVBL();
+    
+
+    // === STEP 1: Remove ALL car BOBs from BOTH buffers ===
+    // Must do this BEFORE moving mapposy or the restore Y coords are wrong
+    
+    for (int pass = 0; pass < 2; pass++)
+    {
+        UBYTE *buffer = (pass == 0) ? screen.bitplanes : screen.offscreen_bitplanes;
+        UBYTE *save_draw = draw_buffer;
+        draw_buffer = buffer;
+        
+        for (int i = 0; i < MAX_CARS; i++)
+        {
+            if (!car[i].visible) continue;
+            if (car[i].needs_restore)
+            {
+                Cars_CopyPristineBackground(&car[i]);
+            }
+        }
+        
+        draw_buffer = save_draw;
+    }
+    
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        car[i].off_screen = TRUE;
+        car[i].spawning = FALSE;
+        car[i].needs_restore = FALSE;
+        car[i].honking = FALSE;
+        car[i].honk_timer = 0;
+        car[i].crashed = FALSE;
+        car[i].accumulator = 0;
+        car[i].old_x = car[i].x;
+        car[i].old_y = car[i].y;
+        car[i].prev_old_x = car[i].x;
+        car[i].prev_old_y = car[i].y;
+        
+        car_was_ahead[i] = TRUE;
+    }
+    
+    respawn_timer = 90;  // 1.5 seconds of clear road before first car
+    
+    // === Move map back ===
+    WORD rewind_amount = SCREENHEIGHT * 2;
+    LONG max_mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT - 1;
+
+    mapposy += rewind_amount;
+    if (mapposy > max_mapposy)
+        mapposy = max_mapposy;
+
+    // Snap to a multiple of EFFECTIVE_HEIGHT so videoposy = 0
+    // This ensures Game_FillScreen bitmap positions match the display
+    mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
+    videoposy = 0;
+    
+    // === STEP 4: Refill ALL three buffers with new map position ===
+ 
+    Game_FillScreen();
+    WaitBlit();
+
+    // === STEP 5: Reposition bike ===
+    bike_position_x = 80;  // Center of road
+    bike_position_y = SCREENHEIGHT - 48;  // Near bottom of screen
+    bike_world_y = mapposy + bike_position_y;
+    bike_speed = MIN_CRUISING_SPEED;
+    bike_state = BIKE_STATE_MOVING;
+    
+    // === STEP 6: Scatter cars far ahead of new position ===
+    LONG bike_y = mapposy + bike_position_y;
+    
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (!car[i].visible) continue;
+        
+        car[i].y = bike_y - SCREENHEIGHT - 100 - (i * 80);
+        
+        // Find road center at spawn position
+        WORD road_start = -1, road_end = -1;
+        WORD bike_cx = bike_position_x + 8;
+        
+        for (WORD scan = bike_cx; scan < 192; scan += 8)
+        {
+            UBYTE lane = Collision_GetLane(scan, car[i].y);
+            if (lane >= LANE_1 && lane <= LANE_4)
+            {
+                if (road_start < 0) road_start = scan;
+                road_end = scan;
+            }
+            else if (lane == LANE_OFFROAD && road_start >= 0)
+                break;
+        }
+        for (WORD scan = bike_cx - 8; scan >= 0; scan -= 8)
+        {
+            UBYTE lane = Collision_GetLane(scan, car[i].y);
+            if (lane >= LANE_1 && lane <= LANE_4)
+                road_start = scan;
+            else if (lane == LANE_OFFROAD && road_start >= 0)
+                break;
+        }
+        
+        if (road_start >= 0)
+            car[i].x = (road_start + road_end) / 2;
+        else
+            car[i].x = 80;
+        
+        car[i].off_screen = TRUE;
+        car[i].spawning = TRUE;
+        car[i].old_x = car[i].x;
+        car[i].old_y = car[i].y;
+        car[i].prev_old_x = car[i].x;
+        car[i].prev_old_y = car[i].y;
+        car[i].needs_restore = FALSE;
+        
+        car_was_ahead[i] = TRUE;
+    }
+    
+    // === STEP 7: Update copper for new scroll position ===
+    const UBYTE* planes_temp[BLOCKSDEPTH];
+    planes_temp[0] = display_buffer;
+    planes_temp[1] = display_buffer + BITMAPBYTESPERROW;
+    planes_temp[2] = display_buffer + BITMAPBYTESPERROW * 2;
+    planes_temp[3] = display_buffer + BITMAPBYTESPERROW * 3;
+    
+    WORD yoffset = (videoposy + BLOCKHEIGHT);
+    if (yoffset >= BITMAPHEIGHT) yoffset -= BITMAPHEIGHT;
+    LONG planeadd = ((LONG)yoffset) * BITMAPBYTESPERROW * BLOCKSDEPTH;
+    
+    Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
+    WaitVBL();
+    
+    // === Reveal — restore stage palette ===
+    Game_ApplyPalette(city_colors, BLOCKSCOLORS);
+    
+    // Reset bike sprite
+    MotorBike_SetFrame(BIKE_FRAME_MOVING1);
 }
+ 

@@ -19,8 +19,10 @@
 #define CAR_COLLISION_DISTANCE 48   
 
 extern BlitterObject car[MAX_CARS];
+extern BOOL car_was_ahead[MAX_CARS];
 extern WORD bike_speed;
 extern UWORD cars_passed;
+extern WORD respawn_timer;
 
 void Cars_Update(void);
 void Cars_Initialize(void);

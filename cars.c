@@ -223,8 +223,9 @@ UWORD cars_passed = 0;
 
 BlitterObject car[MAX_CARS];
 
+BOOL car_was_ahead[MAX_CARS];
+
 static LONG car_last_y[MAX_CARS];
-static BOOL car_was_ahead[MAX_CARS];
 static BOOL passing_initialized = FALSE;
 
 /* Restore pointers */

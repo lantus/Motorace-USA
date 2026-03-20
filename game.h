@@ -173,6 +173,7 @@ extern UWORD	intro_colors[BLOCKSCOLORS];
 extern UWORD	city_colors[BLOCKSCOLORS];
 extern UWORD	desert_colors[BLOCKSCOLORS];
 extern UWORD    lv_colors[BLOCKSCOLORS];
+extern UWORD    black_palette[BLOCKSCOLORS];
 
 extern struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 extern void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest);

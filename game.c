@@ -121,6 +121,7 @@ UWORD	intro_colors[BLOCKSCOLORS];
 UWORD	lv_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
 UWORD	desert_colors[BLOCKSCOLORS];
+UWORD   black_palette[BLOCKSCOLORS] = {0};
 
 // Used for the Countdown
 static Sprite spr_countdown_timer[4];
@@ -905,11 +906,35 @@ void Stage_Update()
             return;
         }
         
-        // === WHEELIE — overrides all input ===
-        if (wheelie_active)
+         if (wheelie_active)
         {
             bike_speed = wheelie_speed;
             bike_state = BIKE_STATE_WHEELIE;
+            
+            // Clear the landing path — push cars out of the way
+          
+            WORD bike_cx = bike_position_x + 8;
+            
+            for (int i = 0; i < MAX_CARS; i++)
+            {
+                if (!car[i].visible || car[i].off_screen || car[i].crashed) continue;
+                
+                WORD car_screen_y = car[i].y - mapposy;
+                WORD car_cx = car[i].x + 16;
+                WORD x_dist = ABS(bike_cx - car_cx);
+                
+                // Car is ahead of bike and in the flight path
+                if (car_screen_y < bike_position_y && 
+                    car_screen_y > bike_position_y - 80 && 
+                    x_dist < 24)
+                {
+                    // Nudge car sideways out of the path
+                    if (car_cx < bike_cx)
+                        car[i].x -= 3;
+                    else
+                        car[i].x += 3;
+                }
+            }
             
             if (Timer_HasElapsed(&wheelie_timer))
             {
@@ -917,7 +942,7 @@ void Stage_Update()
                 wheelie_scored = FALSE;
                 Timer_Stop(&wheelie_timer);
                 bike_state = BIKE_STATE_MOVING;
-                //SFX_Play(SFX_LAND);
+               // SFX_Play(SFX_LAND);
             }
             
             speed_accumulator += bike_speed;
@@ -934,7 +959,7 @@ void Stage_Update()
         if (surface == SURFACE_WHEELIE && !wheelie_active)
         {
             wheelie_active = TRUE;
-            wheelie_speed = bike_speed;
+            wheelie_speed = 150;
             Timer_Start(&wheelie_timer, 2);
             bike_state = BIKE_STATE_WHEELIE;
           //  SFX_Play(SFX_WHEELIE);
