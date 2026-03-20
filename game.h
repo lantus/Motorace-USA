@@ -168,6 +168,8 @@ extern int collision_car_index;
 extern ULONG speed_accumulator;
 extern ULONG speed_sample_count;
 
+extern BOOL bike_invulnerable;
+
 // Palettes
 extern UWORD	intro_colors[BLOCKSCOLORS];
 extern UWORD	city_colors[BLOCKSCOLORS];

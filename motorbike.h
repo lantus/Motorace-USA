@@ -85,7 +85,7 @@ extern BOOL  wheelie_active;
 extern BOOL  wheelie_scored;
 extern WORD  wheelie_speed;
 extern GameTimer wheelie_timer;
-
+extern GameTimer invuln_timer;
 #define MIN_CRUISING_SPEED 42  // Minimum automatic speed
  
 void MotorBike_Initialize();

@@ -138,14 +138,14 @@ static WORD ranking_backdrop_y = 0;
 const UWORD *scroll_speed_table_active;
 
 // HUD stuff
-
-     
 static ULONG last_score = 0xFFFFFFFF;
 static UBYTE last_rank = 0xFF;
 static WORD  last_speed = -1;
-
 static UBYTE hud_phase = 0;
 
+// Bike repositioning stuff
+BOOL bike_invulnerable = FALSE;
+ 
 void Game_Initialize()
 {
     Timer_Init();           // Detect PAL/NTSC and initialize
@@ -245,7 +245,8 @@ void Game_NewGame(UBYTE difficulty)
     bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 24;  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
-    
+    bike_invulnerable = FALSE;
+
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT - 1;
     videoposy = mapposy % HALFBITMAPHEIGHT ;
     stage_progress.mapsize = mapposy;
@@ -805,9 +806,11 @@ void Stage_Draw()
  
         if (Timer_HasElapsed(&hud_update_timer))
         {
-            HUD_UpdateScore(game_score);        
-            HUD_UpdateRank(game_rank);         
-            HUD_UpdateBikeSpeed(bike_speed);
+            if (bike_speed != last_speed)
+            {
+                HUD_UpdateBikeSpeed(bike_speed);
+                last_speed = bike_speed;
+            }
             Timer_Reset(&hud_update_timer);
         }
 
@@ -938,7 +941,14 @@ void Stage_Update()
             return;
         }
         
-         if (wheelie_active)
+
+        if (bike_invulnerable && Timer_HasElapsed(&invuln_timer))
+        {
+            bike_invulnerable = FALSE;
+            Timer_Stop(&invuln_timer);
+        }
+
+        if (wheelie_active)
         {
             bike_speed = wheelie_speed;
             bike_state = BIKE_STATE_WHEELIE;
@@ -1356,6 +1366,8 @@ void Stage_CheckCompletion(void)
 
         // pass the current speed to the frontvie
         HUD_UpdateBikeSpeed(bike_speed);
+        // pass the current score as well
+        HUD_UpdateScore(game_score);
     }
 }
 

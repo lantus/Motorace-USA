@@ -95,6 +95,7 @@ BOOL  wheelie_scored = FALSE;
 WORD  wheelie_speed = 0;
 
 GameTimer wheelie_timer;
+GameTimer invuln_timer;
 
 void MotorBike_Initialize()
 {
@@ -221,6 +222,16 @@ void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
 
 void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 {
+    if (bike_invulnerable)
+    {
+        if (game_frame_count & 4)
+        {
+            // Hide sprites — move them off screen
+            Sprites_ClearLower();
+            return;
+        }
+    }
+
     if (state == BIKE_STATE_MOVING || 
         state == BIKE_STATE_ACCELERATING  || 
         state == BIKE_STATE_BRAKING)
@@ -534,8 +545,11 @@ CollisionState MotorBike_CheckCollision(int *hit_car_index)
     WORD bike_world_top = mapposy + bike_top;
     WORD bike_world_bottom = mapposy + bike_bottom;
     
-    // === CAR COLLISION — check all active cars ===
-    extern BlitterObject car[MAX_CARS];
+    if (bike_invulnerable)
+    {
+        *hit_car_index = -1;
+        return COLLISION_NONE;
+    }
     
     for (int i = 0; i < MAX_CARS; i++)
     {
@@ -648,13 +662,36 @@ void MotorBike_CrashAndReposition(void)
     Game_FillScreen();
     WaitBlit();
 
-    // === STEP 5: Reposition bike ===
-    bike_position_x = 80;  // Center of road
-    bike_position_y = SCREENHEIGHT - 48;  // Near bottom of screen
+    WORD bike_wy = mapposy + (SCREENHEIGHT - 48);
+    WORD safe_x = 80;  // Fallback
+    
+    // Scan for road center near middle of screen
+    WORD road_start = -1;
+    WORD road_end = -1;
+    
+    for (WORD scan = 0; scan < 192; scan += 8)
+    {
+        UBYTE lane = Collision_GetLane(scan, bike_wy);
+        if (lane >= LANE_1 && lane <= LANE_4)
+        {
+            if (road_start < 0) road_start = scan;
+            road_end = scan;
+        }
+        else if (lane == LANE_OFFROAD && road_start >= 0)
+        {
+            break;  // Don't cross gaps
+        }
+    }
+    
+    if (road_start >= 0)
+        safe_x = (road_start + road_end) / 2;
+    
+    bike_position_x = safe_x;
+    bike_position_y = SCREENHEIGHT - 48;
     bike_world_y = mapposy + bike_position_y;
     bike_speed = MIN_CRUISING_SPEED;
     bike_state = BIKE_STATE_MOVING;
-    
+
     // === STEP 6: Scatter cars far ahead of new position ===
     LONG bike_y = mapposy + bike_position_y;
     
@@ -721,7 +758,16 @@ void MotorBike_CrashAndReposition(void)
     // === Reveal — restore stage palette ===
     Game_ApplyPalette(city_colors, BLOCKSCOLORS);
     
-    // Reset bike sprite
+     bike_position_x = safe_x;
+    bike_position_y = SCREENHEIGHT - 48;
+    bike_world_y = mapposy + bike_position_y;
+    bike_speed = MIN_CRUISING_SPEED;
+    bike_state = BIKE_STATE_MOVING;
+    
+    // 2 seconds of invulnerability
+    bike_invulnerable = TRUE;
+    Timer_Start(&invuln_timer, 2);
+    
     MotorBike_SetFrame(BIKE_FRAME_MOVING1);
 }
  
