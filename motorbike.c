@@ -88,6 +88,12 @@ static UBYTE approach_frame_index = 1;  // Track which approach frame we're on
 static UBYTE vibration_counter = 0;
 static UBYTE current_sprite_count = 2;  // Track whether using 2 or 4 sprites
 
+BOOL  wheelie_active = FALSE;
+BOOL  wheelie_scored = FALSE;
+WORD  wheelie_speed = 0;
+
+GameTimer wheelie_timer;
+
 void MotorBike_Initialize()
 {
     Sprites_LoadFromFile(BIKE_MOVING1,&spr_rsrc_bike_moving1);

@@ -242,6 +242,8 @@ void Game_NewGame(UBYTE difficulty)
  
     speed_accumulator = 0;
     speed_sample_count = 0;
+    wheelie_active = FALSE;
+    wheelie_scored = FALSE;
 
     Cars_ResetPositions();
 }
@@ -903,6 +905,52 @@ void Stage_Update()
             return;
         }
         
+        // === WHEELIE — overrides all input ===
+        if (wheelie_active)
+        {
+            bike_speed = wheelie_speed;
+            bike_state = BIKE_STATE_WHEELIE;
+            
+            if (Timer_HasElapsed(&wheelie_timer))
+            {
+                wheelie_active = FALSE;
+                wheelie_scored = FALSE;
+                Timer_Stop(&wheelie_timer);
+                bike_state = BIKE_STATE_MOVING;
+                //SFX_Play(SFX_LAND);
+            }
+            
+            speed_accumulator += bike_speed;
+            speed_sample_count++;
+            StageProgress_UpdateOverhead(mapposy);
+            Stage_CheckCompletion();
+            return;
+        }
+
+        // === CHECK FOR WHEELIE TRIGGER ===
+        WORD bike_wy = mapposy + bike_position_y - g_sprite_voffset;
+        UBYTE surface = Collision_GetSurface(bike_position_x + 8, bike_wy);
+        
+        if (surface == SURFACE_WHEELIE && !wheelie_active)
+        {
+            wheelie_active = TRUE;
+            wheelie_speed = bike_speed;
+            Timer_Start(&wheelie_timer, 2);
+            bike_state = BIKE_STATE_WHEELIE;
+          //  SFX_Play(SFX_WHEELIE);
+            
+            if (!wheelie_scored)
+            {
+                game_score += 700;
+                wheelie_scored = TRUE;
+            }
+            
+            speed_accumulator += bike_speed;
+            speed_sample_count++;
+            StageProgress_UpdateOverhead(mapposy);
+            Stage_CheckCompletion();
+            return;
+        }
 
         // === BRAKE — button 2 or pull down ===
         if (JoyButton2() || JoyDown())

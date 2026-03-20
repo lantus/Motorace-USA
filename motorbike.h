@@ -1,3 +1,4 @@
+#include "timers.h"
 #define ACCEL_RATE 2         // Speed increase per frame when accelerating
 #define DECEL_RATE 2         // Speed decrease per frame when coasting
 
@@ -79,6 +80,11 @@ extern ULONG bike_anim_frames;
 extern WORD bike_speed;        // Current speed in mph (starts at idle)
 extern WORD bike_acceleration;  // Current acceleration
 extern WORD scroll_accumulator;  // Fractional scroll position (fixed point)
+
+extern BOOL  wheelie_active;
+extern BOOL  wheelie_scored;
+extern WORD  wheelie_speed;
+extern GameTimer wheelie_timer;
 
 #define MIN_CRUISING_SPEED 42  // Minimum automatic speed
  
