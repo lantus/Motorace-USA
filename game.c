@@ -726,7 +726,7 @@ void Stage_Draw()
             Stage_ShowInfo();   
         }
         Cars_PreDraw();
-        Game_SwapBuffers();  // Add this
+        Game_SwapBuffers();  
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
     }
     else if (stage_state == STAGE_PLAYING)

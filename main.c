@@ -456,6 +456,7 @@ int main(void)
 		// Flip Buffers
 		if (stage_state == STAGE_PLAYING || 
 			stage_state == STAGE_FRONTVIEW ||
+			stage_state == STAGE_COUNTDOWN ||
 			stage_state == STAGE_RANKING)
 		{
 			current_buffer = 1 - current_buffer;

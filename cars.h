@@ -20,6 +20,7 @@
 
 extern BlitterObject car[MAX_CARS];
 extern WORD bike_speed;
+extern UWORD cars_passed;
 
 void Cars_Update(void);
 void Cars_Initialize(void);
@@ -38,4 +39,6 @@ void Cars_CheckForCollision(BlitterObject *c);
 void Cars_RenderBOB(BlitterObject *c);
 void Cars_CheckForRespawn(void);
 void Cars_CheckPassing(BlitterObject *c);
+void Cars_AssignLane(BlitterObject *car);
+void Cars_PursuePlayer(BlitterObject *car);
 WORD GetScrollAmount(WORD speed);
