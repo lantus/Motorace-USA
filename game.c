@@ -137,6 +137,15 @@ static WORD ranking_backdrop_y = 0;
 
 const UWORD *scroll_speed_table_active;
 
+// HUD stuff
+
+     
+static ULONG last_score = 0xFFFFFFFF;
+static UBYTE last_rank = 0xFF;
+static WORD  last_speed = -1;
+
+static UBYTE hud_phase = 0;
+
 void Game_Initialize()
 {
     Timer_Init();           // Detect PAL/NTSC and initialize
@@ -744,13 +753,36 @@ void Stage_Draw()
         Cars_Update();
         bike_world_y = mapposy + bike_position_y;
         Game_SwapBuffers();
-
+ 
         if (Timer_HasElapsed(&hud_update_timer))
         {
-            HUD_UpdateScore(game_score);        
-            HUD_UpdateRank(game_rank);           
-            HUD_UpdateBikeSpeed(bike_speed);
-            Timer_Reset(&hud_update_timer);
+        switch (hud_phase)
+        {
+            case 0:
+                if (game_score != last_score)
+                {
+                    HUD_UpdateScore(game_score);
+                    last_score = game_score;
+                }
+                break;
+            case 1:
+                if (game_rank != last_rank)
+                {
+                    HUD_UpdateRank(game_rank);
+                    last_rank = game_rank;
+                }
+                break;
+            case 2:
+                if (bike_speed != last_speed)
+                {
+                    HUD_UpdateBikeSpeed(bike_speed);
+                    last_speed = bike_speed;
+                }
+                break;
+        }
+        hud_phase++;
+        if (hud_phase > 2) hud_phase = 0;
+        Timer_Reset(&hud_update_timer);
         }
 
         Fuel_Draw(); 
@@ -1301,12 +1333,12 @@ void Game_HandleCollisions(void)
         }
     }
 
-    if (collision_state == COLLISION_TRAFFIC)
-        Copper_SetPalette(0, 0xF00);
-    else if (collision_state == COLLISION_OFFROAD)
-        Copper_SetPalette(0, 0xFF0);
-    else
-        Copper_SetPalette(0, 0x000);
+   // if (collision_state == COLLISION_TRAFFIC)
+   //     Copper_SetPalette(0, 0xF00);
+   // else if (collision_state == COLLISION_OFFROAD)
+   //     Copper_SetPalette(0, 0xFF0);
+   // else
+   //     Copper_SetPalette(0, 0x000);
  
 }
 

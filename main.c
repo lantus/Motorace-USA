@@ -452,26 +452,12 @@ int main(void)
     {		 
 		WaitLine(0x13);
 
+		//custom->color[0] = 0xF00;  // RED = game work done, waiting
+
 		Joy_ReadAll();
 
-	UBYTE key = ReadKeycode();
-	if (key == KEY_P && !paused)
-		paused = 1;
-	else if (key == KEY_ESC && paused)
-		paused = 0;
-	
-	prev_key = key;
-
-    if (!paused)
-    {
-        Game_Update();
-        Game_Draw();
-    }
-    else
-    {
-        // Paused — show indicator
-        *(volatile UWORD*)0xDFF180 = 0xFF0;  // Yellow border = paused
-    }
+		Game_Update();
+		Game_Draw();
 
 		// Flip Buffers
 		if (stage_state == STAGE_PLAYING || 
