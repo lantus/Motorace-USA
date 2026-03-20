@@ -20,6 +20,7 @@
 #include "motorbike.h"
 #include "hud.h"
 #include "cars.h"
+#include "hardware.h"
 #include "timers.h"
 #include "audio.h"
 
@@ -400,7 +401,8 @@ static __attribute__((interrupt)) void interruptHandler()
 	Timer_VBlankUpdate();
  
 }
-
+static BOOL paused = FALSE;
+static UBYTE prev_key = 0;
 int main(void)
 {
 	LONG x = 0;
@@ -451,10 +453,25 @@ int main(void)
 		WaitLine(0x13);
 
 		Joy_ReadAll();
-		
-		//custom->color[0] = 0xF00;  // RED = game work starts
-		Game_Update();
-		Game_Draw();
+
+	UBYTE key = ReadKeycode();
+	if (key == KEY_P && !paused)
+		paused = 1;
+	else if (key == KEY_ESC && paused)
+		paused = 0;
+	
+	prev_key = key;
+
+    if (!paused)
+    {
+        Game_Update();
+        Game_Draw();
+    }
+    else
+    {
+        // Paused — show indicator
+        *(volatile UWORD*)0xDFF180 = 0xFF0;  // Yellow border = paused
+    }
 
 		// Flip Buffers
 		if (stage_state == STAGE_PLAYING || 

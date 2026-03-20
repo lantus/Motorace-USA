@@ -5,6 +5,11 @@
 #define BPL0_BPU3_F        0x10
 #define BPL0_BPUMASK	   0x7000
 
+#define KEY_P       0x19
+#define KEY_SPACE   0x40
+#define KEY_ESC     0x45
+#define KEY_F1      0x50
+
 extern BOOL os_disabled;
  
 extern BOOL  g_is_pal;
@@ -20,6 +25,9 @@ void HardWaitBlit(void);
 void HardWaitLMB(void);
 
 void Joy_ReadAll(void);
+
+UBYTE ReadKeycode(void);
+BOOL KeyPressed(UBYTE keycode);
 
 BOOL JoyButton2(void);
 BOOL JoyLeft(void);

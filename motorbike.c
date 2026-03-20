@@ -15,6 +15,7 @@
 #include "timers.h"
 #include "cars.h"
 #include "memory.h"
+#include "roadsystem.h"
 #include "motorbike.h"
 
 static Sprite spr_rsrc_bike_moving1;
@@ -514,36 +515,57 @@ void MotorBike_DecelerateToCruising(void)
 
 CollisionState MotorBike_CheckCollision(int *hit_car_index)
 {
-    // Convert bike sprite coords to playfield coords
-    WORD bike_screen_x = bike_position_x;
-    WORD bike_screen_y = bike_position_y - g_sprite_voffset;
-    WORD bike_width = 16;
-    WORD bike_height = 32;
+    // Bike hitbox — tighter than visual for fairness
+    WORD bike_cx = bike_position_x + 8;   // Center of 16px wide sprite
+    WORD bike_top = bike_position_y - g_sprite_voffset;
+    WORD bike_bottom = bike_top + 28;     // NES uses 28px tall hitbox
+    WORD bike_left = bike_position_x + 2; // Inset 2px each side
+    WORD bike_right = bike_position_x + 14;
     
-    // Check car collisions
-    extern BlitterObject car[MAX_CARS];  // Access car array
+    // Convert screen Y to world Y for collision map lookup
+    WORD bike_world_top = mapposy + bike_top;
+    WORD bike_world_bottom = mapposy + bike_bottom;
+    
+    // === CAR COLLISION — check all active cars ===
+    extern BlitterObject car[MAX_CARS];
     
     for (int i = 0; i < MAX_CARS; i++)
     {
-        if (!car[i].visible || car[i].off_screen) continue;
+        if (!car[i].visible || car[i].off_screen || car[i].crashed) continue;
         
         WORD car_screen_y = car[i].y - mapposy;
         WORD car_screen_x = car[i].x;
-        WORD car_width = 32;
-        WORD car_height = 32;
         
-        if (bike_screen_x < car_screen_x + car_width &&
-            bike_screen_x + bike_width > car_screen_x &&
-            bike_screen_y < car_screen_y + car_height &&
-            bike_screen_y + bike_height > car_screen_y)
+        // NES hitbox: 8px wide × 28px tall for player-vs-car
+        WORD x_dist = ABS(bike_cx - (car_screen_x + 16));
+        WORD y_dist = ABS(bike_top + 14 - (car_screen_y + 16));
+        
+        if (x_dist < 12 && y_dist < 24)
         {
             *hit_car_index = i;
             return COLLISION_TRAFFIC;
         }
     }
     
-    // Check offroad collisions (edge of road or medians)
-    if (bike_position_x < 32 || bike_position_x > 288)
+    // === OFFROAD COLLISION — use collision map ===
+    // Check 3 points on the bike: center-left, center, center-right
+    // at two Y positions: top and bottom of bike
+    
+    UBYTE lane_center = Collision_GetLane(bike_cx, bike_world_top);
+    UBYTE lane_left   = Collision_GetLane(bike_left, bike_world_top);
+    UBYTE lane_right  = Collision_GetLane(bike_right, bike_world_top);
+    UBYTE lane_bottom = Collision_GetLane(bike_cx, bike_world_bottom);
+    
+    // Offroad if center AND either side are off the road
+    if (lane_center == LANE_OFFROAD)
+    {
+        *hit_car_index = -1;
+        return COLLISION_OFFROAD;
+    }
+    
+    // Shoulder warning — not a crash, but could slow bike
+    // Only crash if BOTH sides are offroad (bike fully off road)
+    if (lane_left == LANE_OFFROAD && lane_right == LANE_OFFROAD)
     {
         *hit_car_index = -1;
         return COLLISION_OFFROAD;

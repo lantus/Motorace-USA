@@ -12,6 +12,9 @@
 #include <proto/intuition.h>
 #include "hardware.h"
 
+
+
+
 static UWORD old_dmacon;
 static UWORD old_intena;
 static UWORD old_adkcon;
@@ -222,6 +225,22 @@ BOOL JoyFirePressed(void)
 BOOL LMBDown(void)
 {
 	return ((*(UBYTE *)0xbfe001) & 64) ? FALSE : TRUE;
+}
+
+__attribute__((always_inline)) inline UBYTE ReadKeycode(void)
+{
+    UBYTE raw = *(volatile UBYTE*)0xBFEC01;
+    
+    // Acknowledge the key — toggle SP line
+    *(volatile UBYTE*)0xBFE001 |= 0x40;   // Set SP high
+    *(volatile UBYTE*)0xBFE001 &= ~0x40;  // Set SP low
+    
+    return (raw >> 1) ^ 0x7F;
+}
+
+__attribute__((always_inline)) inline BOOL KeyPressed(UBYTE keycode)
+{
+    return (ReadKeycode() == keycode);
 }
 
 void System_DisableOS()

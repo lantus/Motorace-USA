@@ -742,11 +742,10 @@ void Stage_Draw()
         bike_world_y = mapposy + bike_position_y;
         Game_SwapBuffers();
 
-        // === PERIODIC HUD UPDATE ===
         if (Timer_HasElapsed(&hud_update_timer))
         {
-            HUD_UpdateScore(game_score);         // Use actual score variable
-            HUD_UpdateRank(game_rank);           // Use actual rank variable
+            HUD_UpdateScore(game_score);        
+            HUD_UpdateRank(game_rank);           
             HUD_UpdateBikeSpeed(bike_speed);
             Timer_Reset(&hud_update_timer);
         }
@@ -771,8 +770,8 @@ void Stage_Draw()
  
         if (Timer_HasElapsed(&hud_update_timer))
         {
-            //HUD_UpdateScore(game_score);         // Use actual score variable
-            //HUD_UpdateRank(game_rank);           // Use actual rank variable
+            HUD_UpdateScore(game_score);        
+            HUD_UpdateRank(game_rank);         
             HUD_UpdateBikeSpeed(bike_speed);
             Timer_Reset(&hud_update_timer);
         }
@@ -1243,7 +1242,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (stage_progress.current_map_pos >= 16128-32)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= 17128)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 

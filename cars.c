@@ -697,7 +697,7 @@ void Cars_HandleSpinout(UBYTE car_index)
 
 void Cars_CheckLaneAndSteer(BlitterObject *car)
 {
- if (!car->visible || car->crashed) return;
+    if (!car->visible || car->crashed) return;
     
     WORD cx = car->x + 16;
     WORD check_y = car->y;
@@ -706,13 +706,10 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
     UBYTE center = Collision_GetLane(cx, check_y);
     UBYTE right  = Collision_GetLane(cx + 16, check_y);
     
-    // Cars should only drive in LANE_1 through LANE_4
-    // Shoulders are drivable but NOT desirable — treat as blocked for AI
     BOOL ok_l = (left >= LANE_1 && left <= LANE_4);
     BOOL ok_c = (center >= LANE_1 && center <= LANE_4);
     BOOL ok_r = (right >= LANE_1 && right <= LANE_4);
     
-    // ===== CENTER BLOCKED — STEER EVERY FRAME =====
     if (!ok_c)
     {
         if (ok_r && !ok_l)
@@ -721,62 +718,63 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
             car->x -= CAR_STEER_HARD;
         else if (ok_l && ok_r)
         {
-            // Both sides open — pick the side with more room
+            // FIX: check for proper lane, not just "not offroad"
             UBYTE far_l = Collision_GetLane(cx - 32, check_y);
             UBYTE far_r = Collision_GetLane(cx + 32, check_y);
-            if (far_r != LANE_OFFROAD)
+            if (far_r >= LANE_1 && far_r <= LANE_4)
                 car->x += CAR_STEER_HARD;
-            else
+            else if (far_l >= LANE_1 && far_l <= LANE_4)
                 car->x -= CAR_STEER_HARD;
+            else
+                car->x += ((game_frame_count + car->id) & 2) ? CAR_STEER_HARD : -CAR_STEER_HARD;
         }
         else
         {
-            // All blocked — desperate random steer
             car->x += ((game_frame_count + car->id) & 1) ? CAR_STEER_HARD : -CAR_STEER_HARD;
         }
         return;
     }
     
-    // ===== SIDE BLOCKED — NUDGE AWAY EVERY FRAME =====
     if (!ok_l || !ok_r)
     {
         if (!ok_l)
-            car->x += CAR_STEER_SOFT;
+            car->x += CAR_STEER_HARD;
         else
-            car->x -= CAR_STEER_SOFT;
+            car->x -= CAR_STEER_HARD;
         return;
     }
     
-    // ===== LOOK AHEAD — early warning for curves =====
     UBYTE ahead_l = Collision_GetLane(cx - 16, check_y - 32);
     UBYTE ahead_c = Collision_GetLane(cx, check_y - 32);
     UBYTE ahead_r = Collision_GetLane(cx + 16, check_y - 32);
     
-    if (ahead_c == LANE_OFFROAD)
+    BOOL ahead_ok_l = (ahead_l >= LANE_1 && ahead_l <= LANE_4);
+    BOOL ahead_ok_c = (ahead_c >= LANE_1 && ahead_c <= LANE_4);
+    BOOL ahead_ok_r = (ahead_r >= LANE_1 && ahead_r <= LANE_4);
+    
+    if (!ahead_ok_c)
     {
-        // Road curves ahead — start turning early
-        if (ahead_r != LANE_OFFROAD && ahead_l == LANE_OFFROAD)
-            car->x += CAR_STEER_SOFT;
-        else if (ahead_l != LANE_OFFROAD && ahead_r == LANE_OFFROAD)
-            car->x -= CAR_STEER_SOFT;
+        if (ahead_ok_r && !ahead_ok_l)
+            car->x += CAR_STEER_HARD;
+        else if (ahead_ok_l && !ahead_ok_r)
+            car->x -= CAR_STEER_HARD;
         return;
     }
     
-    if (ahead_l == LANE_OFFROAD)
+    if (!ahead_ok_l)
     {
         car->x += CAR_STEER_SOFT;
         return;
     }
     
-    if (ahead_r == LANE_OFFROAD)
+    if (!ahead_ok_r)
     {
         car->x -= CAR_STEER_SOFT;
         return;
     }
     
-    // ===== ALL CLEAR — PURSUE PLAYER (throttled) =====
-    if ((game_frame_count + car->id) & 1) return;  // Only pursue every other frame
-    
+    // ALL CLEAR — pursue
+    if ((game_frame_count + car->id) & 1) return;
     Cars_PursuePlayer(car);
 }
 
@@ -1011,9 +1009,9 @@ void Cars_CheckForRespawn(void)
     else if (cars_passed < 8)
         max_active = 2;
     else if (cars_passed < 15)
-        max_active = 3;
+        max_active = 2;
     else
-        max_active = 4;
+        max_active = 2;
     
     if (active_count >= max_active) return;
     
@@ -1063,7 +1061,15 @@ void Cars_CheckForRespawn(void)
         car_was_ahead[i] = (car[i].y < bike_world_y);
         
         next_slot = (i + 1) % MAX_CARS;
-        respawn_timer = 60;
+
+        if (cars_passed < 3)
+            respawn_timer = 180;    // 3 seconds — plenty of breathing room
+        else if (cars_passed < 8)
+            respawn_timer = 120;    // 2 seconds
+        else if (cars_passed < 15)
+            respawn_timer = 90;     // 1.5 seconds
+        else
+            respawn_timer = 60;     // 1 second — full traffic pressure
         return;
     }
 }
