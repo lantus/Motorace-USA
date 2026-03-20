@@ -785,9 +785,9 @@ void Cars_PursuePlayer(BlitterObject *car)
     // No pursuit until bike is actually racing
     if (bike_speed < 60) return;
     
-    // No pursuit until player has passed at least 1 car
+    // No pursuit until player has passed at least 4 cars
     // (prevents opening cluster from converging)
-    if (cars_passed < 1) return;
+    if (cars_passed < 4) return;
     
     WORD cx = car->x + 16;
     WORD car_screen_y = car->y - mapposy;
