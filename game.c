@@ -1154,8 +1154,7 @@ void Stage_ShowInfo(void)
 
 void Game_HandleCollisions(void)
 {
-    // Handle NEW collisions only if not already in collision
-    if (collision_state == COLLISION_NONE)
+     if (collision_state == COLLISION_NONE)
     {
         int hit_car = -1;
         collision_state = MotorBike_CheckCollision(&hit_car);
@@ -1163,47 +1162,38 @@ void Game_HandleCollisions(void)
         if (collision_state == COLLISION_TRAFFIC)
         {
             collision_car_index = hit_car;
-            Timer_Start(&collision_recovery_timer, 2);  // 2 seconds recovery
-        
+            Timer_Start(&collision_recovery_timer, 2);
+            
             Cars_HandleSpinout(hit_car);
             Music_Stop();
         }
         else if (collision_state == COLLISION_OFFROAD)
         {
-            Timer_Start(&collision_recovery_timer, 2);  // 2 seconds recovery
-          
+            Timer_Start(&collision_recovery_timer, 2);
         }
     }
     
-    // Handle ONGOING collision state
     if (collision_state != COLLISION_NONE)
     {
-        // Decelerate bike
         if (collision_state == COLLISION_TRAFFIC)
         {
             bike_state = BIKE_STATE_CRASHED;
-
             if (bike_speed > 0)
             {
-                bike_speed -= 10;  // Rapid deceleration
+                bike_speed -= 10;
                 if (bike_speed < 0) bike_speed = 0;
-                
             }
         }
         else if (collision_state == COLLISION_OFFROAD)
         {
             if (bike_speed > 20)
-            {
-                bike_speed -= 3;  // Slower deceleration
-            }
+                bike_speed -= 3;
         }
         
-        // Check if 2 seconds have elapsed
         if (Timer_HasElapsed(&collision_recovery_timer))
         {
             MotorBike_CrashAndReposition();
-
-            // Resume play
+            
             collision_state = COLLISION_NONE;
             collision_car_index = -1;
             Timer_Stop(&collision_recovery_timer);
@@ -1214,15 +1204,16 @@ void Game_HandleCollisions(void)
             Fuel_DrawAll();
 
             bike_state = BIKE_STATE_MOVING;
+            bike_speed = MIN_CRUISING_SPEED;
         }
     }
 
     if (collision_state == COLLISION_TRAFFIC)
-        Copper_SetPalette(0,0xF00);
+        Copper_SetPalette(0, 0xF00);
     else if (collision_state == COLLISION_OFFROAD)
-        Copper_SetPalette(0,0xFF0);
+        Copper_SetPalette(0, 0xFF0);
     else
-        Copper_SetPalette(0,0x00);
+        Copper_SetPalette(0, 0x000);
  
 }
 

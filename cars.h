@@ -34,11 +34,12 @@ void Cars_HandleSpinout(UBYTE car_index);
 void Cars_CheckBikeOvertake(BlitterObject *car, WORD bike_x);
 void Cars_Tick(BlitterObject *car);
 void Cars_Update(void);
-void Cars_AccelerateCar(BlitterObject *car);
-void Cars_CheckForCollision(BlitterObject *c);
+ 
+void Cars_ScatterAfterCrash(void);
 void Cars_RenderBOB(BlitterObject *c);
 void Cars_CheckForRespawn(void);
 void Cars_CheckPassing(BlitterObject *c);
 void Cars_AssignLane(BlitterObject *car);
 void Cars_PursuePlayer(BlitterObject *car);
+void Cars_RemoveAllFromScreen(void);
 WORD GetScrollAmount(WORD speed);

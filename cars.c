@@ -23,6 +23,190 @@
 #include "cars.h"
 #include "audio.h"
 
+/*
+ * ============================================================================
+ * ZIPPY RACE — TRAFFIC CAR SYSTEM
+ * ============================================================================
+ *
+ * Based on reverse engineering of the NES Zippy Race (1983, Irem/SunSoft).
+ * Adapted from 2-car NES system to 5-car Amiga system with collision map
+ * pathfinding and double-buffered BOB rendering.
+ *
+ * ---- NES REFERENCE (from disassembly) ------------------------------------
+ *
+ * The NES has exactly 2 traffic car slots. Each car has:
+ *   - X position (pixel)
+ *   - Y position (screen-relative)
+ *   - Previous Y (for pass detection)
+ *   - State: $00=normal, $80=crashed/swerving
+ *
+ * ---- MOVEMENT: RELATIVE SPEED -------------------------------------------
+ *
+ * NES formula: car_y += scroll_speed - offset
+ *
+ * Both values are raw pixels/frame. The car doesn't have its own speed —
+ * everything is relative to the bike's scroll rate:
+ *
+ *   scroll_speed = 0 (stopped):  car_y += -4 -> car drives AWAY from player
+ *   scroll_speed = 4 (cruising): car_y += 0  -> car appears stationary
+ *   scroll_speed = 6 (fast):     car_y += 2  -> car drifts DOWN past player
+ *
+ * NES offset values:
+ *   - Default: 4 pixels/frame
+ *   - Early game (<15 cars passed): 5 pixels/frame (easier)
+ *   - Player crashed: offset++ (cars pull away faster)
+ *
+ * AMIGA IMPLEMENTATION:
+ *   - Scroll values are 8.8 fixed point (256 = 1 pixel/frame)
+ *   - Offset is also 8.8: 768=3px, 1024=4px, 1280=5px
+ *   - Per-car variation via target_speed field:
+ *       target_speed > 150: offset = 768  (fast car, hard to pass)
+ *       target_speed > 120: offset = 1024 (medium, matches NES default)
+ *       target_speed <= 120: offset = 1280 (slow car, easy to pass)
+ *   - Car always moves FORWARD (decreasing Y) at a fixed rate
+ *   - SmoothScroll changes mapposy which handles relative motion:
+ *       screen_y = car.y - mapposy
+ *       Bike fast -> mapposy drops fast -> screen_y increases -> car drifts down
+ *       Bike slow -> mapposy drops slow -> screen_y stays/decreases -> car ahead
+ *
+ * ---- STEERING: 3-TILE PROBE + DECISION TREE -----------------------------
+ *
+ * NES method: Read 3 adjacent road tiles at the car's current X column.
+ * Each tile is checked against a non-road table. The decision tree:
+ *
+ *   CENTER BLOCKED:
+ *     Both sides blocked -> random direction (NES: 25% crash, we skip crash)
+ *     Left open only     -> steer left
+ *     Right open only    -> steer right
+ *     Both open          -> pick side with more room
+ *
+ *   CENTER CLEAR, SIDE BLOCKED:
+ *     Nudge away from blocked side (1px/frame)
+ *
+ *   ALL CLEAR:
+ *     Pursue player (see below)
+ *
+ * NES steers 4px on a 256px screen. Amiga steers 3px (hard) or 1px (soft)
+ * on a 192px screen — proportionally similar.
+ *
+ * AMIGA ADDITION: Lookahead probe at Y-32 (2 tiles ahead). If the road
+ * curves ahead, the car starts turning early with a gentle 1px nudge.
+ * The NES doesn't need this because its road is wider relative to car size.
+ *
+ * ROAD DEFINITION:
+ *   NES: binary road/not-road tile check
+ *   Ours: collision map with packed lane+surface bytes
+ *     - LANE_OFFROAD (0x00): blocked — car must steer away
+ *     - LANE_SHOULDER (0x10-0x20): drivable but treated as blocked for AI
+ *       (bike can ride shoulders, cars avoid them)
+ *     - LANE_1 to LANE_4 (0x30-0x60): proper road — car drives here
+ *
+ * ---- PURSUIT: BLOCKING THE PLAYER ---------------------------------------
+ *
+ * NES code at $A4BA: When all 3 road tiles ahead are clear, the car
+ * actively steers toward the player's X position. Conditions:
+ *
+ *   - Player must be BEHIND the car (approaching from below)
+ *   - Car must be within chase range on screen
+ *   - 25% random chance to skip each frame (keeps it beatable)
+ *   - Only 1px per frame (NES uses INC/DEC car_x)
+ *   - Stops pursuing near top of screen
+ *   - Stops pursuing on narrow road sections
+ *
+ * AMIGA IMPLEMENTATION — three distance zones:
+ *
+ *   Distance > 160px: Car drives normally — no blocking                
+ *   Distance 64-160px: Car subtly drifts into bike's lane                 
+ *   Distance < 64px:  Car STOPS blocking — locked in position
+
+ * ---- SPAWNING: DIFFICULTY RAMP ------------------------------------------
+ *
+ * NES spawn logic at $A388 gates on cars_passed:
+ *   0-1 passed: 1 car max on screen
+ *   2 passed:   2nd car only if 1st is gone
+ *   3+ passed:  Both slots active simultaneously
+ *
+ * OUR RAMP (5 slots):
+ *   cars_passed < 3:   max 1 active
+ *   cars_passed < 8:   max 2 active
+ *   cars_passed < 15:  max 3 active
+ *   cars_passed >= 15: max 4 active
+ *
+ * NES spawn position depends on scroll speed:
+ *   scroll >= 3: spawn at screen Y=0 (top, AHEAD of player)
+ *   scroll < 3:  spawn at screen Y=$E0 (bottom, BEHIND player)
+ *
+ * OUR IMPLEMENTATION:
+ *   scroll >= 768 (3px/frame): spawn at mapposy - 32 (above screen)
+ *   scroll < 768:              spawn at mapposy + SCREENHEIGHT + 32 (below)
+ *
+ * Cars spawned above scroll into view from the top — player approaches.
+ * Cars spawned below scroll into view from the bottom — car approaches.
+ * At low speed, traffic comes from behind and passes.
+ *
+ * NES uses rejection sampling for lane: pick random X column, check 3
+ * adjacent tiles, retry if any are not road. We do the same using
+ * Collision_GetLane().
+ *
+ * Spawn slot rotates via next_slot counter (0->1->2->3->4->0) to cycle
+ * through all 5 car sprites instead of always reusing slot 0.
+ *
+ * ---- CAR-CAR COLLISION: SEPARATION --------------------------------------
+ *
+ * NES at $A2BB: AABB check (24px wide × 32px tall). The car behind
+ * enters crash/swerve state ($80). With only 2 cars this is simple.
+ *
+ * OUR IMPLEMENTATION: With 5 cars, crashing on overlap is too harsh.
+ * Instead we do gentle separation:
+ *   - Y too close (<40px): car behind pushed backward (+1 Y/frame)
+ *   - X too close (<32px): both cars nudged apart (±1 X/frame)
+ *   - Runs once after all cars have moved (Cars_CheckAllCollisions)
+ *   - N*(N-1)/2 pair checks = 10 checks for 5 cars
+ *
+ * ---- CRASH RECOVERY: SCATTER --------------------------------------------
+ *
+ * NES uses invulnerability timer ($93) and speed offset increase during
+ * crash state. Cars naturally drift away because of the offset++ in the
+ * movement formula.
+ *
+ * ADDITION: After crash recovery, Cars_ScatterAfterCrash() pushes
+ * all nearby cars 200-600px ahead with staggered spacing and lane spread.
+ * Cars are marked off_screen and scroll back into view naturally over
+ * the next few seconds. This prevents the same car from repeatedly
+ * colliding with the bike on recovery.
+ *
+ * ---- PASS DETECTION -----------------------------------------------------
+ *
+ * NES at $A342: Frame-to-frame Y comparison.
+ *   - Save car_prev_y each frame
+ *   - If player was behind last frame AND ahead this frame → PASSED
+ *   - Awards 50 points + sound effect
+ *   - Counter capped at 99
+ *
+ * AMIGA IMPLEMENTATION: Same logic using car_was_ahead[] boolean array.
+ * Awards 500 points (10× NES for Amiga score scale) and plays
+ * SFX_OVERHEADOVERTAKE. Also updates game_rank (99=last, 1=first)
+ * and increments cars_passed for the difficulty ramp.
+ *
+ * ---- RENDERING: DOUBLE-BUFFERED BOBS ------------------------------------
+ *
+ * NES: Simple sprite writes to OAM
+ *
+ * AMIGA IMPLEMENTATION: Blitter cookie-cut BOBs on interleaved bitplanes.
+ *   - 32×32 pixel BOBs, 4 bitplanes, barrel-shifted for sub-word X
+ *   - Three buffers: draw_buffer, display_buffer, pristine
+ *   - Position tracking: old_x/old_y and prev_old_x/prev_old_y
+ *     for 2-frame-delayed restore (double buffer = each buffer needs
+ *     its own restore from 2 frames ago)
+ *   - needs_restore flag only set when car was actually rendered on screen
+ *   - Screen bounds check before restore to prevent artifacts from
+ *     off-screen spawn positions
+ *   - Buffer split handling when BOB crosses the bitmap wrap boundary
+ *
+ * ============================================================================
+ */
+
+
 #define CAR_BG_SIZE 768
 extern volatile struct Custom *custom;
 
@@ -300,24 +484,7 @@ void Cars_RenderBOB(BlitterObject *car)
                  BOB_WIDTH, car_restore_ptrs, source, mask, draw_buffer);
     }
 }
-
-void Cars_AccelerateCar(BlitterObject *car)
-{
-    if (car->crashed) return;
-    
-    // Accelerate toward target speed
-    if (car->speed < car->target_speed)
-    {
-        car->speed += 2;  // Acceleration rate
-        if (car->speed > car->target_speed)
-        {
-            car->speed = car->target_speed;
-        }
-    }
-
-}
  
-
 void Cars_PreDraw(void)
 {
     
@@ -359,7 +526,48 @@ void Cars_PreDraw(void)
 
 }
 
-
+void Cars_CheckAllCollisions(void)
+{
+    for (int i = 0; i < MAX_CARS - 1; i++)
+    {
+        if (!car[i].visible || car[i].crashed || car[i].off_screen) continue;
+        
+        for (int j = i + 1; j < MAX_CARS; j++)
+        {
+            if (!car[j].visible || car[j].crashed || car[j].off_screen) continue;
+            
+            WORD x_dist = ABS(car[i].x - car[j].x);
+            LONG y_dist = ABS(car[i].y - car[j].y);
+            
+            // Far apart — skip
+            if (x_dist > 40 || y_dist > 48) continue;
+            
+            // Y too close — car behind backs off
+            if (y_dist < 40)
+            {
+                if (car[i].y > car[j].y)
+                    car[i].y += 1;     // i is behind, push back
+                else
+                    car[j].y += 1;     // j is behind, push back
+            }
+            
+            // X too close — nudge apart
+            if (x_dist < 32 && y_dist < 40)
+            {
+                if (car[i].x <= car[j].x)
+                {
+                    car[i].x -= 1;
+                    car[j].x += 1;
+                }
+                else
+                {
+                    car[i].x += 1;
+                    car[j].x -= 1;
+                }
+            }
+        }
+    }
+}
 void Cars_Update(void)
 {
     bike_world_y = mapposy + bike_position_y;
@@ -375,6 +583,8 @@ void Cars_Update(void)
        
         Cars_Tick(&car[i]);
     }  
+
+     Cars_CheckAllCollisions();
 }
 
 void Cars_CopyPristineBackground(BlitterObject *car)
@@ -570,29 +780,33 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
 
 void Cars_PursuePlayer(BlitterObject *car)
 {
-   WORD cx = car->x + 16;
+    WORD cx = car->x + 16;
     WORD car_screen_y = car->y - mapposy;
     
-    // Only pursue when car is AHEAD of bike and within chase range
-    // (car_screen_y < bike_position_y means car is ABOVE bike on screen)
-    if (car_screen_y < 16) return;                    // Too close to top
-    if (car_screen_y > bike_position_y - 16) return;  // Car is behind bike
-    if (car_screen_y < bike_position_y - 96) return;  // Too far ahead
+    // Car must be AHEAD of bike (above on screen)
+    if (car_screen_y >= bike_position_y) return;
     
+    WORD y_gap = bike_position_y - car_screen_y;
+    
+    // CLOSE (< 64px) — STOP blocking, give bike a chance to pass
+    if (y_gap < 64) return;
+    
+    // FAR (> 160px) — not a threat yet, drive normally
+    if (y_gap > 160) return;
+    
+    // SWEET SPOT (64-160px) — subtly drift into bike's lane
+    // The further away, the more time to position
     WORD x_diff = bike_position_x - cx;
     WORD abs_diff = ABS(x_diff);
     
-    // Already lined up — do nothing
-    if (abs_diff < 8) return;
+    if (abs_diff < 8) return;     // Already lined up
+    if (abs_diff > 48) return;    // Too far apart horizontally
     
-    // Too far apart — give up
-    if (abs_diff > 48) return;
-    
-    // Only pursue ~25% of frames — keeps it beatable (NES does the same)
+    // 25% chance to skip — keeps it beatable
     UBYTE rng = (game_frame_count * 7 + car->id * 13) & 0x0F;
-    if (rng > 3) return;
+    if (rng < 4) return;
     
-    // Gentle 1px nudge
+    // Gentle 1px nudge toward bike's lane
     if (x_diff > 0)
         car->x += 1;
     else
@@ -606,6 +820,48 @@ void Cars_AssignLane(BlitterObject *car)
     UBYTE roll = (car->id * 7 + game_frame_count) & 3;
     static const UBYTE lanes[] = { LANE_1, LANE_2, LANE_3, LANE_4 };
     car->preferred_lane = lanes[roll];
+}
+
+void Cars_ScatterAfterCrash(void)
+{
+    LONG bike_y = mapposy + bike_position_y;
+    
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (!car[i].visible) continue;
+        
+        // Push far ahead
+        car[i].y = bike_y - SCREENHEIGHT - 64 - (i * 80);
+        
+        WORD lanes[] = { FAR_LEFT_LANE, CENTER_LANE, FAR_RIGHT_LANE, 
+                        FAR_LEFT_LANE + 16, FAR_RIGHT_LANE - 16 };
+        car[i].x = lanes[i];
+        
+        car[i].crashed = FALSE;
+        car[i].has_blocked_bike = FALSE;
+        car[i].block_timer = 0;
+        car[i].accumulator = 0;
+        car[i].off_screen = TRUE;
+        car[i].needs_restore = FALSE;
+        
+        car[i].old_x = car[i].x;
+        car[i].old_y = car[i].y;
+        car[i].prev_old_x = car[i].x;
+        car[i].prev_old_y = car[i].y;
+    }
+}
+
+void Cars_RemoveAllFromScreen(void)
+{
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+ 
+        // Mark as completely off screen and inactive
+        car[i].off_screen = TRUE;
+        car[i].needs_restore = FALSE;
+    }
+
+    Cars_PreDraw();
 }
 
 void Cars_UpdatePosition(BlitterObject *c)
@@ -718,12 +974,10 @@ void Cars_Tick(BlitterObject *car)
     
     car->old_x = temp_x;
     car->old_y = temp_y;
-
  
-   // Cars_AccelerateCar(car);
     Cars_UpdatePosition(car);
     Cars_CheckLaneAndSteer(car);
-    Cars_CheckForCollision(car);
+  
 
     car->prev_old_x = car->old_x;
     car->prev_old_y = car->old_y;
@@ -734,30 +988,7 @@ void Cars_Tick(BlitterObject *car)
     car->needs_restore = TRUE;
 }
 
-void Cars_CheckForCollision(BlitterObject *c)
-{
-    for (int j = c->id + 1; j < MAX_CARS; j++)
-    {
-        if (!car[c->id].visible || car[c->id].crashed) continue;
-        // Bounding box collision check (32x32 pixels)
-        WORD x_overlap = ABS(car[c->id].x - car[j].x) < 32;
-        LONG y_distance = ABS(car[c->id].y - car[j].y);
-
-        if (x_overlap && y_distance < CAR_COLLISION_DISTANCE)
-        {
-            // Determine which car is behind (higher Y = behind)
-            BlitterObject *car_behind = (car[c->id].y > car[j].y) ? &car[c->id] : &car[j];
-            BlitterObject *car_ahead = (car[c->id].y > car[j].y) ? &car[j] : &car[c->id];
-
-            // Slow down the car behind
-            if (car_behind->speed > car_ahead->speed)
-            {
-                car_behind->speed = car_ahead->speed - 4;
-            }
-        }
-    }
-}
-
+ 
 void Cars_CheckForRespawn(void)
 {
     if (respawn_timer > 0) { respawn_timer--; return; }
