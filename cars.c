@@ -359,6 +359,8 @@ void Cars_ResetPositions(void)
         car_last_y[i] = car[i].y;
         car_was_ahead[i] = TRUE;
         car[i].spawning = FALSE;
+        car[i].honking = FALSE;
+        car[i].honk_timer = 0;
         Cars_AssignLane(&car[i]);
     }
 
@@ -529,6 +531,54 @@ void Cars_PreDraw(void)
 
 void Cars_CheckAllCollisions(void)
 {
+    WORD bike_cx = bike_position_x + 8;
+    WORD bike_sy = bike_position_y - g_sprite_voffset;
+    
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (!car[i].visible || car[i].off_screen || car[i].crashed) continue;
+        
+        WORD car_screen_y = car[i].y - mapposy;
+        WORD car_cx = car[i].x + 16;
+        
+        
+        // Overlap check: car is 32px wide, bike is 16px wide
+        // Combined half-widths = 16 + 8 = 24
+        WORD x_dist = ABS(bike_cx - car_cx);
+        
+        WORD gap = car_screen_y - bike_sy;
+ 
+        // Detect earlier (gap < 64) so we slow down before collision range
+        if (gap > 0 && gap < 64 && x_dist < 24)
+        {
+            car[i].accumulator = 0;
+
+            car[i].y += 3;
+            
+            if (gap < 36)
+                car[i].y++;
+            
+            if (!car[i].honking)
+            {
+                car[i].honking = TRUE;
+                car[i].honk_timer = 0;
+                //SFX_Play(SFX_HORN);
+            }
+            car[i].honk_timer++;
+            if (car[i].honk_timer > 60)
+            {
+                car[i].honk_timer = 0;
+                //SFX_Play(SFX_HORN);
+            }
+        }
+        else
+        {
+            car[i].honking = FALSE;
+            car[i].honk_timer = 0;
+        }
+    }
+    
+    // ===== CAR vs CAR — existing separation =====
     for (int i = 0; i < MAX_CARS - 1; i++)
     {
         if (!car[i].visible || car[i].off_screen) continue;
@@ -542,16 +592,14 @@ void Cars_CheckAllCollisions(void)
             
             if (x_dist > 40 || y_dist > 48) continue;
             
-            // Y too close — car behind backs off
             if (y_dist < 40)
             {
                 if (car[i].y > car[j].y)
-                    car[i].y += 2;     // i is behind — stronger push
+                    car[i].y += 2;
                 else
                     car[j].y += 2;
             }
             
-            // X too close — nudge apart
             if (x_dist < 32 && y_dist < 40)
             {
                 if (car[i].x <= car[j].x)

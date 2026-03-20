@@ -55,6 +55,8 @@ typedef struct
     BOOL has_blocked_bike;   // TRUE if this car has already moved to block bike
     WORD block_timer;        // Timer for gradual movement   
     BOOL spawning;
+    BOOL honking;
+    UBYTE honk_timer;
     RestorePtrs restore;
 
 } BlitterObject;
