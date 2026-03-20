@@ -54,6 +54,7 @@ typedef struct
     UBYTE preferred_lane;    // LANE_1 through LANE_4
     BOOL has_blocked_bike;   // TRUE if this car has already moved to block bike
     WORD block_timer;        // Timer for gradual movement   
+    BOOL spawning;
     RestorePtrs restore;
 
 } BlitterObject;

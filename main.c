@@ -449,6 +449,9 @@ int main(void)
 	while(1) 
     {		 
 		WaitLine(0x13);
+
+		Joy_ReadAll();
+		
 		//custom->color[0] = 0xF00;  // RED = game work starts
 		Game_Update();
 		Game_Draw();

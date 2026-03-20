@@ -165,6 +165,8 @@ extern UWORD frontview_bike_frames;
 extern CollisionState collision_state;
 extern int collision_car_index;  
 
+extern ULONG speed_accumulator;
+extern ULONG speed_sample_count;
 
 // Palettes
 extern UWORD	intro_colors[BLOCKSCOLORS];

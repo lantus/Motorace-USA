@@ -71,22 +71,43 @@ void Ranking_Initialize(void)
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
 
-    // Calculate ranking data based on gameplay
-    UBYTE player_rank = 81;  // Calculate based on time/performance
-    UWORD points_earned = 0; // Points based on rank tier
-    UWORD avg_speed = 205;   // Track during gameplay
-    UBYTE best_rank = 49;    // Load from saved records
-    BOOL new_record = TRUE;  // Check if beat previous best
+    // === Calculate average speed from overhead stage ===
+    UWORD avg_speed = 0;
+    if (speed_sample_count > 0)
+        avg_speed = (UWORD)(speed_accumulator / speed_sample_count);
+    
+    // === Check for new record ===
+    static UBYTE todays_best_rank = 99;
+    BOOL new_record = FALSE;
+    if (game_rank < todays_best_rank)
+    {
+        todays_best_rank = game_rank;
+        new_record = TRUE;
+    }
+    
+    // === City name = destination (where you're arriving) ===
+    const char *city;
+    UBYTE checkpoint;
+    switch (game_stage)
+    {
+        case STAGE_LASANGELES:  city = "LAS VEGAS";  checkpoint = 1; break;
+        case STAGE_LASVEGAS:    city = "HOUSTON";    checkpoint = 2; break;
+        case STAGE_HOUSTON:     city = "ST. LOUIS";  checkpoint = 3; break;
+        case STAGE_STLOUIS:     city = "CHICAGO";    checkpoint = 4; break;
+        case STAGE_CHICAGO:     city = "NEW YORK";   checkpoint = 5; break;
+        case STAGE_NEWYORK:     city = "FINISH";     checkpoint = 6; break;
+        default:                city = "LAS VEGAS";  checkpoint = 1; break;
+    }
 
-    //  Set ranking data
+    // Ranking_SetData calculates points from tier table
     Ranking_SetData(
-        1,              // Checkpoint number (1 = LA→LV)
-        "LAS VEGAS",    // City name
-        player_rank,    // Player's rank
-        points_earned,  // Points earned
-        avg_speed,      // Average speed
-        best_rank,      // Today's best
-        new_record      // New record flag
+        checkpoint,
+        city,
+        game_rank,
+        0,              // Points filled by SetData from tier table
+        avg_speed,
+        todays_best_rank,
+        new_record
     );
       
 }

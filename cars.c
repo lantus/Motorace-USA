@@ -358,7 +358,7 @@ void Cars_ResetPositions(void)
     {
         car_last_y[i] = car[i].y;
         car_was_ahead[i] = TRUE;
-        
+        car[i].spawning = FALSE;
         Cars_AssignLane(&car[i]);
     }
 
@@ -427,7 +427,8 @@ void Cars_RenderBOB(BlitterObject *car)
     }
     
     car->off_screen = FALSE;
-    
+    car->spawning = FALSE;
+
     WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
     
     // Handle wraparound
@@ -530,25 +531,24 @@ void Cars_CheckAllCollisions(void)
 {
     for (int i = 0; i < MAX_CARS - 1; i++)
     {
-        if (!car[i].visible || car[i].crashed || car[i].off_screen) continue;
+        if (!car[i].visible || car[i].off_screen) continue;
         
         for (int j = i + 1; j < MAX_CARS; j++)
         {
-            if (!car[j].visible || car[j].crashed || car[j].off_screen) continue;
+            if (!car[j].visible || car[j].off_screen) continue;
             
             WORD x_dist = ABS(car[i].x - car[j].x);
             LONG y_dist = ABS(car[i].y - car[j].y);
             
-            // Far apart — skip
             if (x_dist > 40 || y_dist > 48) continue;
             
             // Y too close — car behind backs off
             if (y_dist < 40)
             {
                 if (car[i].y > car[j].y)
-                    car[i].y += 1;     // i is behind, push back
+                    car[i].y += 2;     // i is behind — stronger push
                 else
-                    car[j].y += 1;     // j is behind, push back
+                    car[j].y += 2;
             }
             
             // X too close — nudge apart
@@ -556,18 +556,20 @@ void Cars_CheckAllCollisions(void)
             {
                 if (car[i].x <= car[j].x)
                 {
-                    car[i].x -= 1;
-                    car[j].x += 1;
+                    car[i].x -= 2;
+                    car[j].x += 2;
                 }
                 else
                 {
-                    car[i].x += 1;
-                    car[j].x -= 1;
+                    car[i].x += 2;
+                    car[j].x -= 2;
                 }
             }
         }
     }
 }
+
+
 void Cars_Update(void)
 {
     bike_world_y = mapposy + bike_position_y;
@@ -780,33 +782,32 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
 
 void Cars_PursuePlayer(BlitterObject *car)
 {
+    // No pursuit until bike is actually racing
+    if (bike_speed < 60) return;
+    
+    // No pursuit until player has passed at least 1 car
+    // (prevents opening cluster from converging)
+    if (cars_passed < 1) return;
+    
     WORD cx = car->x + 16;
     WORD car_screen_y = car->y - mapposy;
     
-    // Car must be AHEAD of bike (above on screen)
     if (car_screen_y >= bike_position_y) return;
     
     WORD y_gap = bike_position_y - car_screen_y;
     
-    // CLOSE (< 64px) — STOP blocking, give bike a chance to pass
     if (y_gap < 64) return;
-    
-    // FAR (> 160px) — not a threat yet, drive normally
     if (y_gap > 160) return;
     
-    // SWEET SPOT (64-160px) — subtly drift into bike's lane
-    // The further away, the more time to position
     WORD x_diff = bike_position_x - cx;
     WORD abs_diff = ABS(x_diff);
     
-    if (abs_diff < 8) return;     // Already lined up
-    if (abs_diff > 48) return;    // Too far apart horizontally
+    if (abs_diff < 8) return;
+    if (abs_diff > 48) return;
     
-    // 25% chance to skip — keeps it beatable
     UBYTE rng = (game_frame_count * 7 + car->id * 13) & 0x0F;
     if (rng < 4) return;
     
-    // Gentle 1px nudge toward bike's lane
     if (x_diff > 0)
         car->x += 1;
     else
@@ -848,6 +849,9 @@ void Cars_ScatterAfterCrash(void)
         car[i].old_y = car[i].y;
         car[i].prev_old_x = car[i].x;
         car[i].prev_old_y = car[i].y;
+
+        car_was_ahead[i] = TRUE;
+        car[i].spawning = TRUE;
     }
 }
 
@@ -991,12 +995,13 @@ void Cars_Tick(BlitterObject *car)
  
 void Cars_CheckForRespawn(void)
 {
+  if (collision_state != COLLISION_NONE) return;
     if (respawn_timer > 0) { respawn_timer--; return; }
     
     WORD active_count = 0;
     for (int i = 0; i < MAX_CARS; i++)
     {
-        if (car[i].visible && !car[i].off_screen)
+        if (car[i].visible && (!car[i].off_screen || car[i].spawning))
             active_count++;
     }
     
@@ -1012,82 +1017,92 @@ void Cars_CheckForRespawn(void)
     
     if (active_count >= max_active) return;
     
-    // Rotate which slot to check — not always starting at 0
     static UBYTE next_slot = 0;
     
     for (int attempt = 0; attempt < MAX_CARS; attempt++)
     {
         int i = (next_slot + attempt) % MAX_CARS;
         
-        if (car[i].off_screen || !car[i].visible)
-        {
-            WORD spawn_y;
-            WORD spawn_x;
-            WORD attempts = 0;
-            
-            WORD scroll = GetScrollAmount(bike_speed);
-            
-            if (scroll >= 768)
-                spawn_y = mapposy - 32;
-            else
-                spawn_y = mapposy + SCREENHEIGHT + 32;
-            
-            do {
-                spawn_x = 16 + ((game_frame_count * 7 + i * 31 + attempts * 13) & 127);
-                UBYTE lane = Collision_GetLane(spawn_x + 16, spawn_y);
-                if (lane != LANE_OFFROAD) break;
-                attempts++;
-            } while (attempts < 10);
-            
-            if (attempts >= 10) continue;  // Try next slot
-            
-            car[i].x = spawn_x;
-            car[i].y = spawn_y;
-            car[i].off_screen = TRUE;
-            car[i].crashed = FALSE;
-            car[i].has_blocked_bike = FALSE;
-            car[i].accumulator = 0;
-            car[i].needs_restore = 0;
-            car[i].old_x = car[i].x;
-            car[i].old_y = car[i].y;
-            car[i].prev_old_x = car[i].x;
-            car[i].prev_old_y = car[i].y;
-            
-            // Advance to next slot for next respawn
-            next_slot = (i + 1) % MAX_CARS;
-            
-            respawn_timer = 60;
-            return;
-        }
+        // Skip cars that are active or freshly spawned
+        if (!car[i].off_screen) continue;   // On screen — active
+        if (car[i].spawning) continue;       // Just spawned — waiting to appear
+        
+        WORD spawn_y;
+        WORD spawn_x;
+        WORD attempts = 0;
+        
+        WORD scroll = GetScrollAmount(bike_speed);
+        
+        if (scroll >= 768)
+            spawn_y = mapposy - 32;
+        else
+            spawn_y = mapposy + SCREENHEIGHT + 32;
+        
+        do {
+            spawn_x = 16 + ((game_frame_count * 7 + i * 31 + attempts * 13) & 127);
+            UBYTE lane = Collision_GetLane(spawn_x + 16, spawn_y);
+            if (lane != LANE_OFFROAD) break;
+            attempts++;
+        } while (attempts < 10);
+        
+        if (attempts >= 10) continue;
+        
+        car[i].x = spawn_x;
+        car[i].y = spawn_y;
+        car[i].off_screen = TRUE;
+        car[i].spawning = TRUE;      // Mark as freshly spawned
+        car[i].crashed = FALSE;
+        car[i].has_blocked_bike = FALSE;
+        car[i].accumulator = 0;
+        car[i].needs_restore = 0;
+        car[i].old_x = car[i].x;
+        car[i].old_y = car[i].y;
+        car[i].prev_old_x = car[i].x;
+        car[i].prev_old_y = car[i].y;
+        
+        car_was_ahead[i] = (car[i].y < bike_world_y);
+        
+        next_slot = (i + 1) % MAX_CARS;
+        respawn_timer = 60;
+        return;
     }
 }
 
+#define PASS_DEADZONE 48  // Must be 48px apart before re-triggering
+
 void Cars_CheckPassing(BlitterObject *c)
 {
-     if (stage_state != STAGE_PLAYING) return;
+    if (stage_state != STAGE_PLAYING) return;
     
     LONG car_world_y = c->y;
-    BOOL car_is_ahead = (car_world_y < bike_world_y);
+    LONG distance = car_world_y - bike_world_y;
     
-    // Use c->id instead of passing index
-    if (car_was_ahead[c->id] && !car_is_ahead)
+    // Positive = car is behind bike, negative = car is ahead
+    BOOL car_is_ahead = (distance < -PASS_DEADZONE);
+    BOOL car_is_behind = (distance > PASS_DEADZONE);
+    
+    // In the dead zone — don't change state
+    if (!car_is_ahead && !car_is_behind) return;
+    
+    if (car_was_ahead[c->id] && car_is_behind)
     {
+        // Car was ahead, now clearly behind — bike passed it
         SFX_Play(SFX_OVERHEADOVERTAKE);
         game_score += 500;
+        cars_passed++;
         
         if (game_rank > 1)
             game_rank--;
         
-        KPrintF("=== PASSED CAR #%d! Rank: %d ===\n", c->id, game_rank);
+        car_was_ahead[c->id] = FALSE;
     }
     else if (!car_was_ahead[c->id] && car_is_ahead)
     {
+        // Car was behind, now clearly ahead — car passed bike
         if (game_rank < 99)
             game_rank++;
         
-        KPrintF("=== GOT PASSED BY CAR #%d! Rank: %d ===\n", c->id, game_rank);
+        car_was_ahead[c->id] = TRUE;
     }
-    
-    car_was_ahead[c->id] = car_is_ahead;
 }
 

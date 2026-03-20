@@ -37,42 +37,53 @@ UBYTE *collision_map = NULL;   /* Loaded from disk, MEMF_ANY is fine */
 WORD   col_map_width;
 WORD   col_map_height;
 
+// NTSC road scroll speed table — index by bike_speed >> 4 (0-15)
+static const UWORD road_scroll_ntsc[16] = {
+//  0    16   32   48   64   80   96  112  128  144  160  176  192  208  224  240
+    0,   10,  28,  48,  64,  80,  96, 112, 128, 160, 192, 224, 240, 248, 255, 255
+};
+
+// PAL — each value * 1.2
+static const UWORD road_scroll_pal[16] = {
+    0,   12,  34,  58,  77,  96, 115, 134, 154, 192, 230, 255, 255, 255, 255, 255
+};
+
+static const UWORD *road_scroll_table;
+
+ 
 void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count)
 {
-     UWORD scroll_speed;
-    
-    // Map speed to scroll rate (higher = faster scrolling)
+    UWORD scroll_speed;
 
     if (bike_speed > 200)
-        scroll_speed = 255;  // Maximum speed
+        scroll_speed = 512;
     else if (bike_speed > 150)
-        scroll_speed = 192;
+        scroll_speed = 384;
     else if (bike_speed > 120)
-        scroll_speed = 128;
+        scroll_speed = 256;
     else if (bike_speed > 100)
-        scroll_speed = 96;
+        scroll_speed = 192;
     else if (bike_speed > 60)
-        scroll_speed = 64;
+        scroll_speed = 128;
     else if (bike_speed > 40)
-        scroll_speed = 48;
+        scroll_speed = 80;
     else if (bike_speed > 20)
-        scroll_speed = 28;
+        scroll_speed = 40;
     else if (bike_speed > 10)
-        scroll_speed = 10;                
+        scroll_speed = 16;
     else
-        return;  // Too slow
-    
-    // Accumulate fractional movement
+        return;
+        
     road_scroll.scroll_fraction += scroll_speed;
-    
-    // When fraction overflows 255, advance to next tile
-    if (road_scroll.scroll_fraction >= 255)
+
+    while (road_scroll.scroll_fraction >= 255)
     {
         road_scroll.scroll_fraction -= 255;
-        road_scroll.tile_idx = (road_scroll.tile_idx + 1) % 15;
+        road_scroll.tile_idx++;
+        if (road_scroll.tile_idx >= 15)
+            road_scroll.tile_idx = 0;
     }
-    
-    // Use road_scroll.tile_idx for rendering
+
     road_tile_idx = road_scroll.tile_idx;
 }
  

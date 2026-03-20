@@ -30,6 +30,11 @@ extern struct IntuitionBase *IntuitionBase;
 extern struct GfxBase *GfxBase;
 extern volatile struct Custom *custom;
 
+// Read once per frame — store in a global
+static UWORD joy1dat_cache;
+static UBYTE cia_cache;
+static UBYTE prev_fire_state = 0;
+
 static volatile ULONG *custom_vposr = (volatile ULONG *) 0xdff004;
 
 // System state backup
@@ -37,9 +42,6 @@ struct View *saved_view;
 UWORD saved_intena, saved_dma, saved_adkcon;
  
 BOOL os_disabled = FALSE;
-
-// Track previous fire button state for edge detection
-static BOOL prev_fire_state = FALSE;
 
 // VERY SLOW but seems to be working RNG (good old xorshift)
 ULONG rand() {
@@ -172,56 +174,48 @@ void HardWaitLMB(void)
 	}
 
 }
-
-BOOL JoyLeft(void)
+ 
+void Joy_ReadAll(void)
 {
-	return (custom->joy1dat & 512) ? TRUE : FALSE;
+    joy1dat_cache = custom->joy1dat;
+    cia_cache = *(volatile UBYTE*)0xbfe001;
 }
 
-BOOL JoyRight(void)
+__attribute__((always_inline)) inline BOOL JoyLeft(void)
 {
-	return (custom->joy1dat & 2) ? TRUE : FALSE;
+    return (joy1dat_cache >> 9) & 1;
 }
 
-BOOL JoyUp(void)
+__attribute__((always_inline)) inline BOOL JoyRight(void)
 {
-	// ^ = xor
-
-	WORD w;
-	
-	w = custom->joy1dat << 1;
-
-	return ((w ^ custom->joy1dat) & 512) ? TRUE : FALSE;
+    return (joy1dat_cache >> 1) & 1;
 }
 
-BOOL JoyDown(void)
+__attribute__((always_inline)) inline BOOL JoyUp(void)
 {
-	// ^ = xor
-
-	WORD w;
-	
-	w = custom->joy1dat << 1;
-
-	return ((w ^ custom->joy1dat) & 2) ? TRUE : FALSE;
+    return ((joy1dat_cache << 1) ^ joy1dat_cache) >> 9 & 1;
 }
 
-BOOL JoyFireHeld(void)
+__attribute__((always_inline)) inline BOOL JoyDown(void)
 {
-	return ((*(UBYTE *)0xbfe001) & 128) ? FALSE : TRUE;
+    return ((joy1dat_cache << 1) ^ joy1dat_cache) >> 1 & 1;
+}
+
+__attribute__((always_inline)) inline BOOL JoyFireHeld(void)
+{
+    return !(cia_cache & 128);
+}
+
+__attribute__((always_inline)) inline BOOL JoyButton2(void)
+{
+    return !((*(volatile UWORD*)0xdff016) & (1 << 10));
 }
 
 BOOL JoyFirePressed(void)
 {
-    BOOL current_fire = JoyFireHeld();
-    BOOL pressed = FALSE;
-    
-    // Detect rising edge (was not pressed, now is pressed)
-    if (current_fire && !prev_fire_state)
-    {
-        pressed = TRUE;
-    }
-    
-    prev_fire_state = current_fire;
+    BOOL current = JoyFireHeld();
+    BOOL pressed = current && !prev_fire_state;
+    prev_fire_state = current;
     return pressed;
 }
 

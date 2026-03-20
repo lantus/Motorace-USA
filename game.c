@@ -98,6 +98,9 @@ UBYTE game_car_block_move_rate = 5;   // Frames between movements (lower = faste
 UBYTE game_car_block_move_speed = 1;  // Pixels per move (higher = faster)
 UBYTE game_car_block_x_threshold = 32; // How close bike needs to be horizontally
 
+ULONG speed_accumulator = 0;
+ULONG speed_sample_count = 0;
+
 UWORD frontview_bike_frames = 0;
 
 WORD mapposy,videoposy;
@@ -236,6 +239,9 @@ void Game_NewGame(UBYTE difficulty)
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT - 1;
     videoposy = mapposy % HALFBITMAPHEIGHT ;
     stage_progress.mapsize = mapposy;
+ 
+    speed_accumulator = 0;
+    speed_sample_count = 0;
 
     Cars_ResetPositions();
 }
@@ -879,7 +885,10 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_PLAYING)
     {
-      
+
+        speed_accumulator += bike_speed;
+        speed_sample_count++;
+
         // Update fuel gauge
         Fuel_Update();
         
@@ -894,6 +903,18 @@ void Stage_Update()
             KPrintF("=== GAME OVER - OUT OF FUEL ===\n");
             return;
         }
+        
+
+        // === BRAKE — button 2 or pull down ===
+        if (JoyButton2() || JoyDown())
+        {
+            bike_speed -= 8;  // Hard braking
+            if (bike_speed < MIN_CRUISING_SPEED)
+                bike_speed = MIN_CRUISING_SPEED;
+            
+            bike_state = BIKE_STATE_BRAKING;
+        }
+
         // === ACCELERATION LOGIC ===
 
         if (JoyFireHeld())
@@ -1074,7 +1095,7 @@ void Stage_Update()
         // Update road scrolling
         if (approach_state == CITY_STATE_WAITING_NAME || approach_state == CITY_STATE_ACTIVE)
         {
-            UpdateRoadScroll(bike_speed << 1, 0);
+            UpdateRoadScroll(bike_speed, 0);
         }
         else if (approach_state == CITY_STATE_INTO_HORIZON)
         {
@@ -1256,7 +1277,7 @@ void Stage_InitializeFrontView(void)
     Game_SetBackGroundColor(0x00);
     
     Title_Reset();
-   
+ 
     City_PreDrawRoad();
     City_OncomingCarsReset();
 

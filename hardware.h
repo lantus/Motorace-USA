@@ -19,6 +19,9 @@ void WaitVBeam(ULONG line);
 void HardWaitBlit(void);
 void HardWaitLMB(void);
 
+void Joy_ReadAll(void);
+
+BOOL JoyButton2(void);
 BOOL JoyLeft(void);
 BOOL JoyRight(void);
 BOOL JoyUp(void);
