@@ -4,3 +4,10 @@ gfx/amigeconv.exe
 images/*.TGA
 gfx/1.iff
 gfx/bike1.iff
+tools/zippy.adf
+tools/ADFOpus1_2.exe
+tools/gadf.exe
+tools/make_adf.bat
+maps/level1.map.bak2
+maps/level1.map.bak3
+
