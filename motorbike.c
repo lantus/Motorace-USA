@@ -44,6 +44,10 @@ static Sprite spr_rsrc_frontview_bike_crash2;
 static Sprite spr_rsrc_frontview_bike_crash3;
 static Sprite spr_rsrc_frontview_bike_crash4;
 
+static Sprite spr_rsrc_bike_wheelie1;
+static Sprite spr_rsrc_bike_wheelie2;
+static Sprite spr_rsrc_bike_wheelie3;
+
 ULONG *spr_bike_moving1;
 ULONG *spr_bike_moving2;
 ULONG *spr_bike_moving3;
@@ -67,6 +71,10 @@ ULONG *spr_frontview_bike_crash1;
 ULONG *spr_frontview_bike_crash2;
 ULONG *spr_frontview_bike_crash3;
 ULONG *spr_frontview_bike_crash4;
+
+ULONG *spr_bike_wheelie1;
+ULONG *spr_bike_wheelie2;
+ULONG *spr_bike_wheelie3;
 
 ULONG *current_bike_sprite;
 
@@ -93,6 +101,7 @@ static UBYTE current_sprite_count = 2;  // Track whether using 2 or 4 sprites
 BOOL  wheelie_active = FALSE;
 BOOL  wheelie_scored = FALSE;
 WORD  wheelie_speed = 0;
+UWORD wheelie_anim_frames = 0;
 
 GameTimer wheelie_timer;
 GameTimer invuln_timer;
@@ -121,11 +130,17 @@ void MotorBike_Initialize()
     Sprites_LoadFromFile(APPROACH_BIKE_LEFT,&spr_rsrc_approach_bike_frame1_left);
     Sprites_LoadFromFile(APPROACH_BIKE_RIGHT,&spr_rsrc_approach_bike_frame1_right);
 
+     // Frontview Crash
     Sprites_LoadFromFile(FRONTVIEW_BIKECRASH1,&spr_rsrc_frontview_bike_crash1);
     Sprites_LoadFromFile(FRONTVIEW_BIKECRASH2,&spr_rsrc_frontview_bike_crash2);
     Sprites_LoadFromFile(FRONTVIEW_BIKECRASH3,&spr_rsrc_frontview_bike_crash3);
     Sprites_LoadFromFile(FRONTVIEW_BIKECRASH4,&spr_rsrc_frontview_bike_crash4); 
-    // Frontview Crash
+
+    // Overhead Wheelie
+    Sprites_LoadFromFile(WHEELIE1,&spr_rsrc_bike_wheelie1);
+    Sprites_LoadFromFile(WHEELIE2,&spr_rsrc_bike_wheelie2);
+    Sprites_LoadFromFile(WHEELIE3,&spr_rsrc_bike_wheelie3); 
+
 
     spr_bike_moving1 = Mem_AllocChip(32);
     spr_bike_moving2 = Mem_AllocChip(32);
@@ -134,6 +149,12 @@ void MotorBike_Initialize()
     spr_bike_turn_left2 = Mem_AllocChip(32);
     spr_bike_turn_right1 = Mem_AllocChip(32);
     spr_bike_turn_right2 = Mem_AllocChip(32);
+
+    // Wheelie 
+
+    spr_bike_wheelie1 = Mem_AllocChip(32);
+    spr_bike_wheelie2 = Mem_AllocChip(32);
+    spr_bike_wheelie3 = Mem_AllocChip(32);
 
     // Approach City Bike Sprites Mem Alloc
 
@@ -180,6 +201,9 @@ void MotorBike_Initialize()
     Sprites_BuildComposite(spr_frontview_bike_crash3,4,&spr_rsrc_frontview_bike_crash3);   
     Sprites_BuildComposite(spr_frontview_bike_crash4,4,&spr_rsrc_frontview_bike_crash4);   
 
+    Sprites_BuildComposite(spr_bike_wheelie1,4,&spr_rsrc_bike_wheelie1);   
+    Sprites_BuildComposite(spr_bike_wheelie2,4,&spr_rsrc_bike_wheelie2);   
+    Sprites_BuildComposite(spr_bike_wheelie3,4,&spr_rsrc_bike_wheelie3);       
 
     Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
  
@@ -222,6 +246,7 @@ void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
 
 void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 {
+    current_sprite_count = 2;
     if (bike_invulnerable)
     {
         if (game_frame_count & 4)
@@ -286,15 +311,52 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 
          bike_anim_lr_frames++;
     }
+    else if (state == BIKE_STATE_WHEELIE)
+    {
+        if (Timer_GetRemainingMs(&wheelie_timer) <= 500)  
+        {
+            current_bike_sprite = spr_bike_wheelie3;
+        }
+        else
+        {
+            if ((bike_anim_frames >> 2) & 1)   
+                current_bike_sprite = spr_bike_wheelie2;
+            else
+                current_bike_sprite = spr_bike_wheelie1;
+        }
+        
+        current_sprite_count = 4;
+        bike_anim_lr_frames = 0;
+    }
     else if (state == BIKE_STATE_CRASHED)
     {
          current_bike_sprite = spr_bike_moving1;
          KPrintF("Bike Crashed\n");
     }
 
-    Sprites_SetPointers(current_bike_sprite,2,SPRITEPTR_ZERO_AND_ONE);
-    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0],x,y,32);
-    Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1],x,y,32);
+    // Center adjustment: 16px sprites are at x, 32px sprites need x-8
+    WORD draw_x = x;
+    if (current_sprite_count == 4)
+    {
+        draw_x = x - 8;  // Shift left 8px to center 32px over 16px position
+    }
+    
+    Sprites_SetPointers(current_bike_sprite, current_sprite_count, SPRITEPTR_ZERO_AND_ONE);
+    
+    if (current_sprite_count == 2)
+    {
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0], draw_x, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1], draw_x, y, 32);
+    }
+    else
+    {
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[0], draw_x, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[1], draw_x, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[2], draw_x + 16, y, 32);
+        Sprites_SetScreenPosition((UWORD *)current_bike_sprite[3], draw_x + 16, y, 32);
+    }
+    
+    bike_anim_frames++;
    
     bike_anim_frames++;
 }

@@ -984,7 +984,9 @@ void Stage_Update()
                 wheelie_scored = FALSE;
                 Timer_Stop(&wheelie_timer);
                 bike_state = BIKE_STATE_MOVING;
-               // SFX_Play(SFX_LAND);
+                wheelie_anim_frames = 0;  // Reset animation counter
+                Sprites_ClearHigher();     // Turn off sprites 2+3
+                //SFX_Play(SFX_LAND);
             }
             
             speed_accumulator += bike_speed;
@@ -1004,6 +1006,7 @@ void Stage_Update()
             wheelie_speed = 150;
             Timer_Start(&wheelie_timer, 2);
             bike_state = BIKE_STATE_WHEELIE;
+            wheelie_anim_frames = 0;  // Reset animation counter
           //  SFX_Play(SFX_WHEELIE);
             
             if (!wheelie_scored)

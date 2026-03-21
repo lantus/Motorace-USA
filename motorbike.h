@@ -53,6 +53,10 @@ typedef enum {
 #define FRONTVIEW_BIKECRASH3    "sprites/bike/3dbike_crash3.spr"
 #define FRONTVIEW_BIKECRASH4    "sprites/bike/3dbike_crash4.spr"
  
+#define WHEELIE1                "sprites/bike/bike_wheelie1.spr"
+#define WHEELIE2                "sprites/bike/bike_wheelie2.spr"
+#define WHEELIE3                "sprites/bike/bike_wheelie3.spr"
+
 extern UWORD bike_position_x;
 extern UWORD bike_position_y;
 extern LONG  bike_world_y;   
@@ -84,6 +88,7 @@ extern WORD scroll_accumulator;  // Fractional scroll position (fixed point)
 extern BOOL  wheelie_active;
 extern BOOL  wheelie_scored;
 extern WORD  wheelie_speed;
+extern UWORD wheelie_anim_frames;
 extern GameTimer wheelie_timer;
 extern GameTimer invuln_timer;
 #define MIN_CRUISING_SPEED 42  // Minimum automatic speed
