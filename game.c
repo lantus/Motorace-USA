@@ -255,7 +255,8 @@ void Game_NewGame(UBYTE difficulty)
     speed_sample_count = 0;
     wheelie_active = FALSE;
     wheelie_scored = FALSE;
-
+    crash_anim_frames = 0;
+    
     Cars_ResetPositions();
 }
 
@@ -995,6 +996,21 @@ void Stage_Update()
             Stage_CheckCompletion();
             return;
         }
+        
+        if (collision_state == COLLISION_TRAFFIC || collision_state == COLLISION_OFFROAD)
+        {
+            if (bike_speed > 0)
+            {
+                bike_speed -= 6;
+                if (bike_speed < 0) bike_speed = 0;
+            }
+            
+            bike_state = BIKE_STATE_CRASHED;
+            
+            StageProgress_UpdateOverhead(mapposy);
+            Stage_CheckCompletion();
+            return;
+        }
 
         // === CHECK FOR WHEELIE TRIGGER ===
         WORD bike_wy = mapposy + bike_position_y - g_sprite_voffset;
@@ -1301,19 +1317,22 @@ void Game_HandleCollisions(void)
         {
             collision_car_index = hit_car;
             Timer_Start(&collision_recovery_timer, 2);
-            
             Cars_HandleSpinout(hit_car);
             Music_Stop();
+            crash_anim_frames = 0;
         }
         else if (collision_state == COLLISION_OFFROAD)
         {
             Timer_Start(&collision_recovery_timer, 2);
+            Music_Stop();
+            crash_anim_frames = 0;
         }
     }
     
     if (collision_state != COLLISION_NONE)
     {
-        if (collision_state == COLLISION_TRAFFIC)
+        if (collision_state == COLLISION_TRAFFIC || 
+            collision_state == COLLISION_OFFROAD)
         {
             bike_state = BIKE_STATE_CRASHED;
             if (bike_speed > 0)
@@ -1322,12 +1341,7 @@ void Game_HandleCollisions(void)
                 if (bike_speed < 0) bike_speed = 0;
             }
         }
-        else if (collision_state == COLLISION_OFFROAD)
-        {
-            if (bike_speed > 20)
-                bike_speed -= 3;
-        }
-        
+ 
         if (Timer_HasElapsed(&collision_recovery_timer))
         {
             MotorBike_CrashAndReposition();

@@ -53,6 +53,15 @@ typedef enum {
 #define FRONTVIEW_BIKECRASH3    "sprites/bike/3dbike_crash3.spr"
 #define FRONTVIEW_BIKECRASH4    "sprites/bike/3dbike_crash4.spr"
  
+#define OVERHEAD_BIKECRASH1    "sprites/bike/bike_crash1.spr"
+#define OVERHEAD_BIKECRASH2    "sprites/bike/bike_crash2.spr"
+#define OVERHEAD_BIKECRASH3    "sprites/bike/bike_crash3.spr"
+#define OVERHEAD_BIKECRASH4    "sprites/bike/bike_crash4.spr"
+#define OVERHEAD_BIKECRASH5    "sprites/bike/bike_crash5.spr"
+#define OVERHEAD_BIKECRASH6    "sprites/bike/bike_crash6.spr"
+#define OVERHEAD_BIKECRASH7    "sprites/bike/bike_crash7.spr"
+#define OVERHEAD_BIKECRASH8    "sprites/bike/bike_crash8.spr"
+
 #define WHEELIE1                "sprites/bike/bike_wheelie1.spr"
 #define WHEELIE2                "sprites/bike/bike_wheelie2.spr"
 #define WHEELIE3                "sprites/bike/bike_wheelie3.spr"
@@ -60,6 +69,7 @@ typedef enum {
 extern UWORD bike_position_x;
 extern UWORD bike_position_y;
 extern LONG  bike_world_y;   
+extern UWORD crash_anim_frames;
 
 // TODO: Crashing, Jump, Wheelie
 

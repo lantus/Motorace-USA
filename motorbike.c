@@ -44,6 +44,15 @@ static Sprite spr_rsrc_frontview_bike_crash2;
 static Sprite spr_rsrc_frontview_bike_crash3;
 static Sprite spr_rsrc_frontview_bike_crash4;
 
+static Sprite spr_rsrc_overhead_bike_crash1;
+static Sprite spr_rsrc_overhead_bike_crash2;
+static Sprite spr_rsrc_overhead_bike_crash3;
+static Sprite spr_rsrc_overhead_bike_crash4;
+static Sprite spr_rsrc_overhead_bike_crash5;
+static Sprite spr_rsrc_overhead_bike_crash6;
+static Sprite spr_rsrc_overhead_bike_crash7;
+static Sprite spr_rsrc_overhead_bike_crash8;
+
 static Sprite spr_rsrc_bike_wheelie1;
 static Sprite spr_rsrc_bike_wheelie2;
 static Sprite spr_rsrc_bike_wheelie3;
@@ -71,6 +80,15 @@ ULONG *spr_frontview_bike_crash1;
 ULONG *spr_frontview_bike_crash2;
 ULONG *spr_frontview_bike_crash3;
 ULONG *spr_frontview_bike_crash4;
+
+ULONG *spr_overhead_bike_crash1;
+ULONG *spr_overhead_bike_crash2;
+ULONG *spr_overhead_bike_crash3;
+ULONG *spr_overhead_bike_crash4;
+ULONG *spr_overhead_bike_crash5;
+ULONG *spr_overhead_bike_crash6;
+ULONG *spr_overhead_bike_crash7;
+ULONG *spr_overhead_bike_crash8;
 
 ULONG *spr_bike_wheelie1;
 ULONG *spr_bike_wheelie2;
@@ -101,7 +119,9 @@ static UBYTE current_sprite_count = 2;  // Track whether using 2 or 4 sprites
 BOOL  wheelie_active = FALSE;
 BOOL  wheelie_scored = FALSE;
 WORD  wheelie_speed = 0;
+
 UWORD wheelie_anim_frames = 0;
+UWORD crash_anim_frames = 0;
 
 GameTimer wheelie_timer;
 GameTimer invuln_timer;
@@ -135,6 +155,16 @@ void MotorBike_Initialize()
     Sprites_LoadFromFile(FRONTVIEW_BIKECRASH2,&spr_rsrc_frontview_bike_crash2);
     Sprites_LoadFromFile(FRONTVIEW_BIKECRASH3,&spr_rsrc_frontview_bike_crash3);
     Sprites_LoadFromFile(FRONTVIEW_BIKECRASH4,&spr_rsrc_frontview_bike_crash4); 
+
+    // Overhead Crash
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH1,&spr_rsrc_overhead_bike_crash1);
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH2,&spr_rsrc_overhead_bike_crash2);
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH3,&spr_rsrc_overhead_bike_crash3);
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH4,&spr_rsrc_overhead_bike_crash4); 
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH5,&spr_rsrc_overhead_bike_crash5);
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH6,&spr_rsrc_overhead_bike_crash6);
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH7,&spr_rsrc_overhead_bike_crash7);
+    Sprites_LoadFromFile(OVERHEAD_BIKECRASH8,&spr_rsrc_overhead_bike_crash8);    
 
     // Overhead Wheelie
     Sprites_LoadFromFile(WHEELIE1,&spr_rsrc_bike_wheelie1);
@@ -173,7 +203,17 @@ void MotorBike_Initialize()
     spr_frontview_bike_crash2 = Mem_AllocChip(32);  
     spr_frontview_bike_crash3 = Mem_AllocChip(32);       
     spr_frontview_bike_crash4 = Mem_AllocChip(32);     
- 
+
+    spr_overhead_bike_crash1 = Mem_AllocChip(32);  
+    spr_overhead_bike_crash2 = Mem_AllocChip(32);  
+    spr_overhead_bike_crash3 = Mem_AllocChip(32);       
+    spr_overhead_bike_crash4 = Mem_AllocChip(32);     
+    spr_overhead_bike_crash5 = Mem_AllocChip(32);  
+    spr_overhead_bike_crash6 = Mem_AllocChip(32);  
+    spr_overhead_bike_crash7 = Mem_AllocChip(32);       
+    spr_overhead_bike_crash8 = Mem_AllocChip(32);        
+    
+
     Sprites_BuildComposite(spr_bike_moving1,2,&spr_rsrc_bike_moving1);
     Sprites_BuildComposite(spr_bike_moving2,2,&spr_rsrc_bike_moving2);
     Sprites_BuildComposite(spr_bike_moving3,2,&spr_rsrc_bike_moving3);
@@ -200,6 +240,16 @@ void MotorBike_Initialize()
     Sprites_BuildComposite(spr_frontview_bike_crash2,4,&spr_rsrc_frontview_bike_crash2);   
     Sprites_BuildComposite(spr_frontview_bike_crash3,4,&spr_rsrc_frontview_bike_crash3);   
     Sprites_BuildComposite(spr_frontview_bike_crash4,4,&spr_rsrc_frontview_bike_crash4);   
+
+    Sprites_BuildComposite(spr_overhead_bike_crash1,4,&spr_rsrc_overhead_bike_crash1);
+    Sprites_BuildComposite(spr_overhead_bike_crash2,4,&spr_rsrc_overhead_bike_crash2);   
+    Sprites_BuildComposite(spr_overhead_bike_crash3,4,&spr_rsrc_overhead_bike_crash3);   
+    Sprites_BuildComposite(spr_overhead_bike_crash4,4,&spr_rsrc_overhead_bike_crash4);      
+    Sprites_BuildComposite(spr_overhead_bike_crash5,4,&spr_rsrc_overhead_bike_crash5);
+    Sprites_BuildComposite(spr_overhead_bike_crash6,4,&spr_rsrc_overhead_bike_crash6);   
+    Sprites_BuildComposite(spr_overhead_bike_crash7,4,&spr_rsrc_overhead_bike_crash7);   
+    Sprites_BuildComposite(spr_overhead_bike_crash8,4,&spr_rsrc_overhead_bike_crash8);      
+
 
     Sprites_BuildComposite(spr_bike_wheelie1,4,&spr_rsrc_bike_wheelie1);   
     Sprites_BuildComposite(spr_bike_wheelie2,4,&spr_rsrc_bike_wheelie2);   
@@ -247,6 +297,7 @@ void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
 void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 {
     current_sprite_count = 2;
+
     if (bike_invulnerable)
     {
         if (game_frame_count & 4)
@@ -330,8 +381,26 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
     }
     else if (state == BIKE_STATE_CRASHED)
     {
-         current_bike_sprite = spr_bike_moving1;
-         KPrintF("Bike Crashed\n");
+        crash_anim_frames++;
+        
+        // Swap frame every 4 frames — 8 frames total
+        UBYTE frame = (crash_anim_frames >> 2);
+        if (frame > 7) frame = 7;  // Hold last frame
+ 
+        switch (frame)
+        {
+            case 0: current_bike_sprite = spr_overhead_bike_crash1; break;
+            case 1: current_bike_sprite = spr_overhead_bike_crash2; break;
+            case 2: current_bike_sprite = spr_overhead_bike_crash3; break;
+            case 3: current_bike_sprite = spr_overhead_bike_crash4; break;
+            case 4: current_bike_sprite = spr_overhead_bike_crash5; break;
+            case 5: current_bike_sprite = spr_overhead_bike_crash6; break;
+            case 6: current_bike_sprite = spr_overhead_bike_crash7; break;
+            case 7: current_bike_sprite = spr_overhead_bike_crash8; break;
+        }
+        
+        // Crash sprites are 32x32  
+        current_sprite_count = 4;
     }
 
     // Center adjustment: 16px sprites are at x, 32px sprites need x-8
@@ -356,8 +425,6 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
         Sprites_SetScreenPosition((UWORD *)current_bike_sprite[3], draw_x + 16, y, 32);
     }
     
-    bike_anim_frames++;
-   
     bike_anim_frames++;
 }
 
@@ -820,7 +887,7 @@ void MotorBike_CrashAndReposition(void)
     // === Reveal — restore stage palette ===
     Game_ApplyPalette(city_colors, BLOCKSCOLORS);
     
-     bike_position_x = safe_x;
+    bike_position_x = safe_x;
     bike_position_y = SCREENHEIGHT - 48;
     bike_world_y = mapposy + bike_position_y;
     bike_speed = MIN_CRUISING_SPEED;
@@ -829,7 +896,7 @@ void MotorBike_CrashAndReposition(void)
     // 2 seconds of invulnerability
     bike_invulnerable = TRUE;
     Timer_Start(&invuln_timer, 2);
-    
+    Sprites_ClearHigher();
     MotorBike_SetFrame(BIKE_FRAME_MOVING1);
 }
  
