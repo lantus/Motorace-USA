@@ -122,7 +122,8 @@ WORD  wheelie_speed = 0;
 
 UWORD wheelie_anim_frames = 0;
 UWORD crash_anim_frames = 0;
-
+UBYTE crash_spin_frame = 0;
+ 
 GameTimer wheelie_timer;
 GameTimer invuln_timer;
 
@@ -383,11 +384,28 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
     {
         crash_anim_frames++;
         
-        // Swap frame every 4 frames — 8 frames total
-        UBYTE frame = (crash_anim_frames >> 2);
-        if (frame > 7) frame = 7;  // Hold last frame
- 
-        switch (frame)
+        // Spin speed — starts moderate, decelerates to stop
+        UBYTE spin_delay;
+        
+        if (crash_anim_frames < 40)
+            spin_delay = 4;      // Initial spin — not too fast
+        else if (crash_anim_frames < 80)
+            spin_delay = 6;      // Slowing
+        else if (crash_anim_frames < 110)
+            spin_delay = 8;      // Slower
+        else if (crash_anim_frames < 140)
+            spin_delay = 12;     // Crawling
+        else if (crash_anim_frames < 160)
+            spin_delay = 16;     // Almost stopped
+        else
+            spin_delay = 0;      // Stopped
+        
+        if (spin_delay > 0 && (crash_anim_frames % spin_delay) == 0)
+        {
+            crash_spin_frame = (crash_spin_frame + 1) & 7;
+        }
+        
+        switch (crash_spin_frame)
         {
             case 0: current_bike_sprite = spr_overhead_bike_crash1; break;
             case 1: current_bike_sprite = spr_overhead_bike_crash2; break;
@@ -399,7 +417,6 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
             case 7: current_bike_sprite = spr_overhead_bike_crash8; break;
         }
         
-        // Crash sprites are 32x32  
         current_sprite_count = 4;
     }
 

@@ -95,6 +95,9 @@ extern WORD bike_speed;        // Current speed in mph (starts at idle)
 extern WORD bike_acceleration;  // Current acceleration
 extern WORD scroll_accumulator;  // Fractional scroll position (fixed point)
 
+extern UBYTE crash_spin_frame;
+ 
+
 extern BOOL  wheelie_active;
 extern BOOL  wheelie_scored;
 extern WORD  wheelie_speed;

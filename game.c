@@ -1001,12 +1001,12 @@ void Stage_Update()
         {
             if (bike_speed > 0)
             {
-                bike_speed -= 6;
+                bike_speed -= 4;
                 if (bike_speed < 0) bike_speed = 0;
             }
             
             bike_state = BIKE_STATE_CRASHED;
-            
+                
             StageProgress_UpdateOverhead(mapposy);
             Stage_CheckCompletion();
             return;
@@ -1313,19 +1313,23 @@ void Game_HandleCollisions(void)
         int hit_car = -1;
         collision_state = MotorBike_CheckCollision(&hit_car);
         
-        if (collision_state == COLLISION_TRAFFIC)
+       if (collision_state == COLLISION_TRAFFIC)
         {
             collision_car_index = hit_car;
-            Timer_Start(&collision_recovery_timer, 2);
+            Timer_Start(&collision_recovery_timer, 3);
             Cars_HandleSpinout(hit_car);
             Music_Stop();
             crash_anim_frames = 0;
+            crash_spin_frame = 0;
+ 
         }
         else if (collision_state == COLLISION_OFFROAD)
         {
             Timer_Start(&collision_recovery_timer, 2);
             Music_Stop();
             crash_anim_frames = 0;
+            crash_spin_frame = 0;
+   
         }
     }
     
@@ -1335,11 +1339,7 @@ void Game_HandleCollisions(void)
             collision_state == COLLISION_OFFROAD)
         {
             bike_state = BIKE_STATE_CRASHED;
-            if (bike_speed > 0)
-            {
-                bike_speed -= 10;
-                if (bike_speed < 0) bike_speed = 0;
-            }
+         
         }
  
         if (Timer_HasElapsed(&collision_recovery_timer))
@@ -1359,13 +1359,6 @@ void Game_HandleCollisions(void)
             bike_speed = MIN_CRUISING_SPEED;
         }
     }
-
-   // if (collision_state == COLLISION_TRAFFIC)
-   //     Copper_SetPalette(0, 0xF00);
-   // else if (collision_state == COLLISION_OFFROAD)
-   //     Copper_SetPalette(0, 0xFF0);
-   // else
-   //     Copper_SetPalette(0, 0x000);
  
 }
 

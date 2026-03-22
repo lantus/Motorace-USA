@@ -1079,11 +1079,27 @@ void Cars_CheckForRespawn(void)
         WORD attempts = 0;
         
         WORD scroll = GetScrollAmount(bike_speed);
-        
-        if (scroll >= 768)
+ 
+        if (game_rank >= 99)
+        {
+            // Last place — only spawn ahead (top of screen)
+            // No cars coming from behind to overtake
             spawn_y = mapposy - 32;
-        else
+        }
+        else if (game_rank <= 1)
+        {
+            // First place — only spawn behind (bottom of screen)
+            // No cars ahead to pass
             spawn_y = mapposy + SCREENHEIGHT + 32;
+        }
+        else
+        {
+            // Normal — speed determines direction
+            if (scroll >= 768)
+                spawn_y = mapposy - 32;
+            else
+                spawn_y = mapposy + SCREENHEIGHT + 32;
+        }
         
         do {
             spawn_x = 16 + ((game_frame_count * 7 + i * 31 + attempts * 13) & 127);
