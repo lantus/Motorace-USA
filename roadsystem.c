@@ -136,3 +136,35 @@ UBYTE Collision_GetSurface(WORD world_x, WORD world_y)
 {
     return GET_SURFACE(Collision_Get(world_x, world_y));
 }
+ 
+WORD road_center_cache[ROAD_CACHE_SIZE];
+
+void Road_CacheRow(WORD world_y)
+{
+    WORD mapy = world_y >> 4;
+    WORD left = -1, right = -1;
+    
+    for (WORD scan = 0; scan < 192; scan += 16)
+    {
+        UBYTE lane = Collision_GetLane(scan, world_y);
+        if (lane >= LANE_1 && lane <= LANE_4)
+        {
+            if (left < 0) left = scan;
+            right = scan;
+        }
+    }
+    
+    road_center_cache[mapy & 0xFF] = (left >= 0) ? (left + right) / 2 : 96;
+}
+ 
+
+void Road_CacheFillVisible(void)
+{
+    for (WORD y = mapposy - 64; y < mapposy + SCREENHEIGHT + 64; y += 16)
+    {
+        if (y < 0) continue;
+        Road_CacheRow(y);
+    }
+}
+
+ 

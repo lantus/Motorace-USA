@@ -342,39 +342,27 @@ __attribute__((always_inline)) WORD GetScrollAmount(WORD speed)
 
 static void SmoothScroll(void)
 {
-    WORD scroll_speed = GetScrollAmount(bike_speed);
+ WORD scroll_speed = GetScrollAmount(bike_speed);
     
     scroll_accumulator += scroll_speed;
     
-    // How many whole pixels to scroll this frame
     WORD pixels = scroll_accumulator >> 8;
     if (pixels == 0) return;
     scroll_accumulator &= 0xFF;
     
-    // Clamp to top of map
     if (mapposy - pixels < 1)
         pixels = mapposy - 1;
     if (pixels <= 0) return;
     
-    // Remember old position to figure out which columns need drawing
     WORD old_mapposy = mapposy;
     
-    // Advance all at once — no per-pixel loop
     mapposy -= pixels;
    
     videoposy = mapposy;
     while (videoposy >= HALFBITMAPHEIGHT)
         videoposy -= HALFBITMAPHEIGHT;
     
-    // Figure out which tile columns need drawing.
-    // Columns are drawn round-robin: column = mapposy & 15
-    // We need to draw every column index between old and new position.
-    
-    WORD old_col = old_mapposy & (NUMSTEPS - 1);
-    WORD new_col = mapposy & (NUMSTEPS - 1);
-    
-    // Track which columns we already drew this frame
-    UWORD drawn_cols = 0;  // Bitmask
+    UWORD drawn_cols = 0;
     
     for (WORD p = 1; p <= pixels; p++)
     {
@@ -392,14 +380,17 @@ static void SmoothScroll(void)
         DrawBlock(x, y, col, mapy, screen.bitplanes);
         DrawBlock(x, y, col, mapy, screen.offscreen_bitplanes);
         DrawBlock(x, y, col, mapy, screen.pristine);
-        
-#ifndef USE_YUNLIMITED2
-        // Double-height: duplicate blit to lower half
+ 
         UWORD yoff = y + (HALFBITMAPHEIGHT << 2);
         DrawBlock(x, yoff, col, mapy, screen.bitplanes);
         DrawBlock(x, yoff, col, mapy, screen.offscreen_bitplanes);
         DrawBlock(x, yoff, col, mapy, screen.pristine);
-#endif
+ 
+        /* ---- Cache road center for this tile row ---- */
+        if (col == 0)
+        {
+            Road_CacheRow(pos);
+        }
     }
 }
 

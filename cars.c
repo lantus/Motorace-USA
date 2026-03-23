@@ -272,7 +272,7 @@ void Cars_ResetPositions(void)
     car[0].old_y = car[0].y;
     car[0].prev_old_x  = car[0].x;
     car[0].prev_old_y = car[0].y;
-    car[0].speed = 41;
+    car[0].speed = 768;
     car[0].accumulator = 0;
     car[0].target_speed = 125;
     car[0].off_screen = FALSE;
@@ -286,7 +286,7 @@ void Cars_ResetPositions(void)
     car[1].visible = TRUE;
     car[1].x = FAR_LEFT_LANE;
     car[1].y = mapposy + 220;
-    car[1].speed = 63;
+    car[1].speed = 1024;
     car[1].accumulator = 0;
     car[1].target_speed = 155;
     car[1].off_screen = FALSE;
@@ -304,7 +304,7 @@ void Cars_ResetPositions(void)
     car[2].visible = TRUE;
     car[2].x = FAR_LEFT_LANE;
     car[2].y = mapposy + 140;
-    car[2].speed = 65;
+    car[2].speed = 1024;
     car[2].target_speed = 165;
     car[2].accumulator = 0;
     car[2].off_screen = FALSE;
@@ -322,7 +322,7 @@ void Cars_ResetPositions(void)
     car[3].visible = TRUE;
     car[3].x = FAR_RIGHT_LANE;
     car[3].y = mapposy + 140;  
-    car[3].speed = 45;
+    car[3].speed = 768;
     car[3].target_speed = 165;
     car[3].accumulator = 0;
     car[3].off_screen = FALSE;
@@ -340,7 +340,7 @@ void Cars_ResetPositions(void)
     car[4].visible = TRUE;
     car[4].x = CENTER_LANE;
     car[4].y = mapposy + 40;
-    car[4].speed = 56;
+    car[4].speed = 640;
     car[4].target_speed = 165;
     car[4].accumulator = 0;
     car[4].off_screen = FALSE;
@@ -362,6 +362,7 @@ void Cars_ResetPositions(void)
         car[i].spawning = FALSE;
         car[i].honking = FALSE;
         car[i].honk_timer = 0;
+        car[i].pursuit_timer = 0;
         Cars_AssignLane(&car[i]);
     }
 
@@ -767,7 +768,6 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
             car->x -= CAR_STEER_HARD;
         else if (ok_l && ok_r)
         {
-            // FIX: check for proper lane, not just "not offroad"
             UBYTE far_l = Collision_GetLane(cx - 32, check_y);
             UBYTE far_r = Collision_GetLane(cx + 32, check_y);
             if (far_r >= LANE_1 && far_r <= LANE_4)
@@ -822,35 +822,53 @@ void Cars_CheckLaneAndSteer(BlitterObject *car)
         return;
     }
     
-    // ALL CLEAR — pursue
+    /* ---- ALL CLEAR — arcade curve anticipation from cache ---- */
+    /* Two array reads — zero collision map scanning               */
+    
+    WORD car_row = (car->y >> 4) & 0xFF;
+    WORD ahead_row = ((car->y - 32) >> 4) & 0xFF;
+    
+    WORD center_now = road_center_cache[car_row];
+    WORD center_ahead = road_center_cache[ahead_row];
+    WORD curve = center_ahead - center_now;
+    
+    /* Road shifting — pre-steer into curve */
+    if (curve < -4)
+        car->x -= 1;       /* Curve going left — drift left */
+    else if (curve > 4)
+        car->x += 1;       /* Curve going right — drift right */
+    
+    /* Pursue player (every other frame) */
     if ((game_frame_count + car->id) & 1) return;
     Cars_PursuePlayer(car);
 }
 
 void Cars_PursuePlayer(BlitterObject *car)
 {
-    // No pursuit until bike is actually racing
-    if (bike_speed < 60) return;
-    
-    // No pursuit until player has passed at least 4 cars
-    // (prevents opening cluster from converging)
-    if (cars_passed < 4) return;
+   if (bike_speed < 60) { car->pursuit_timer = 0; return; }
+    if (cars_passed < 4) { car->pursuit_timer = 0; return; }
     
     WORD cx = car->x + 16;
     WORD car_screen_y = car->y - mapposy;
     
-    if (car_screen_y >= bike_position_y) return;
+    if (car_screen_y >= bike_position_y) { car->pursuit_timer = 0; return; }
     
     WORD y_gap = bike_position_y - car_screen_y;
     
-    if (y_gap < 64) return;
-    if (y_gap > 160) return;
+    if (y_gap < 64) { car->pursuit_timer = 0; return; }
+    if (y_gap > 160) { car->pursuit_timer = 0; return; }
     
     WORD x_diff = bike_position_x - cx;
     WORD abs_diff = ABS(x_diff);
     
-    if (abs_diff < 8) return;
-    if (abs_diff > 48) return;
+    if (abs_diff < 26) { car->pursuit_timer = 0; return; }
+    if (abs_diff > 48) { car->pursuit_timer = 0; return; }
+    
+ 
+    if (car->pursuit_timer >= 94)
+        return;
+    
+    car->pursuit_timer++;
     
     UBYTE rng = (game_frame_count * 7 + car->id * 13) & 0x0F;
     if (rng < 4) return;
@@ -917,7 +935,7 @@ void Cars_RemoveAllFromScreen(void)
 
 void Cars_UpdatePosition(BlitterObject *c)
 {
-   if (!c->visible) return;
+    if (!c->visible) return;
     
     if (c->crashed)
     {
@@ -927,39 +945,49 @@ void Cars_UpdatePosition(BlitterObject *c)
     
     c->moved = TRUE;
     
-    // ===== FIXED FORWARD SPEED =====
-    // Car always drives forward (decreasing Y) at a constant rate.
-    // SmoothScroll changes mapposy, which handles relative motion:
-    //   - Bike fast → mapposy drops fast → screen_y increases → car drifts down (passed)
-    //   - Bike slow → mapposy drops slow → screen_y decreases → car drifts up (pulls away)
-    // This matches NES where offset=4 is the car's OWN speed.
+    /* ---- ARCADE: gradual speed adjustment toward target ---- */
+    /* target_speed_val = what this car WANTS to go               */
+    /* Car adjusts by 14 units/frame toward target — smooth ramp  */
+    /* At spawn, car gets a base speed from its tier.              */
+    /* As bike speeds up/slows down, cars gradually follow.        */
     
-    WORD car_speed;
+    WORD target;
+    
     if (c->target_speed > 150)
-        car_speed = 1280;    // 5 px/frame — fast car, hard to pass
+        target = 1280;
     else if (c->target_speed > 120)
-        car_speed = 1024;    // 4 px/frame — NES default
+        target = 1024;
     else
-        car_speed = 768;     // 3 px/frame — slow car, easy to pass
+        target = 768;
     
-    // Early game: cars slightly slower
     if (cars_passed < 15)
-        car_speed -= 128;    // -0.5 px/frame
+        target -= 128;
     
-    // Player crashed: cars speed up (pull away)
     if (collision_state == COLLISION_TRAFFIC)
-        car_speed += 512;
+        target += 512;
     
-    c->accumulator += car_speed;
+    /* Gradual adjustment: ±14 per frame instead of snapping */
+    if (c->speed < target)
+    {
+        c->speed += 14;
+        if (c->speed > target) c->speed = target;
+    }
+    else if (c->speed > target)
+    {
+        c->speed -= 14;
+        if (c->speed < target) c->speed = target;
+    }
+    
+    c->accumulator += c->speed;
     
     if (c->accumulator >= 256)
     {
         WORD pixels = c->accumulator >> 8;
-        c->y -= pixels;     // ALWAYS forward (decreasing Y = up the road)
+        c->y -= pixels;
         c->accumulator &= 0xFF;
     }
     
-    // Wheel animation
+    /* Wheel animation */
     c->anim_counter++;
     WORD threshold = (bike_speed < 84) ? 8 : (bike_speed < 126) ? 4 : 2;
     if (c->anim_counter >= threshold)
@@ -1110,6 +1138,13 @@ void Cars_CheckForRespawn(void)
         
         if (attempts >= 10) continue;
         
+        if (car[i].target_speed > 150)
+            car[i].speed = 1280;
+        else if (car[i].target_speed > 120)
+            car[i].speed = 1024;
+        else
+            car[i].speed = 768;
+
         car[i].x = spawn_x;
         car[i].y = spawn_y;
         car[i].off_screen = TRUE;

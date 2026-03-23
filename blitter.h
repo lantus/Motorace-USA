@@ -57,6 +57,7 @@ typedef struct
     BOOL spawning;
     BOOL honking;
     UBYTE honk_timer;
+    UBYTE pursuit_timer;    
     RestorePtrs restore;
 
 } BlitterObject;

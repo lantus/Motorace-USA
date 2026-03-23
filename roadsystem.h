@@ -49,10 +49,16 @@
 #define IS_DRIVABLE(packed) (GET_LANE(packed) >= LANE_SHOULDER_L)
 #define IS_LANE(packed)     (GET_LANE(packed) >= LANE_1 && GET_LANE(packed) <= LANE_4)
 
+#define ROAD_CACHE_SIZE 256
+
 extern BYTE road_tile_idx;
+extern WORD road_center_cache[ROAD_CACHE_SIZE];
 
 void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count);
 UBYTE Collision_Get(WORD world_x, WORD world_y);
 UBYTE Collision_GetLane(WORD world_x, WORD world_y);
 UBYTE Collision_GetSurface(WORD world_x, WORD world_y);
 void CollisionMap_Load(void);
+
+void Road_CacheRow(WORD world_y);
+void Road_CacheFillVisible(void);
