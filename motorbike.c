@@ -807,6 +807,7 @@ void MotorBike_CrashAndReposition(void)
  
     Game_FillScreen();
     WaitBlit();
+    Road_CacheFillVisible();
 
     WORD bike_wy = mapposy + (SCREENHEIGHT - 48);
     WORD safe_x = 80;  // Fallback

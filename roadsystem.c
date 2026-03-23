@@ -99,18 +99,7 @@ void CollisionMap_Load(void)
         KPrintF("WARNING: collision.dat not found!\n");
 }
 
-/* 
- * Single lookup — no tile index indirection needed.
- * 
- * Old way (2 lookups):
- *   tile_idx = mapdata[y * width + x]     ; 1st read (word)
- *   attrib = attrib_table[tile_idx]        ; 2nd read (byte) + add
- *
- * New way (1 lookup):
- *   packed = collision_map[y * width + x]  ; 1 read (byte)
- *   lane = packed >> 4                     ; shift
- *   surface = packed & 0x0F                ; mask
- */
+ 
 __attribute__((always_inline)) 
 UBYTE Collision_Get(WORD world_x, WORD world_y)
 {

@@ -327,18 +327,6 @@ void FreeSystem()
 #define GAMEAREA_WIDTH 64          // 24 blocks × 8 pixels
 #define GAMEAREA_BLOCKS 28          // blocks across the game area
  
-__attribute__((always_inline)) inline static void UpdateCopperlist(void)
-{
-	LONG planeadd;
-	
-	planeadd = ((LONG)(videoposy + BLOCKHEIGHT)) * BITMAPBYTESPERROW * BLOCKSDEPTH;
-	
-	// set plane pointers
- 
-	Copper_SetBitplanePointer(BLOCKSDEPTH, planes, planeadd);
- 
-}
-
 static __attribute__((interrupt)) void interruptHandlerLvl4() 
 {
     const UWORD intreq = custom->intreqr;

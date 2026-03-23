@@ -51,13 +51,15 @@ typedef struct
     WORD saved_buffer_y;    // Track where background was saved
     BOOL crashed;
     UBYTE crash_timer;
-    UBYTE preferred_lane;    // LANE_1 through LANE_4
     BOOL has_blocked_bike;   // TRUE if this car has already moved to block bike
     WORD block_timer;        // Timer for gradual movement   
     BOOL spawning;
     BOOL honking;
     UBYTE honk_timer;
     UBYTE pursuit_timer;    
+    BOOL   swerving;         /* In swerve/spinout state */
+    BYTE lateral_accum;
+    UBYTE  swerve_timer;     /* Frames remaining in swerve */
     RestorePtrs restore;
 
 } BlitterObject;

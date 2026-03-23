@@ -247,8 +247,12 @@ void Game_NewGame(UBYTE difficulty)
     bike_state = BIKE_STATE_STOPPED; 
     bike_invulnerable = FALSE;
 
-    mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT - 1;
+    mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
+    mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
+    mapposy -= 14;
     videoposy = mapposy % HALFBITMAPHEIGHT ;
+
+    //videoposy = 0;
     stage_progress.mapsize = mapposy;
  
     speed_accumulator = 0;
@@ -342,7 +346,7 @@ __attribute__((always_inline)) WORD GetScrollAmount(WORD speed)
 
 static void SmoothScroll(void)
 {
- WORD scroll_speed = GetScrollAmount(bike_speed);
+    WORD scroll_speed = GetScrollAmount(bike_speed);
     
     scroll_accumulator += scroll_speed;
     
@@ -688,6 +692,8 @@ void GameReady_Update(void)
         HUD_DrawAll();
  
         Game_FillScreen();
+        Road_CacheFillVisible();
+        Game_SwapBuffers(); 
 
         Stage_ShowInfo();
         StageProgress_SetStage(0);
@@ -889,8 +895,8 @@ void Stage_Update()
             }
             else
             {
-                WORD difficulty_y = videoposy + BLOCKHEIGHT + 70;
-                WORD stage_y = videoposy + BLOCKHEIGHT + 120;
+                WORD difficulty_y = videoposy + BLOCKHEIGHT + 72;
+                WORD stage_y = videoposy + BLOCKHEIGHT + 128;
 
                 if (difficulty_y >= BITMAPHEIGHT)
                     difficulty_y -= BITMAPHEIGHT;
@@ -1283,8 +1289,8 @@ void Stage_ShowInfo(void)
             break;
     }
     
-    WORD difficulty_y = videoposy + BLOCKHEIGHT + 70;
-    WORD stage_y = videoposy + BLOCKHEIGHT + 120;
+    WORD difficulty_y = videoposy + BLOCKHEIGHT + 72;
+    WORD stage_y = videoposy + BLOCKHEIGHT + 128;
 
     if (difficulty_y >= BITMAPHEIGHT)
         difficulty_y -= BITMAPHEIGHT;
