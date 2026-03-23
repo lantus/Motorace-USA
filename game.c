@@ -1364,7 +1364,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (stage_progress.current_map_pos >= 17128)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= 16940)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 

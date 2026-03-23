@@ -399,7 +399,21 @@ void Cars_RenderBOB(BlitterObject *car)
     WORD src_y_offset = 0;
     WORD clip_height = BOB_HEIGHT;
     WORD dest_y = screen_y;
+ 
+     // Clip BOTTOM edge
+    if (screen_y + clip_height > SCREENHEIGHT)
+    {
+        clip_height = SCREENHEIGHT - screen_y;
+        
+        if (clip_height <= 0)
+        {
+            car->off_screen = TRUE;
+            return;
+        }
+    }
     
+    car->spawning = FALSE;
+
     // Clip TOP edge
     if (screen_y < -BOB_HEIGHT)
     {
@@ -413,19 +427,7 @@ void Cars_RenderBOB(BlitterObject *car)
             return;
         }
     }
-    
-    // Clip BOTTOM edge
-    if (screen_y + clip_height > SCREENHEIGHT)
-    {
-        clip_height = SCREENHEIGHT - screen_y;
-        
-        if (clip_height <= 0)
-        {
-            car->off_screen = TRUE;
-            return;
-        }
-    }
-    
+  
     // Check X bounds
     if (car->x < -16 || car->x > SCREENWIDTH + 16)
     {
@@ -434,7 +436,7 @@ void Cars_RenderBOB(BlitterObject *car)
     }
     
     car->off_screen = FALSE;
-    car->spawning = FALSE;
+ 
 
     WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
     
@@ -1074,13 +1076,13 @@ void Cars_Tick(BlitterObject *car)
  
 void Cars_CheckForRespawn(void)
 {
-  if (collision_state != COLLISION_NONE) return;
+    if (collision_state != COLLISION_NONE) return;
     if (respawn_timer > 0) { respawn_timer--; return; }
     
     WORD active_count = 0;
     for (int i = 0; i < MAX_CARS; i++)
     {
-        if (car[i].visible && (!car[i].off_screen || car[i].spawning))
+        if (car[i].visible && (!car[i].off_screen ))
             active_count++;
     }
     
@@ -1173,12 +1175,8 @@ void Cars_CheckForRespawn(void)
 
         if (cars_passed < 3)
             respawn_timer = 180;    // 3 seconds — plenty of breathing room
-        else if (cars_passed < 8)
+        else  
             respawn_timer = 120;    // 2 seconds
-        else if (cars_passed < 15)
-            respawn_timer = 90;     // 1.5 seconds
-        else
-            respawn_timer = 60;     // 1 second — full traffic pressure
         return;
     }
 }
