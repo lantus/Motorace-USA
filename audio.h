@@ -1,71 +1,54 @@
+#ifndef AUDIO_H
+#define AUDIO_H
 
-extern void *current_track;
-extern BOOL g_is_music_ready;
+#include <exec/types.h>
 
-enum MusicTrack
-{
-    MUSIC_START = 0,
-    MUSIC_ONROAD = 1,
-    MUSIC_CHECKPOINT = 2,
-    MUSIC_RANKING = 3,
-    MUSIC_OFFROAD = 4,
-    MUSIC_FRONTVIEW = 5,
-    MUSIC_VIVANY = 6,
-    MUSIC_GAMEOVER = 7,
-};
+extern volatile struct Custom *custom;
+extern BYTE _mt_Enable;
 
-enum SoundEffect
-{
-    SFX_CRASH = 0,
-    SFX_SKID = 1,
-    SFX_HONK = 2,
-    SFX_CRASHSKID = 3,
-    SFX_FRONTVIEWOVERTAKE = 4,
-    SFX_OVERHEADOVERTAKE = 5
-} ;
+/* ptplayer symbol references */
+extern void _mt_install_cia();
+extern void _mt_remove_cia();
+extern void _mt_init();
+extern void _mt_end();
+extern void _mt_musicmask();
+extern void _mt_playfx();
+ 
 
-// Audio channels (Amiga has 4 hardware channels)
-typedef enum {
-    SFX_CHANNEL_0 = 0,
-    SFX_CHANNEL_1 = 1,
-    SFX_CHANNEL_2 = 2,
-    SFX_CHANNEL_3 = 3
-} SFXChannel;
+typedef struct __attribute__((packed)) {
+    APTR   sfx_ptr;
+    UWORD  sfx_len;
+    UWORD  sfx_per;
+    UWORD  sfx_vol;
+    BYTE   sfx_cha;
+    UBYTE  sfx_pri;
+} SFXStruct;
 
-// SFX handle for loaded sounds
-typedef struct {
-    UBYTE *sample_data;      // Pointer to 8-bit sample data (CHIP RAM)
-    ULONG sample_length;     // Length in bytes
-    UWORD sample_rate;       // Playback rate (e.g., 8000, 11025, 22050)
-    UWORD volume;            // Default volume (0-64)
-    BOOL loaded;             // Is this SFX loaded?
-} SFXHandle;
+#define SFX_OVERHEADOVERTAKE  0
+#define SFX_FRONTVIEWOVERTAKE 1
+#define SFX_HORN              2
+#define SFX_CRASH             3
+#define SFX_SKID              4
+#define SFX_CRASHSKID         5
+#define SFX_WHEELIE           6
+#define SFX_LAND              7
+#define SFX_MAX               8
 
 
-extern UBYTE channel_play_count[4];
+/* Your game's music IDs */
+#define MUSIC_START     0
+#define MUSIC_ONROAD    1
+#define MUSIC_FRONTVIEW 2
+#define MUSIC_RANKING   3
 
+/* API */
 void Audio_Initialize(void);
-void Music_LoadModule(BYTE track);
-void Music_Play();
-void Music_Stop();
-void SFX_Play(UBYTE effect);
- 
- 
-BOOL SFX_LoadRaw(const char *filename, SFXHandle *sfx, UWORD sample_rate);
+void Audio_Shutdown(void);
+void Audio_InstallPlayer(void);
+void Music_LoadModule(UBYTE music_id);
 
-// Free an SFX handle
-void SFX_Free(SFXHandle *sfx);
+void Music_Stop(void);
+void SFX_Play(UBYTE sfx_id);
+void SFX_LoadAll(void);
 
-// Play an SFX on specified channel
-// channel: 0-3 (Amiga audio channels)
-// volume: 0-64 (0=silent, 64=max), use 0 to use default from file
-void SFX_PlayEffect(SFXHandle *sfx, SFXChannel channel, UWORD volume);
-
-// Stop playback on a channel
-void SFX_Stop(SFXChannel channel);
-
-// Stop all SFX playback
-void SFX_StopAll(void);
-
-// Set master volume for all SFX (0-64)
-void SFX_SetMasterVolume(UWORD volume);
+#endif

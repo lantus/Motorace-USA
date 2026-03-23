@@ -394,7 +394,7 @@ void City_DrawOncomingCars(void)
                 crash_anim_counter = 0;
                 MotorBike_SetFrame(BIKE_FRAME_CRASH1);  
                 Music_Stop();
-                SFX_Play(SFX_CRASHSKID);
+               // SFX_Play(SFX_CRASHSKID);
                 Timer_Start(&crash_recovery_timer, 2);  // 2 second recovery
             }
 
@@ -517,7 +517,7 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
     {
         Music_Stop();
         
-        SFX_StopAll();
+        //SFX_StopAll();
  
         city_state = CITY_STATE_COMPLETE;
 
@@ -527,7 +527,7 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
         LONG vpos = VBeamPos();
         while (VBeamPos() - vpos < 4) ;   // brief settle
         
-        Music_LoadModule(MUSIC_CHECKPOINT);
+       // Music_LoadModule(MUSIC_CHECKPOINT);
     }
 }
 

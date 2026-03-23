@@ -215,8 +215,7 @@ void WaitLine(USHORT line)
 			break;
 	}
 }
-
-static APTR GetVBR(void) 
+APTR GetVBR(void) 
 {
     APTR vbr = 0;
     UWORD getvbr[] = { 0x4e7a, 0x0801, 0x4e73 }; // MOVEC.L VBR,D0 RTE
@@ -327,61 +326,7 @@ void FreeSystem()
 #define GAMEAREA_WIDTH 64          // 24 blocks × 8 pixels
 #define GAMEAREA_BLOCKS 28          // blocks across the game area
  
-static __attribute__((interrupt)) void interruptHandlerLvl4() 
-{
-    const UWORD intreq = custom->intreqr;
-    
-    // Early exit optimization
-    if (!(intreq & (INTF_AUD0 | INTF_AUD1 | INTF_AUD2 | INTF_AUD3)))
-        return;
-    
-    const UBYTE sample_oneshot_count = 2;
-    
-    // Channel 0
-    if (intreq & INTF_AUD0)
-    {
-        if (++channel_play_count[0] == sample_oneshot_count)
-        {
-            custom->dmacon = DMAF_AUD0;
-        }
-        custom->intreq = INTF_AUD0;
-    }
-    
-    // Channel 1
-    if (intreq & INTF_AUD1)
-    {
-        if (++channel_play_count[1] == sample_oneshot_count)
-        {
-            custom->dmacon = DMAF_AUD1;
-        }
-        custom->intreq = INTF_AUD1;
-    }
-    
-    // Channel 2
-    if (intreq & INTF_AUD2)
-    {
-        if (++channel_play_count[2] == sample_oneshot_count)
-        {
-			custom->dmacon = DMAF_AUD2;
-			custom->intena = INTF_AUD2;      //  DISABLE the interrupt
-			channel_play_count[2] = 0;       // Reset the counter
-        }
-        custom->intreq = INTF_AUD2;
-    }
-    
-    // Channel 3
-    if (intreq & INTF_AUD3)
-    {
-		if (++channel_play_count[3] == sample_oneshot_count)
-		{
-			custom->dmacon = DMAF_AUD3;
-			custom->intena = INTF_AUD3;      // DISABLE the interrupt
-			channel_play_count[3] = 0;       // Reset the counter
-		}
-		custom->intreq = INTF_AUD3;
-    }
-}
-
+ 
 static __attribute__((interrupt)) void interruptHandler() 
 {
 	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
@@ -432,7 +377,7 @@ int main(void)
 	custom->intreq = (1<<INTB_VERTB);  // Clear pending
 	
 	SetInterruptHandler((APTR)interruptHandler);
-	SetInterruptHandlerLevel4((APTR)interruptHandlerLvl4);
+	Audio_InstallPlayer();
   
 	HUD_DrawAll();
  

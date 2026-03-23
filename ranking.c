@@ -356,7 +356,7 @@ void Ranking_Update(void)
                 
                 current_ranking.rankingstate = RANKING_STATE_DEMO_END;
 
-                Music_LoadModule(MUSIC_GAMEOVER);
+               // Music_LoadModule(MUSIC_GAMEOVER);
           
             }
             break;

@@ -564,7 +564,7 @@ void Cars_CheckAllCollisions(void)
             {
                 car[i].honking = TRUE;
                 car[i].honk_timer = 0;
-                //SFX_Play(SFX_HORN);
+                SFX_Play(SFX_HORN);
             }
             car[i].honk_timer++;
             if (car[i].honk_timer > 60)

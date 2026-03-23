@@ -7,323 +7,209 @@
 #include <hardware/intbits.h>
 #include <hardware/dmabits.h>
 #include <proto/exec.h>
-#include <proto/graphics.h>
-#include <proto/dos.h>
-#include "game.h"
-#include "map.h"
-#include "timers.h"
-#include "hardware.h"
-#include "bitmap.h"
-#include "copper.h"
-#include "pixel.h"
-#include "sprites.h"
-#include "motorbike.h"
-#include "hud.h"
-#include "font.h"
-#include "title.h"
-#include "hiscore.h"
-#include "city_approach.h"
 
 #include "audio.h"
-
+#include "memory.h"
+#include "disk.h"
+ 
 extern volatile struct Custom *custom;
+extern APTR GetVBR(void) ;
 
-static UWORD master_volume = 64;
- 
-static BYTE __attribute__((chip)) silent_buffer[2] = {0, 0};
+/* Module storage — loaded into chip RAM */
+static APTR modules[4];
 
-static ULONG SwapLong(ULONG v)
+/* SFX table */
+static SFXStruct sfx_table[SFX_MAX];
+static APTR sfx_samples[SFX_MAX];
+
+/* a6=custom, a0=VBR, d0=PAL */
+void mt_install_cia(void *vbr, UBYTE pal)
 {
-    return ((v) << 24) | 
-           ((v & 0xFF00) << 8) | 
-           ((v & 0xFF0000) >> 8) | 
-           ((v & 0xFF000000) >> 24);
+    register volatile void *_a6 ASM("a6") = (void *)custom;
+    register volatile void *_a0 ASM("a0") = vbr;
+    register volatile UBYTE _d0 ASM("d0") = pal;
+    __asm volatile (
+        "movem.l %%d0-%%d7/%%a0-%%a5,-(%%sp)\n"
+        "jsr _mt_install_cia\n"
+        "movem.l (%%sp)+,%%d0-%%d7/%%a0-%%a5"
+    : "+rf"(_a6), "+rf"(_a0), "+rf"(_d0)
+    :
+    : "cc", "memory");
 }
 
-static UWORD SwapWord(UWORD v)
+/* a6=custom */
+void mt_remove_cia(void)
 {
-    return ((v & 0xFF) << 8) | ((v & 0xFF00) >> 8);
+    register volatile void *_a6 ASM("a6") = (void *)custom;
+    __asm volatile (
+        "movem.l %%d0-%%d7/%%a0-%%a5,-(%%sp)\n"
+        "jsr _mt_remove_cia\n"
+        "movem.l (%%sp)+,%%d0-%%d7/%%a0-%%a5"
+    : "+rf"(_a6)
+    :
+    : "cc", "memory");
 }
 
-SFXHandle sfx_crash;
-SFXHandle sfx_skid;
-SFXHandle sfx_honk;
-SFXHandle sfx_overtake;
-SFXHandle sfx_fvovertake;
-
-BOOL g_is_music_ready = FALSE;
-
-// Track which channels are playing one-shot SFX
-UBYTE channel_play_count[4] = {0, 0, 0, 0};
- 
-// Demo - Module Player - ThePlayer 6.1a: https://www.pouet.net/prod.php?which=19922
-// The Player® 6.1A: Copyright © 1992-95 Jarno Paananen
-
-INCBIN(player, "mus/610.6.bin_new")
-INCBIN(player_nocia, "mus/player610.6.no_cia.bin");
-
-INCBIN_CHIP(mod_start, "mus/P61.start")
-INCBIN_CHIP(mod_onroad, "mus/P61.onroadstag")
-INCBIN_CHIP(mod_checkpoint, "mus/P61.checkpoint")
-INCBIN_CHIP(mod_ranking, "mus/P61.ranking")
-//INCBIN_CHIP(mod_offroad,"" )
-INCBIN_CHIP(mod_frontview,"mus/P61.frontview" )
-//INCBIN_CHIP(mod_vivany,"" )
-INCBIN_CHIP(mod_gameover,"mus/P61.gameover" )
- 
-int p61Init(const void* module) { // returns 0 if success, non-zero otherwise
-	register volatile const void* _a0 ASM("a0") = module;
-	register volatile const void* _a1 ASM("a1") = NULL;
-	register volatile const void* _a2 ASM("a2") = NULL;
-	register volatile const void* _a3 ASM("a3") = player;
-	register                int   _d0 ASM("d0"); // return value
-	__asm volatile (
-		"movem.l %%d1-%%d7/%%a4-%%a6,-(%%sp)\n"
-		"jsr 0(%%a3)\n"
-		"movem.l (%%sp)+,%%d1-%%d7/%%a4-%%a6"
-	: "=r" (_d0), "+rf"(_a0), "+rf"(_a1), "+rf"(_a2), "+rf"(_a3)
-	:
-	: "cc", "memory");
-	return _d0;
-}
-
-void p61Music() {
-	register volatile const void* _a3 ASM("a3") = player;
-	register volatile const void* _a6 ASM("a6") = (void*)0xdff000;
-	__asm volatile (
-		"movem.l %%d0-%%d7/%%a0-%%a2/%%a4-%%a5,-(%%sp)\n"
-		"jsr 4(%%a3)\n"
-		"movem.l (%%sp)+,%%d0-%%d7/%%a0-%%a2/%%a4-%%a5"
-	: "+rf"(_a3), "+rf"(_a6)
-	:
-	: "cc", "memory");
-}
-
-void p61End() {
-	register volatile const void* _a3 ASM("a3") = player_nocia;
-	register volatile const void* _a6 ASM("a6") = (void*)0xdff000;
-	__asm volatile (
-		"movem.l %%d0-%%d1/%%a0-%%a1,-(%%sp)\n"
-		"jsr 8(%%a3)\n"
-		"movem.l (%%sp)+,%%d0-%%d1/%%a0-%%a1"
-	: "+rf"(_a3), "+rf"(_a6)
-	:
-	: "cc", "memory");
-}
-
-void Music_LoadModule(BYTE track)
+/* a6=custom, a0=module, a1=samples, d0=startpos */
+void mt_init(void *module, void *samples, UBYTE startpos)
 {
-    switch (track)
-    {
-    case MUSIC_START:
-        p61Init(mod_start);
-        break;
-    case MUSIC_ONROAD:
-        p61Init(mod_onroad);
-        break;
-    case MUSIC_CHECKPOINT:
-        p61Init(mod_checkpoint);
-        break;
-    case MUSIC_RANKING:
-        p61Init(mod_ranking);
-        break;
-    case MUSIC_OFFROAD:
-        //p61Init(mod_offroad);
-        break;
-    case MUSIC_FRONTVIEW:
-        p61Init(mod_frontview);
-        break;
-    case MUSIC_VIVANY:
-        //p61Init(mod_vivany);
-        break;
-    case MUSIC_GAMEOVER:
-        p61Init(mod_gameover);
-        break;
-    }
-    custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB | INTF_EXTER;
-    custom->intreq = (1<<INTB_VERTB);  // Clear pending
+    register volatile void *_a6 ASM("a6") = (void *)custom;
+    register volatile void *_a0 ASM("a0") = module;
+    register volatile void *_a1 ASM("a1") = samples;
+    register volatile UBYTE _d0 ASM("d0") = startpos;
+    __asm volatile (
+        "movem.l %%d0-%%d7/%%a0-%%a5,-(%%sp)\n"
+        "jsr _mt_init\n"
+        "movem.l (%%sp)+,%%d0-%%d7/%%a0-%%a5"
+    : "+rf"(_a6), "+rf"(_a0), "+rf"(_a1), "+rf"(_d0)
+    :
+    : "cc", "memory");
+}
 
-    g_is_music_ready = TRUE;
+/* a6=custom */
+void mt_end(void)
+{
+    register volatile void *_a6 ASM("a6") = (void *)custom;
+    __asm volatile (
+        "movem.l %%d0-%%d7/%%a0-%%a5,-(%%sp)\n"
+        "jsr _mt_end\n"
+        "movem.l (%%sp)+,%%d0-%%d7/%%a0-%%a5"
+    : "+rf"(_a6)
+    :
+    : "cc", "memory");
+}
+
+/* a6=custom, d0=mask */
+void mt_musicmask(UWORD mask)
+{
+    register volatile void *_a6 ASM("a6") = (void *)custom;
+    register volatile UWORD _d0 ASM("d0") = mask;
+    __asm volatile (
+        "movem.l %%d0-%%d7/%%a0-%%a5,-(%%sp)\n"
+        "jsr _mt_musicmask\n"
+        "movem.l (%%sp)+,%%d0-%%d7/%%a0-%%a5"
+    : "+rf"(_a6), "+rf"(_d0)
+    :
+    : "cc", "memory");
 }
  
-void Music_Stop()
+void mt_playfx(void *sfx)
 {
-    p61End();
-    g_is_music_ready = FALSE;
-}
-
-BOOL SFX_LoadRaw(const char *filename, SFXHandle *sfx, UWORD sample_rate)
-{
-    if (!sfx) return FALSE;
-    
-    // Initialize handle
-    sfx->sample_data = NULL;
-    sfx->sample_length = 0;
-    sfx->sample_rate = sample_rate;
-    sfx->volume = 64;
-    sfx->loaded = FALSE;
-    
-    // Open file
-    BPTR file = Open((STRPTR)filename, MODE_OLDFILE);
-    if (!file)
-    {
-        KPrintF("SFX_LoadRaw: Failed to open %s\n", filename);
-        return FALSE;
-    }
-    
-    // Get file size
-    Seek(file, 0, OFFSET_END);
-    LONG file_size = Seek(file, 0, OFFSET_BEGINNING);
-    
-    if (file_size <= 0)
-    {
-        KPrintF("SFX_LoadRaw: Invalid file size\n");
-        Close(file);
-        return FALSE;
-    }
-    
-    // Allocate CHIP RAM
-    sfx->sample_data = Mem_AllocChip(file_size);
-    if (!sfx->sample_data)
-    {
-        KPrintF("SFX_LoadRaw: Failed to allocate CHIP RAM\n");
-        Close(file);
-        return FALSE;
-    }
-    
-    // Read entire file
-    if (Read(file, sfx->sample_data, file_size) != file_size)
-    {
-        KPrintF("SFX_LoadRaw: Failed to read file\n");
-       
-        Close(file);
-        return FALSE;
-    }
-    
-    Close(file);
-    
-    sfx->sample_length = file_size;
-    sfx->loaded = TRUE;
-    
-    KPrintF("SFX_LoadRaw: Loaded %s (%ld bytes @ %d Hz)\n", 
-            filename, sfx->sample_length, sfx->sample_rate);
-    
-    return TRUE;
-}
- 
-void SFX_Free(SFXHandle *sfx)
-{
-    if (!sfx || !sfx->loaded) return;
-    
-    if (sfx->sample_data)
-    {
-        
-        sfx->sample_data = NULL;
-    }
-    
-    sfx->sample_length = 0;
-    sfx->loaded = FALSE;
+    register volatile void *_a6 ASM("a6") = (void *)custom;
+    register volatile void *_a0 ASM("a0") = sfx;
+    __asm volatile (
+        "movem.l %%d0-%%d7/%%a0-%%a5,-(%%sp)\n"
+        "jsr _mt_playfx\n"
+        "movem.l (%%sp)+,%%d0-%%d7/%%a0-%%a5"
+    : "+rf"(_a6), "+rf"(_a0)
+    :
+    : "cc", "memory");
 }
 
 void Audio_Initialize(void)
 {
-    SFX_LoadRaw("sfx/crash.8svx", &sfx_crash, 22050);
-    SFX_LoadRaw("sfx/honk.8svx", &sfx_honk, 22050);
-    SFX_LoadRaw("sfx/skid.8svx", &sfx_skid, 22050);
-    SFX_LoadRaw("sfx/fvovertake.8svx", &sfx_fvovertake, 22050);
-    SFX_LoadRaw("sfx/overtake.8svx", &sfx_overtake, 22050);
+    SFX_LoadAll();
+ 
+    modules[MUSIC_START]     = Disk_AllocAndLoadAsset("mus/start.mod", MEMF_CHIP);
+    modules[MUSIC_ONROAD]    = Disk_AllocAndLoadAsset("mus/onroadstage.mod", MEMF_CHIP);
+    modules[MUSIC_FRONTVIEW] = Disk_AllocAndLoadAsset("mus/frontview.mod", MEMF_CHIP);
+    modules[MUSIC_RANKING]   = Disk_AllocAndLoadAsset("mus/ranking.mod", MEMF_CHIP);
+}
 
-    SFX_StopAll();
-
-    LONG vpos = VBeamPos();
-    while (VBeamPos() - vpos < 4) ;   // brief settle
+static void SFX_Load8SVX(const char *filename, UBYTE sfx_id, UWORD sample_rate, UBYTE priority)
+{
+    ULONG file_size = findSize((char *)filename);
+    UBYTE *file_data = Disk_AllocAndLoadAsset((char *)filename, MEMF_CHIP);
+    if (!file_data) { KPrintF("SFX: Failed to load %s\n", filename); return; }
     
-    // Clear all channel states
-    for (int i = 0; i < 4; i++)
+    /* Find BODY chunk */
+    UBYTE *ptr = file_data;
+    UBYTE *end = file_data + file_size;
+    APTR body_ptr = NULL;
+    ULONG body_len = 0;
+    
+    /* Skip FORM header: "FORM" + size + "8SVX" = 12 bytes */
+    ptr += 12;
+    
+    while (ptr < end - 8)
     {
-        channel_play_count[i] = 0;
+        ULONG chunk_id = (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+        ptr += 4;
+        ULONG chunk_size = (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+        ptr += 4;
+        
+        if (chunk_id == 0x424F4459)  /* "BODY" */
+        {
+            body_ptr = ptr;
+            body_len = chunk_size;
+            break;
+        }
+        
+        ptr += chunk_size;
+        if (chunk_size & 1) ptr++;  /* Word-align */
     }
- 
-}
-
-void SFX_Play(UBYTE effect)
-{
-    switch (effect)
+    
+    if (!body_ptr)
     {
-        case SFX_CRASH:
-            SFX_PlayEffect(&sfx_crash, SFX_CHANNEL_3, 0);  
-            break;
-        case SFX_SKID:
-            SFX_PlayEffect(&sfx_skid, SFX_CHANNEL_3, 0);  
-            break;
-        case SFX_HONK:
-            SFX_PlayEffect(&sfx_honk, SFX_CHANNEL_3, 0);  
-            break;
-        case SFX_FRONTVIEWOVERTAKE:
-            SFX_PlayEffect(&sfx_fvovertake, SFX_CHANNEL_3, 64);  
-            break;
-        case SFX_OVERHEADOVERTAKE:
-            SFX_PlayEffect(&sfx_overtake, SFX_CHANNEL_3, 64);  
-            break;    
-        case SFX_CRASHSKID:
-            SFX_PlayEffect(&sfx_crash, SFX_CHANNEL_3, 0); 
-            SFX_PlayEffect(&sfx_skid, SFX_CHANNEL_2, 0);   
-            break;
-    } 
-}
-
-void SFX_PlayEffect(SFXHandle *sfx, SFXChannel channel, UWORD volume)
-{
-    if (!sfx || !sfx->loaded || channel > 3) return;
+        KPrintF("SFX: No BODY in %s\n", filename);
+        return;
+    }
     
-    if (volume == 0) volume = sfx->volume;
-    volume = (volume * master_volume) >> 6;
-    if (volume > 64) volume = 64;
-  
-    UWORD period = 3579545UL / sfx->sample_rate;
- 
-    // Use proper interrupt flag constant
-    custom->intena = INTF_SETCLR | (INTF_AUD0 << channel);
+    sfx_samples[sfx_id] = file_data;  /* Keep file in memory (chip RAM) */
+    sfx_table[sfx_id].sfx_ptr = body_ptr;
+    sfx_table[sfx_id].sfx_len = body_len / 2;           /* Length in WORDS */
+    sfx_table[sfx_id].sfx_per = 3579545 / sample_rate;  /* Period */
+    sfx_table[sfx_id].sfx_vol = 64;                     /* Max volume */
+    sfx_table[sfx_id].sfx_cha = 3;                      /* Channel 3 */
+    sfx_table[sfx_id].sfx_pri = priority;               /* Priority */
     
-    volatile struct AudChannel *chan = &custom->aud[channel];
- 
-    // Silent buffer trick prevents clicks
-    chan->ac_ptr = (UWORD *)silent_buffer;
-    chan->ac_len = 1;
-    chan->ac_per = period;
-    chan->ac_vol = volume;
-
-
-    // Now set the real sample
-    chan->ac_ptr = (UWORD *)sfx->sample_data;
-    chan->ac_len = sfx->sample_length >> 1;
-
-    channel_play_count[channel] = 0;
-
-    // Start playback
-    custom->dmacon = DMAF_SETCLR | (DMAF_AUD0 << channel);
+    KPrintF("SFX: %s loaded, body=%ld bytes, per=%ld\n", 
+            filename, body_len, (LONG)(3579545 / sample_rate));
 }
 
-void SFX_Stop(SFXChannel channel)
+
+void Audio_InstallPlayer(void)
 {
-    if (channel > 3) return;
+    APTR vbr = GetVBR();
+    mt_install_cia(vbr, 1);
+    mt_musicmask(0x0007);
+}
+
+void Music_LoadModule(UBYTE music_id)
+{
+    mt_end();
+    if (modules[music_id])
+    {
+        mt_init(modules[music_id], NULL, 0);
+        _mt_Enable = 1;
+    }
+}
+
+void Music_Stop(void)
+{
+    _mt_Enable = 0;
+    mt_end();
+}
+
+void SFX_Play(UBYTE sfx_id)
+{
+    if (sfx_id >= SFX_MAX) return;
+    sfx_table[sfx_id].sfx_cha = 3;
     
-    // Disable DMA for this channel
-    custom->dmacon = (1 << channel);
+    mt_playfx(&sfx_table[sfx_id]);
 }
 
-void SFX_StopAll(void)
+void Audio_Shutdown(void)
 {
-   void SFX_StopAll(void)
-{
-    custom->dmacon = DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3;
-    custom->intena = INTF_AUD0 | INTF_AUD1 | INTF_AUD2 | INTF_AUD3;  // disable all audio ints
-    for (int i = 0; i < 4; i++) channel_play_count[i] = 0;
-}
+    mt_end();
+    mt_remove_cia();
 }
 
-void SFX_SetMasterVolume(UWORD volume)
+void SFX_LoadAll(void)
 {
-    if (volume > 64) volume = 64;
-    master_volume = volume;
+    SFX_Load8SVX("sfx/overtake.8svx",   SFX_OVERHEADOVERTAKE, 22050, 1);
+    SFX_Load8SVX("sfx/horn.8svx",       SFX_HORN,             22050, 2);
+    SFX_Load8SVX("sfx/crash.8svx",      SFX_CRASH,            22050, 3);
+    SFX_Load8SVX("sfx/skid.8svx",       SFX_SKID,             22050, 1);
+    SFX_Load8SVX("sfx/fvovertake.8svx", SFX_FRONTVIEWOVERTAKE,22050, 1);
 }
