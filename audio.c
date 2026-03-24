@@ -16,11 +16,15 @@ extern volatile struct Custom *custom;
 extern APTR GetVBR(void) ;
 
 /* Module storage — loaded into chip RAM */
-static APTR modules[4];
+static APTR modules[8];
 
 /* SFX table */
 static SFXStruct sfx_table[SFX_MAX];
 static APTR sfx_samples[SFX_MAX];
+
+static APTR modules_fast[8];
+static ULONG module_sizes[8];
+static APTR module_chip_buffer = NULL;
 
 /* a6=custom, a0=VBR, d0=PAL */
 void mt_install_cia(void *vbr, UBYTE pal)
@@ -108,12 +112,50 @@ void mt_playfx(void *sfx)
 
 void Audio_Initialize(void)
 {
+    mt_install_cia(GetVBR(), 1);
+    mt_musicmask(0x0007);
+    
+    SFX_LoadAll();
+    
+    /* Load modules into FAST RAM */ 
+
+    module_sizes[MUSIC_START] = findSize("mus/start.mod");
+    modules_fast[MUSIC_START] = Disk_AllocAndLoadAsset("mus/start.mod", MEMF_ANY);
+
+    module_sizes[MUSIC_CHECKPOINT] = findSize("mus/checkpoint.mod");
+    modules_fast[MUSIC_CHECKPOINT] = Disk_AllocAndLoadAsset("mus/checkpoint.mod", MEMF_ANY);
+    
+    module_sizes[MUSIC_FRONTVIEW]  = findSize("mus/frontview.mod");
+    modules_fast[MUSIC_FRONTVIEW]  = Disk_AllocAndLoadAsset("mus/frontview.mod", MEMF_ANY);
+    
+    module_sizes[MUSIC_GAMEOVER]  = findSize("mus/gameover.mod");
+    modules_fast[MUSIC_GAMEOVER]  = Disk_AllocAndLoadAsset("mus/gameover.mod", MEMF_ANY);
+    
+    module_sizes[MUSIC_OFFROAD]  = findSize("mus/offroad.mod");
+    modules_fast[MUSIC_OFFROAD]  = Disk_AllocAndLoadAsset("mus/offroad.mod", MEMF_ANY);
+    
+    module_sizes[MUSIC_ONROAD]  = findSize("mus/onroadstage.mod");
+    modules_fast[MUSIC_ONROAD]  = Disk_AllocAndLoadAsset("mus/onroadstage.mod", MEMF_ANY);
+    
+    module_sizes[MUSIC_RANKING]  = findSize("mus/ranking.mod");
+    modules_fast[MUSIC_RANKING]  = Disk_AllocAndLoadAsset("mus/ranking.mod", MEMF_ANY);
+    
+    module_sizes[MUSIC_VIVA_NY]  = findSize("mus/viva ny.mod");
+    modules_fast[MUSIC_VIVA_NY]  = Disk_AllocAndLoadAsset("mus/viva ny.mod", MEMF_ANY);    
+
+    /* Find largest module */
+    ULONG max_size = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        if (module_sizes[i] > max_size)
+            max_size = module_sizes[i];
+    }
+    
+    /* One chip buffer for the active module */
+    module_chip_buffer = Mem_AllocChip(max_size);
+
     SFX_LoadAll();
  
-    modules[MUSIC_START]     = Disk_AllocAndLoadAsset("mus/start.mod", MEMF_CHIP);
-    modules[MUSIC_ONROAD]    = Disk_AllocAndLoadAsset("mus/onroadstage.mod", MEMF_CHIP);
-    modules[MUSIC_FRONTVIEW] = Disk_AllocAndLoadAsset("mus/frontview.mod", MEMF_CHIP);
-    modules[MUSIC_RANKING]   = Disk_AllocAndLoadAsset("mus/ranking.mod", MEMF_CHIP);
 }
 
 static void SFX_Load8SVX(const char *filename, UBYTE sfx_id, UWORD sample_rate, UBYTE priority)
@@ -162,9 +204,7 @@ static void SFX_Load8SVX(const char *filename, UBYTE sfx_id, UWORD sample_rate, 
     sfx_table[sfx_id].sfx_vol = 64;                     /* Max volume */
     sfx_table[sfx_id].sfx_cha = 3;                      /* Channel 3 */
     sfx_table[sfx_id].sfx_pri = priority;               /* Priority */
-    
-    KPrintF("SFX: %s loaded, body=%ld bytes, per=%ld\n", 
-            filename, body_len, (LONG)(3579545 / sample_rate));
+ 
 }
 
 
@@ -178,9 +218,18 @@ void Audio_InstallPlayer(void)
 void Music_LoadModule(UBYTE music_id)
 {
     mt_end();
-    if (modules[music_id])
+    
+    if (modules_fast[music_id] && module_chip_buffer)
     {
-        mt_init(modules[music_id], NULL, 0);
+        /* Copy from fast to chip */
+        ULONG *src = (ULONG *)modules_fast[music_id];
+        ULONG *dst = (ULONG *)module_chip_buffer;
+        ULONG longs = (module_sizes[music_id] + 3) >> 2;
+        
+        while (longs--)
+            *dst++ = *src++;
+        
+        mt_init(module_chip_buffer, NULL, 0);
         _mt_Enable = 1;
     }
 }
@@ -207,9 +256,5 @@ void Audio_Shutdown(void)
 
 void SFX_LoadAll(void)
 {
-    SFX_Load8SVX("sfx/overtake.8svx",   SFX_OVERHEADOVERTAKE, 22050, 1);
-    SFX_Load8SVX("sfx/horn.8svx",       SFX_HORN,             22050, 2);
-    SFX_Load8SVX("sfx/crash.8svx",      SFX_CRASH,            22050, 3);
-    SFX_Load8SVX("sfx/skid.8svx",       SFX_SKID,             22050, 1);
-    SFX_Load8SVX("sfx/fvovertake.8svx", SFX_FRONTVIEWOVERTAKE,22050, 1);
+ 
 }

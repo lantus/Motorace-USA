@@ -148,47 +148,79 @@ BOOL bike_invulnerable = FALSE;
  
 void Game_Initialize()
 {
-    Timer_Init();           // Detect PAL/NTSC and initialize
+    LONG prev, now;
+    
+    prev = Mem_GetFreeChip();
+    KPrintF("=== Chip RAM Usage Report ===\n");
+    KPrintF("Start: %ld bytes\n\n", prev);
+    
+    Timer_Init();
     Sprites_Initialize();
     HiScore_Initialize();
+    now = Mem_GetFreeChip();
+    KPrintF("Timer/Sprites/HiScore:  %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
     
-    Audio_Initialize();     // SFX
+    Audio_Initialize();
+    now = Mem_GetFreeChip();
+    KPrintF("Audio (modules+SFX):    %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
     
-    // Motorbike
     MotorBike_Initialize();
+    now = Mem_GetFreeChip();
+    KPrintF("MotorBike:              %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
     
-    // HUD
     HUD_InitSprites();
     HUD_SetSpritePositions();
-
-    // Title Screen (Logo, Palette, etc)
+    now = Mem_GetFreeChip();
+    KPrintF("HUD:                    %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
+    
     Title_Initialize();
-
-    // City Skyline
+    now = Mem_GetFreeChip();
+    KPrintF("Title:                  %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
+    
     City_Initialize();
-
+    now = Mem_GetFreeChip();
+    KPrintF("City:                   %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
+    
     Game_SetBackGroundColor(0x125);
-
-    // Stage Tiles and TileMaps
+    
     Stage_Initialize();
+    now = Mem_GetFreeChip();
+    KPrintF("Stage tiles/maps:       %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
+    
     CollisionMap_Load();
- 
+    now = Mem_GetFreeChip();
+    KPrintF("Collision map:          %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
+    
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
-
     Game_SetMap(game_map);
-
+    
     MotorBike_Reset();
-
+    
     Fuel_Initialize();
-    StageProgress_Initialize(); 
- 
+    now = Mem_GetFreeChip();
+    KPrintF("Fuel:                   %6ld used  (%ld free)\n", prev - now, now);
+    prev = now;
+    
+    StageProgress_Initialize();
+    now = Mem_GetFreeChip();
+    KPrintF("StageProgress:          %6ld used  (%ld free)\n", prev - now, now);
+    
     scroll_speed_table_active = g_is_pal ? scroll_speed_table_pal : scroll_speed_table;
-
-    KPrintF("Avail Chip  = %ld\n", Mem_GetFreeChip());
-    KPrintF("Avail Fast  = %ld\n", Mem_GetFreeFast());
+    
+    LONG total = Mem_GetFreeChip();
+    KPrintF("\n=== Total chip used: %ld bytes ===\n", Mem_GetFreeChip());
+    KPrintF("Chip remaining: %ld\n", total);
+    KPrintF("Fast remaining: %ld\n", Mem_GetFreeFast());
 }
-
 void Game_Reset(void)
 {
     title_state = TITLE_ATTRACT_INIT;
@@ -950,6 +982,9 @@ void Stage_Update()
         {
             bike_speed = wheelie_speed;
             bike_state = BIKE_STATE_WHEELIE;
+
+            if ((game_frame_count & 15) == 0)
+                SFX_Play(SFX_SKID);
             
             // Clear the landing path — push cars out of the way
           
@@ -994,6 +1029,7 @@ void Stage_Update()
             return;
         }
         
+        
         if (collision_state == COLLISION_TRAFFIC || collision_state == COLLISION_OFFROAD)
         {
             if (bike_speed > 0)
@@ -1033,6 +1069,11 @@ void Stage_Update()
             StageProgress_UpdateOverhead(mapposy);
             Stage_CheckCompletion();
             return;
+        }
+
+        if (surface == SURFACE_PUDDLE)
+        {
+           SFX_Play(SFX_SKID);
         }
 
         // === BRAKE — button 2 or pull down ===
@@ -1318,6 +1359,8 @@ void Game_HandleCollisions(void)
             Music_Stop();
             crash_anim_frames = 0;
             crash_spin_frame = 0;
+            SFX_Play(SFX_CRASHSKID);
+           
  
         }
         else if (collision_state == COLLISION_OFFROAD)
@@ -1326,7 +1369,7 @@ void Game_HandleCollisions(void)
             Music_Stop();
             crash_anim_frames = 0;
             crash_spin_frame = 0;
-   
+            SFX_Play(SFX_CRASHSKID);
         }
     }
     

@@ -201,9 +201,8 @@ void Cleanup(char *msg)
 static void OpenDisplay(void)
 {
 	bitmapheight = BITMAPHEIGHT + 3;
- 
+
 	Screen_Initialize_DoubleBuff(BITMAPWIDTH,bitmapheight,BLOCKSDEPTH, FALSE);
- 
 }
 
 void WaitLine(USHORT line) 

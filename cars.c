@@ -552,7 +552,7 @@ void Cars_CheckAllCollisions(void)
         WORD x_dist = ABS(bike_cx - car_cx);
         WORD gap = car_screen_y - bike_sy;
  
-        if (gap > 0 && gap < 64 && x_dist < 24)
+        if (gap > 0 && gap < 40 && x_dist < 16)
         {
             car[i].accumulator = 0;
             car[i].y += 3;
@@ -567,10 +567,9 @@ void Cars_CheckAllCollisions(void)
                 SFX_Play(SFX_HORN);
             }
             car[i].honk_timer++;
-            if (car[i].honk_timer > 60)
+            if (car[i].honk_timer > 360)
             {
-                car[i].honk_timer = 0;
-                //SFX_Play(SFX_HORN);
+                car[i].honk_timer = 0;           
             }
         }
         else

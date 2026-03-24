@@ -35,11 +35,15 @@ typedef struct __attribute__((packed)) {
 #define SFX_MAX               8
 
 
-/* Your game's music IDs */
-#define MUSIC_START     0
-#define MUSIC_ONROAD    1
-#define MUSIC_FRONTVIEW 2
-#define MUSIC_RANKING   3
+/* music IDs */
+#define MUSIC_START         0
+#define MUSIC_ONROAD        1
+#define MUSIC_FRONTVIEW     2
+#define MUSIC_RANKING       3
+#define MUSIC_GAMEOVER      4
+#define MUSIC_OFFROAD       5
+#define MUSIC_CHECKPOINT    6
+#define MUSIC_VIVA_NY       7
 
 /* API */
 void Audio_Initialize(void);
