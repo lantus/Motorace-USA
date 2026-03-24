@@ -97,7 +97,7 @@ void Fuel_Draw(void)
     fuel_gauge.needs_redraw = FALSE;
     
     WORD status_y = 40;
-    WORD y_offset = status_y + 8 + (fuel_gauge.current_block * 8);
+    WORD y_offset = status_y + 8 + (fuel_gauge.current_block << 3);
     
     const char *piece = fuel_pieces[fuel_gauge.current_state];
     HUD_DrawString((char*)piece, 0, y_offset);
@@ -105,7 +105,7 @@ void Fuel_Draw(void)
 
 void Fuel_DrawAll(void)
 {
-     WORD status_y = 40;
+    WORD status_y = 40;
     
     for (UBYTE block = 0; block < FUEL_BLOCKS; block++)
     {
@@ -127,7 +127,7 @@ void Fuel_DrawAll(void)
             piece = fuel_pieces[0];
         }
         
-        WORD y_offset = status_y + 8 + (block * 8);
+        WORD y_offset = status_y + 8 + (block << 3);
         HUD_DrawString((char*)piece, 0, y_offset);
     }
 }
@@ -159,7 +159,7 @@ void Fuel_Add(UBYTE blocks)
     fuel_gauge.fuel_empty = FALSE;
     fuel_gauge.needs_redraw = TRUE;   
     
-    KPrintF("Added %d fuel blocks\n", blocks);
+    KPrintF("Added %ld fuel blocks\n", blocks);
 }
 
 BOOL Fuel_IsEmpty(void)

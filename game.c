@@ -1040,6 +1040,42 @@ void Stage_Update()
             return;
         }
 
+        if (surface == SURFACE_GASCAN)
+        {
+            /* Find the map tile at bike position and replace with road */
+            WORD map_x = (bike_position_x + 8) / BLOCKWIDTH;
+            WORD map_y = bike_wy / BLOCKHEIGHT;
+ 
+            /* Add fuel */
+            Fuel_Add(1);
+            Fuel_DrawAll();        
+
+            /* Replace tile in map data */
+            mapdata[map_y * mapwidth + map_x] = ROAD_TILE_PLAIN;
+            
+            UBYTE old_col = Collision_Get(bike_position_x + 8, bike_wy);
+            Collision_Set(bike_position_x + 8, bike_wy, (old_col & 0xF0) | SURFACE_NORMAL);
+            
+            surface = (LANE_1 << 4) | SURFACE_NORMAL ; // Do it here too
+ 
+            /* Redraw the tile on all three buffers */
+            WORD tile_screen_y = (map_y * BLOCKHEIGHT) - mapposy;
+            WORD buf_y = ROUND2BLOCKHEIGHT((map_y * BLOCKHEIGHT) % EFFECTIVE_HEIGHT) << 2;
+            WORD buf_x = map_x << 4;
+            
+            DrawBlock(buf_x, buf_y, map_x, map_y, screen.bitplanes);
+            DrawBlock(buf_x, buf_y, map_x, map_y, screen.offscreen_bitplanes);
+            DrawBlock(buf_x, buf_y, map_x, map_y, screen.pristine);
+            
+            /* Also the mirrored half */
+            UWORD yoff = buf_y + (HALFBITMAPHEIGHT << 2);
+            DrawBlock(buf_x, yoff, map_x, map_y, screen.bitplanes);
+            DrawBlock(buf_x, yoff, map_x, map_y, screen.offscreen_bitplanes);
+            DrawBlock(buf_x, yoff, map_x, map_y, screen.pristine);
+
+            return;
+        }
+
         if (surface == SURFACE_PUDDLE)
         {
            SFX_Play(SFX_SKID);

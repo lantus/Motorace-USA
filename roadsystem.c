@@ -112,6 +112,18 @@ UBYTE Collision_Get(WORD world_x, WORD world_y)
     return collision_map[ty * col_map_width + tx];
 }
 
+__attribute__((always_inline)) 
+void Collision_Set(WORD world_x, WORD world_y, UBYTE value)
+{
+    WORD tx = world_x >> 4;
+    WORD ty = world_y >> 4;
+    
+    if (tx < 0 || tx >= col_map_width || ty < 0 || ty >= col_map_height)
+        return;
+    
+    collision_map[ty * col_map_width + tx] = value;
+}
+
 /* Convenience: just the lane */
 __attribute__((always_inline))
 UBYTE Collision_GetLane(WORD world_x, WORD world_y)

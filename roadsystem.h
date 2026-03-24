@@ -39,10 +39,11 @@
 #define SURFACE_PUDDLE    1
 #define SURFACE_WATER     2
 #define SURFACE_WHEELIE   3
-#define SURFACE_OIL       4
+#define SURFACE_GASCAN    4
 #define SURFACE_GRAVEL    5
 #define SURFACE_BOOST     6
 #define SURFACE_JUMP      7
+
 
 #define GET_LANE(packed)    ((packed) >> 4)
 #define GET_SURFACE(packed) ((packed) & 0x0F)
@@ -51,6 +52,8 @@
 
 #define ROAD_CACHE_SIZE 256
 
+#define ROAD_TILE_PLAIN 11
+
 extern BYTE road_tile_idx;
 extern WORD road_center_cache[ROAD_CACHE_SIZE];
 
@@ -58,6 +61,7 @@ void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count);
 UBYTE Collision_Get(WORD world_x, WORD world_y);
 UBYTE Collision_GetLane(WORD world_x, WORD world_y);
 UBYTE Collision_GetSurface(WORD world_x, WORD world_y);
+void Collision_Set(WORD world_x, WORD world_y, UBYTE value);
 void CollisionMap_Load(void);
 
 void Road_CacheRow(WORD world_y);
