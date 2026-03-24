@@ -207,6 +207,6 @@ void Fuel_AddPoints(UWORD points)
     fuel_gauge.fuel_empty = FALSE;
     fuel_gauge.needs_redraw = TRUE;
     
-    KPrintF("Added %ld points to fuel (now block=%ld, state=%ld)\n", 
-            points, fuel_gauge.current_block, fuel_gauge.current_state);
+    //KPrintF("Added %ld points to fuel (now block=%ld, state=%ld)\n", 
+    //        points, fuel_gauge.current_block, fuel_gauge.current_state);
 }

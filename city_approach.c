@@ -387,15 +387,15 @@ void City_DrawOncomingCars(void)
       
             if (!frontview_bike_crashed && City_CheckCarCollision(current_car))
             {
-                Game_SetBackGroundColor(0xF00);  // Flash red
+              
                 frontview_bike_crashed = TRUE;
                 bike_speed = 20;  // Drop to near zero
                 crash_anim_frame = 0;
                 crash_anim_counter = 0;
                 MotorBike_SetFrame(BIKE_FRAME_CRASH1);  
                 Music_Stop();
-                SFX_Play(SFX_CRASH);
-                SFX_Play(SFX_SKID);
+                SFX_Play(SFX_CRASHSKID);
+             
                 Timer_Start(&crash_recovery_timer, 2);  // 2 second recovery
             }
 

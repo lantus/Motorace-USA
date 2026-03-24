@@ -262,4 +262,7 @@ void SFX_LoadAll(void)
     SFX_Load8SVX("sfx/overtake.8svx", SFX_OVERHEADOVERTAKE, 22050, 1);
     SFX_Load8SVX("sfx/fvovertake.8svx", SFX_FRONTVIEWOVERTAKE, 22050, 1);
     SFX_Load8SVX("sfx/crashskid.8svx", SFX_CRASHSKID, 22050, 1);
+
+    sfx_table[SFX_BRAKE] = sfx_table[SFX_SKID];    /* Copy everything */
+    sfx_table[SFX_BRAKE].sfx_per = 250;
 }

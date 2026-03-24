@@ -945,10 +945,10 @@ void Stage_Update()
 
         if (wheelie_active)
         {
-            bike_speed = wheelie_speed;
+            //bike_speed = wheelie_speed;
             bike_state = BIKE_STATE_WHEELIE;
 
-            if ((game_frame_count & 15) == 0)
+            if ((game_frame_count & 7) == 0)
                 SFX_Play(SFX_SKID);
             
             // Clear the landing path — push cars out of the way
@@ -1049,6 +1049,8 @@ void Stage_Update()
                 bike_speed = MIN_CRUISING_SPEED;
             
             bike_state = BIKE_STATE_BRAKING;
+
+            SFX_Play(SFX_BRAKE);
         }
 
         // === ACCELERATION LOGIC ===
