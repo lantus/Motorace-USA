@@ -1,12 +1,28 @@
+#ifndef _TITLE_
+#define _TITLE_
+
 #define ZIPPY_LOGO "objects/zippylogo.BPL"
 #define CITY_ATTRACT "images/city_attract.BPL"
 #define AMIGA_LOGO "images/amilogo.BPL"
 
 extern RawMap *city_attract_map;
-extern BitMapEx *city_attract_tiles;
+//extern BitMapEx *city_attract_tiles;
 extern UBYTE title_state;
 
 #define ATTRACTMODE_Y_OFFSET 192
+
+#define ZIPPY_LOGO_WIDTH 80
+#define ZIPPY_LOGO_HEIGHT 48
+#define ZIPPY_LOGO_WIDTH_WORDS 6            // (includes padding)
+#define ATTRACT_MOTORBIKE_CENTER_X 80       // X position of the bike during attract
+
+#define ATTRACTMODE_TILES_WIDTH 256
+#define ATTRACTMODE_TILES_HEIGHT 512
+#define NUM_ROAD_FRAMES 14
+
+#define AMI_LOGO_WIDTH 32
+#define AMI_LOGO_HEIGHT 32
+#define AMI_LOGO_WIDTH_WORDS 2
 
 enum TitleState {
     TITLE_ATTRACT_INIT = 0,
@@ -38,3 +54,5 @@ void AttractMode_ShowHiScores(void);
 void AttractMode_ShowCredits(void);
 void AttractMode_DrawText(void);
 void AttractMode_BlitAmiLogo();
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef _MAP_
+#define _MAP_
+
 typedef struct RawMap
 {
 	WORD	mapwidth;
@@ -9,4 +12,6 @@ typedef struct RawMap
 	BYTE	transparentblock;
 	UBYTE	data[1];
 } RawMap;
+
+#endif
 

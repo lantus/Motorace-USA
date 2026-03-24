@@ -28,19 +28,6 @@
 #include "city_approach.h"
 #include "stageprogress.h"
  
-#define ZIPPY_LOGO_WIDTH 80
-#define ZIPPY_LOGO_HEIGHT 48
-#define ZIPPY_LOGO_WIDTH_WORDS 6            // (includes padding)
-#define ATTRACT_MOTORBIKE_CENTER_X 80       // X position of the bike during attract
-
-#define ATTRACTMODE_TILES_WIDTH 256
-#define ATTRACTMODE_TILES_HEIGHT 512
-#define NUM_ROAD_FRAMES 14
-
-#define AMI_LOGO_WIDTH 32
-#define AMI_LOGO_HEIGHT 32
-#define AMI_LOGO_WIDTH_WORDS 2
-
 extern volatile struct Custom *custom;
 
 BlitterObject zippy_logo;
@@ -53,7 +40,7 @@ static UWORD title_frames = 0;
 static UWORD title_flash_counter = 0;
  
 RawMap *city_attract_map;
-BitMapEx *city_attract_tiles;
+//BitMapEx *city_attract_tiles;
 
 GameTimer attract_timer;
 GameTimer logo_flash_timer;
@@ -74,29 +61,19 @@ void Title_LoadSprites()
 
 void Title_Initialize(void)
 {
-    // Load Zippy Race Logo Bob
-
     zippy_logo.background = Mem_AllocChip((ZIPPY_LOGO_WIDTH_WORDS * 2) * ZIPPY_LOGO_HEIGHT * 4);
-  
     zippy_logo.visible = TRUE;
     zippy_logo.off_screen = FALSE;
 
     Title_LoadSprites();
- 
-    // Attract Mode Tiles/Tilemap
     Title_OpenMap();
-    Title_OpenBlocks();
-
-    // Palette
+ 
     Game_LoadPalette("palettes/intro.pal", intro_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/cars_frontview_lv.pal", lv_colors, BLOCKSCOLORS);
-    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
-   
-    title_state = TITLE_ATTRACT_INIT;
+    Game_ApplyPalette(intro_colors, BLOCKSCOLORS);
     
-    // Reset Positions
+    title_state = TITLE_ATTRACT_INIT;
     Title_Reset();
-
     title_state = TITLE_ATTRACT_START;
 }
 
@@ -114,12 +91,10 @@ void Title_Draw()
             // So we pre-draw the city skyline ones
             // then on update we only draw the tiles being replaced
       
-
             City_PreDrawRoad();
             Title_SaveBackground();
             // Draw the hud
             
-
             StageProgress_FillAll();
             StageProgress_DrawAll(); 
 
@@ -600,7 +575,7 @@ void Title_OpenMap(void)
  
 void Title_OpenBlocks(void)
 {
-	city_attract_tiles = BitMapEx_Create(BLOCKSDEPTH, ATTRACTMODE_TILES_WIDTH, ATTRACTMODE_TILES_HEIGHT+64);
-	Disk_LoadAsset((UBYTE *)city_attract_tiles->planes[0],"tiles/city_attract.BPL");  
+	//city_attract_tiles = BitMapEx_Create(BLOCKSDEPTH, ATTRACTMODE_TILES_WIDTH, ATTRACTMODE_TILES_HEIGHT+64);
+	//Disk_LoadAsset((UBYTE *)city_attract_tiles->planes[0],"tiles/city_attract.BPL");  
 }
  

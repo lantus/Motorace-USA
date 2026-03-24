@@ -30,12 +30,11 @@ typedef struct __attribute__((packed)) {
 #define SFX_CRASH             3
 #define SFX_SKID              4
 #define SFX_CRASHSKID         5
-#define SFX_WHEELIE           6
-#define SFX_LAND              7
-#define SFX_MAX               8
+ 
+#define SFX_MAX               6
 
 
-/* music IDs */
+/* music */
 #define MUSIC_START         0
 #define MUSIC_ONROAD        1
 #define MUSIC_FRONTVIEW     2

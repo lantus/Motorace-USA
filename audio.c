@@ -255,6 +255,11 @@ void Audio_Shutdown(void)
 }
 
 void SFX_LoadAll(void)
-{
- 
+{ 
+    SFX_Load8SVX("sfx/crashskid.8svx", SFX_CRASHSKID, 22050, 1);
+    SFX_Load8SVX("sfx/horn.8svx", SFX_HORN, 22050, 1);
+    SFX_Load8SVX("sfx/skid.8svx", SFX_SKID, 22050, 1);
+    SFX_Load8SVX("sfx/overtake.8svx", SFX_OVERHEADOVERTAKE, 22050, 1);
+    SFX_Load8SVX("sfx/fvovertake.8svx", SFX_FRONTVIEWOVERTAKE, 22050, 1);
+    SFX_Load8SVX("sfx/crashskid.8svx", SFX_CRASHSKID, 22050, 1);
 }

@@ -148,79 +148,40 @@ BOOL bike_invulnerable = FALSE;
  
 void Game_Initialize()
 {
-    LONG prev, now;
-    
-    prev = Mem_GetFreeChip();
-    KPrintF("=== Chip RAM Usage Report ===\n");
-    KPrintF("Start: %ld bytes\n\n", prev);
-    
     Timer_Init();
     Sprites_Initialize();
     HiScore_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("Timer/Sprites/HiScore:  %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
     
     Audio_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("Audio (modules+SFX):    %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
-    
     MotorBike_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("MotorBike:              %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
-    
     HUD_InitSprites();
     HUD_SetSpritePositions();
-    now = Mem_GetFreeChip();
-    KPrintF("HUD:                    %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
+    
+    /* Initialize tilesheet pool BEFORE Title and Stage */
+    TilesheetPool_Initialize();
     
     Title_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("Title:                  %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
-    
     City_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("City:                   %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
     
     Game_SetBackGroundColor(0x125);
     
     Stage_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("Stage tiles/maps:       %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
-    
     CollisionMap_Load();
-    now = Mem_GetFreeChip();
-    KPrintF("Collision map:          %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
     
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
+    
+    /* Load city attract tiles for title screen */
+    TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
+    
     Game_SetMap(game_map);
-    
     MotorBike_Reset();
-    
     Fuel_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("Fuel:                   %6ld used  (%ld free)\n", prev - now, now);
-    prev = now;
-    
     StageProgress_Initialize();
-    now = Mem_GetFreeChip();
-    KPrintF("StageProgress:          %6ld used  (%ld free)\n", prev - now, now);
     
     scroll_speed_table_active = g_is_pal ? scroll_speed_table_pal : scroll_speed_table;
-    
-    LONG total = Mem_GetFreeChip();
-    KPrintF("\n=== Total chip used: %ld bytes ===\n", Mem_GetFreeChip());
-    KPrintF("Chip remaining: %ld\n", total);
-    KPrintF("Fast remaining: %ld\n", Mem_GetFreeFast());
 }
+
 void Game_Reset(void)
 {
     title_state = TITLE_ATTRACT_INIT;
@@ -237,6 +198,9 @@ void Game_Reset(void)
  
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
+
+    /* Swap back to city attract tiles */
+    TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
 
     nyc_horizon.visible = TRUE;
     nyc_horizon.off_screen = FALSE;
@@ -271,6 +235,8 @@ void Game_NewGame(UBYTE difficulty)
     bike_speed = 0;
     game_rank = 99; // Start in 99th
 
+    /* Swap to level 1 tiles */
+    TilesheetPool_Load(TILEPOOL_LEVEL1);
     Game_SetMap(game_map);
 
     // Position bike near bottom of screen
@@ -343,21 +309,21 @@ void Game_SetMap(UBYTE maptype)
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
-            blocksbuffer = city_attract_tiles->planes[0];
+           
             city_horizon = &nyc_horizon;
             break;
         case MAP_OVERHEAD_LASANGELES:
             mapdata = (UWORD *)la_map->data;
             mapwidth = la_map->mapwidth;
             mapheight = la_map->mapheight;  
-            blocksbuffer = la_tiles->planes[0];
+          
             city_horizon = &lv_horizon;
             break;
         case MAP_FRONTVIEW_LASVEGAS:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
-            blocksbuffer = city_attract_tiles->planes[0];
+      
             city_horizon = &lv_horizon;
             break;
         case MAP_OVERHEAD_LASVEGAS:
@@ -711,7 +677,7 @@ void GameReady_Update(void)
 
         // Start HUD update timer (update every 96 frames)
         Timer_StartMs(&hud_update_timer, 96);
-    
+ 
         Game_NewGame(0);
 
         Game_ApplyPalette(city_colors,BLOCKSCOLORS);
@@ -722,6 +688,7 @@ void GameReady_Update(void)
 
         HUD_SetSpritePositions();
         HUD_DrawAll();
+
  
         Game_FillScreen();
         Road_CacheFillVisible();
@@ -736,11 +703,9 @@ void GameReady_Update(void)
 
 void Stage_Initialize(void)
 {
-	la_tiles = BitMapEx_Create(BLOCKSDEPTH, BLOCKSWIDTH, BLOCKSHEIGHT);
-	Disk_LoadAsset((UBYTE *)la_tiles->planes[0],"tiles/lv1_tiles.BPL");
-	Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
-	la_map = Disk_AllocAndLoadAsset("maps/level1.map",MEMF_PUBLIC);
-
+    Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
+    la_map = Disk_AllocAndLoadAsset("maps/level1.map", MEMF_PUBLIC);
+ 
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);
     Sprites_LoadFromFile(COUNTDOWN_ONE,&spr_countdown_timer[1]);
@@ -1434,6 +1399,9 @@ void Stage_InitializeFrontView(void)
  
     Sprites_ClearLower();
     Sprites_ClearHigher();
+
+     /* Swap to city attract tiles for front view */
+    TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
 
     Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
 
