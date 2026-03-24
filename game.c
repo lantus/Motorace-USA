@@ -750,6 +750,16 @@ void Stage_Draw()
         bike_world_y = mapposy + bike_position_y;
         Game_SwapBuffers();
  
+        if ((game_frame_count & 31) < 16)
+        {
+            HUD_DrawString("1UP", 0, 16);
+        }
+        else
+        {
+            HUD_ClearSpriteBlock(0, 16);
+            HUD_ClearSpriteBlock(1, 16);
+        }
+
         if (Timer_HasElapsed(&hud_update_timer))
         {
         switch (hud_phase)
