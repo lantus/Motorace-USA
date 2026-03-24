@@ -359,7 +359,7 @@ void HUD_DrawAll()
    
 
     HUD_DrawString("1UP", 0, 16);
-    HUD_UpdateScore(0);
+    HUD_UpdateScore(game_score);
     HUD_DrawString(NEW_YORK , 3 , status_y+3);
     HUD_DrawString(CHICAGO , 3 , status_y+21);
     HUD_DrawString(ST_LOUIS , 3 , status_y+41);

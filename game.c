@@ -90,8 +90,8 @@ UBYTE game_stage = STAGE_LASANGELES;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDREDCC;
 UBYTE game_map = MAP_ATTRACT_INTRO;
-ULONG game_score = 0;
-UBYTE game_rank = 90;
+ULONG game_score;
+UBYTE game_rank;
 ULONG game_frame_count = 0;
 
 UBYTE game_car_block_move_rate = 5;   // Frames between movements (lower = faster)
@@ -750,16 +750,6 @@ void Stage_Draw()
         bike_world_y = mapposy + bike_position_y;
         Game_SwapBuffers();
  
-        if ((game_frame_count & 31) < 16)
-        {
-            HUD_DrawString("1UP", 0, 16);
-        }
-        else
-        {
-            HUD_ClearSpriteBlock(0, 16);
-            HUD_ClearSpriteBlock(1, 16);
-        }
-
         if (Timer_HasElapsed(&hud_update_timer))
         {
         switch (hud_phase)
@@ -896,9 +886,14 @@ void Stage_Update()
                 Timer_Reset(&countdown_timer);  // Reset for next second
                 current_countdown_spr = spr_countdown[countdown_value];
                 WaitVBL();
+
+                custom->intena = INTF_INTEN;
+
                 Sprites_SetPointers(current_countdown_spr, 2, SPRITEPTR_TWO_AND_THREE);
                 Sprites_SetScreenPosition((UWORD *)current_countdown_spr[0],96,120,32);
                 Sprites_SetScreenPosition((UWORD *)current_countdown_spr[1],96,120,32);
+
+                custom->intena = INTF_SETCLR | INTF_INTEN;
             }
             else
             {
@@ -1031,7 +1026,6 @@ void Stage_Update()
             Timer_Start(&wheelie_timer, 2);
             bike_state = BIKE_STATE_WHEELIE;
             wheelie_anim_frames = 0;  // Reset animation counter
-          //  SFX_Play(SFX_WHEELIE);
             
             if (!wheelie_scored)
             {
@@ -1384,7 +1378,7 @@ void Stage_CheckCompletion(void)
     // Check if bike reached the top of the map (end of stage)
     // Map starts at high Y values and scrolls toward 0
     
-    if (stage_progress.current_map_pos >= 16940)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= 19120)  // Near the top/end of map
     {
         stage_state = STAGE_FRONTVIEW;
 
@@ -1430,6 +1424,7 @@ void Stage_InitializeFrontView(void)
     City_ShowCityName("LAS VEGAS");
 
     HUD_DrawAll();
+    HUD_UpdateScore(game_score);
 
     Music_Stop();
     Music_LoadModule(MUSIC_FRONTVIEW);

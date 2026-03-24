@@ -246,7 +246,7 @@ void Ranking_Update(void)
             if (flash_counter >= 1)
             {
                 flash_counter = 0;
-                current_ranking.flash_state = !current_ranking.flash_state;
+                current_ranking.flash_state = !current_ranking.flash_state;   
             }
             
             // After 2 seconds, stop flashing
@@ -484,6 +484,11 @@ void Ranking_Draw(UBYTE *buffer)
             {
                 Fuel_AddPoints(amount);   
                 Fuel_DrawAll();
+
+                if ((game_frame_count % 4) == 0 )
+                {
+                    SFX_Play(SFX_OVERHEADOVERTAKE);
+                }
             }
             else
             {
