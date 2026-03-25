@@ -22,6 +22,7 @@
 #include "font.h"
 #include "title.h"
 #include "hiscore.h"
+#include "hiscore_entry.h"
 #include "blitter.h"
 #include "city_approach.h"
 #include "roadsystem.h"
@@ -142,6 +143,13 @@ static ULONG last_score = 0xFFFFFFFF;
 static UBYTE last_rank = 0xFF;
 static WORD  last_speed = -1;
 static UBYTE hud_phase = 0;
+
+// hiscore/gameover stuff
+
+static GameTimer gameover_timer;
+static GameTimer gameover_flash_timer;
+static BOOL gameover_text_visible = TRUE;
+static UBYTE gameover_hiscore_pos = 0;  /* 0 = doesn't qualify */
 
 // Bike repositioning stuff
 BOOL bike_invulnerable = FALSE;
@@ -918,6 +926,24 @@ void Stage_Draw()
  
         Ranking_Draw(draw_buffer);
         Game_ResetBitplanePointer();
+    }
+    else if (stage_state == STAGE_GAMEOVER)
+    {
+        if (gameover_text_visible)
+        {
+            Font_DrawStringCentered(draw_buffer, "GAME OVER", 120, 17); 
+        }
+        else
+        {
+            Font_ClearArea(draw_buffer, 0, 120, SCREENWIDTH, 8);
+        }
+        
+        Game_ResetBitplanePointer();
+    }
+    else if (stage_state == STAGE_GAMEOVER_ENTRY)
+    {
+        NameEntry_Draw(draw_buffer);
+        Game_SwapBuffers();
     }   
 }
 
@@ -994,7 +1020,20 @@ void Stage_Update()
             
             // Transition to game over
             stage_state = STAGE_GAMEOVER;
-            KPrintF("=== GAME OVER - OUT OF FUEL ===\n");
+ 
+            // Turn off Bike
+            Sprites_ClearLower();
+            Sprites_ClearHigher();
+            
+            Game_ApplyPalette((UWORD *)black_palette, BLOCKSCOLORS);
+            WaitVBL();
+
+            BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+            BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+            BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+
+            Music_LoadModule(MUSIC_GAMEOVER); 
+
             return;
         }
         
@@ -1057,6 +1096,7 @@ void Stage_Update()
         }
         
         
+        
         if (collision_state == COLLISION_TRAFFIC || collision_state == COLLISION_OFFROAD)
         {
             if (bike_speed > 0)
@@ -1103,7 +1143,7 @@ void Stage_Update()
         
         if (surface_l == SURFACE_GASCAN || surface == SURFACE_GASCAN || surface_r == SURFACE_GASCAN)
         {
-             WORD hit_x = bike_position_x + 8;
+            WORD hit_x = bike_position_x + 8;
             if (surface_l == SURFACE_GASCAN) hit_x = bike_position_x;
             else if (surface_r == SURFACE_GASCAN) hit_x = bike_position_x + 16;
             
@@ -1118,7 +1158,7 @@ void Stage_Update()
             UBYTE old_col = Collision_Get(hit_x, bike_wy);
             Collision_Set(hit_x, bike_wy, (old_col & 0xF0) | SURFACE_NORMAL);
             
-            WORD buf_y = ROUND2BLOCKHEIGHT((map_y * BLOCKHEIGHT) % EFFECTIVE_HEIGHT) << 2;
+            WORD buf_y = ROUND2BLOCKHEIGHT((map_y << 4) % EFFECTIVE_HEIGHT) << 2;
             WORD buf_x = map_x << 4;
             
             DrawBlock(buf_x, buf_y, map_x, map_y, screen.bitplanes);
@@ -1230,7 +1270,23 @@ void Stage_Update()
             
             // Transition to game over
             stage_state = STAGE_GAMEOVER;
-            KPrintF("=== GAME OVER - OUT OF FUEL ===\n");
+          
+
+            // Turn off Bike
+            Sprites_ClearLower();
+            Sprites_ClearHigher();
+
+            Game_ApplyPalette((UWORD *)black_palette, BLOCKSCOLORS);
+            WaitVBL();
+  
+
+            BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+            BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+            BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+ 
+
+            Music_LoadModule(MUSIC_GAMEOVER); 
+
             return;
         }
 
@@ -1340,6 +1396,73 @@ void Stage_Update()
     else if (stage_state == STAGE_RANKING)
     {
         Ranking_Update();
+    }
+    else if (stage_state == STAGE_GAMEOVER)
+    {
+        /* First frame — set up */
+        if (!Timer_IsActive(&gameover_timer))
+        {
+           
+            Timer_Start(&gameover_timer, 6);
+            Timer_StartMs(&gameover_flash_timer, 300);
+            gameover_text_visible = TRUE;
+            
+            /* Check high score qualification now */
+            gameover_hiscore_pos = HiScore_CheckQualifies(game_score);
+
+            Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
+
+        }
+        
+        /* Flash "GAME OVER" text */
+        if (Timer_HasElapsed(&gameover_flash_timer))
+        {
+            gameover_text_visible = !gameover_text_visible;
+            Timer_Reset(&gameover_flash_timer);
+        }
+        
+        /* After 5 seconds */
+        if (Timer_HasElapsed(&gameover_timer))
+        {
+            Timer_Stop(&gameover_timer);
+            Timer_Stop(&gameover_flash_timer);
+            
+            if (gameover_hiscore_pos > 0)
+            {
+                /* Qualifies for high score — show name entry */
+                stage_state = STAGE_GAMEOVER_ENTRY;
+                
+                BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
+                BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 256);
+                
+                NameEntry_Init(gameover_hiscore_pos);
+            }
+            else
+            {
+                /* Doesn't qualify — back to attract */
+                Game_Reset();
+            }
+        }
+    }
+    else if (stage_state == STAGE_GAMEOVER_ENTRY)
+    {
+        NameEntry_Update();
+        
+        /* Handle input */
+        UBYTE joy = 0;
+        if (JoyUp()) joy |= 0x01;
+        if (JoyDown()) joy |= 0x02;
+        NameEntry_HandleInput(joy, JoyFirePressed());
+        
+        if (NameEntry_IsComplete())
+        {
+            /* Insert into high score table */
+            const char *name = NameEntry_GetName();
+            HiScore_Insert(game_score, game_rank, name);
+            
+            /* Return to attract */
+            Game_Reset();
+        }
     }
 }
  

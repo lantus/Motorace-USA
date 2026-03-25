@@ -348,6 +348,7 @@ void Ranking_Update(void)
         {
             if (Timer_HasElapsed(&display_timer))
             {
+                
                 Timer_Start(&display_timer, 2);
                 
                 // Clear everything and show thank you message

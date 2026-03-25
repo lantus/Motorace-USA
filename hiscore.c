@@ -76,13 +76,14 @@ UBYTE HiScore_Insert(ULONG score, UBYTE rank, const char *name)
         hiscore_table.entries[i] = hiscore_table.entries[i - 1];
     }
     
-    // Insert new entry
     hiscore_table.entries[insert_pos].score = score;
     hiscore_table.entries[insert_pos].rank = rank;
     
-    // Copy name (max 3 chars)
-    //strncpy(hiscore_table.entries[insert_pos].name, name, HISCORE_NAME_LENGTH);
-    hiscore_table.entries[insert_pos].name[HISCORE_NAME_LENGTH] = '\0';
+    /* Copy name (max 3 chars) */
+    hiscore_table.entries[insert_pos].name[0] = name[0];
+    hiscore_table.entries[insert_pos].name[1] = name[1];
+    hiscore_table.entries[insert_pos].name[2] = name[2];
+    hiscore_table.entries[insert_pos].name[3] = '\0';
     
     // Save to disk (implement later)
     // HiScore_Save();

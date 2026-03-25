@@ -59,32 +59,94 @@ void NameEntry_Draw(UBYTE *buffer)
 {
     if (!entry_state.active) return;
     
-    // Draw prompt
-    Font_DrawStringCentered(buffer, "ENTER YOUR NAME", 60, 15);
+    char line_buffer[32];
+    UWORD y = 10;
+    UBYTE normal_color = 12;
+    UBYTE entry_color = 2;   /* Red for the entry row */
     
-    // Draw name with cursor
-    char display_name[10];
-   // sprintf(display_name, "%c %c %c", 
-   //         entry_state.name[0],
-   //         entry_state.name[1],
-    //        entry_state.name[2]);
+    WaitBlit();
+    Font_DrawStringCentered(buffer, " BEST 10 PLAYERS", y, normal_color);
+    y += 20;
     
-    Font_DrawStringCentered(buffer, display_name, 80, 15);
+    WaitBlit();
+    Font_DrawString(buffer, "NO", 8, y, normal_color);
+    Font_DrawString(buffer, "SCORE", 32, y, normal_color);
+    Font_DrawString(buffer, "RANK", 88, y, normal_color);
+    Font_DrawString(buffer, "NAME", 144, y, normal_color);
+    y += 16;
     
-    // Draw cursor under current letter
-    if (cursor_visible)
+    WaitBlit();
+    
+    HiScoreTable *table = HiScore_GetTable();
+    UBYTE insert_idx = entry_state.table_position - 1;  /* 0-based */
+    
+    for (int i = 0; i < MAX_HISCORE_ENTRIES; i++)
     {
-        char cursor = '_';
-        UWORD name_width = Font_MeasureText(display_name);
-        UWORD name_x = (192 - name_width) / 2;
-        UWORD cursor_x = name_x + (entry_state.cursor_pos * 16);  // 16 pixels per char with spacing
+        BOOL is_entry_row = (i == insert_idx);
+        UBYTE color = is_entry_row ? entry_color : normal_color;
         
-        Font_DrawChar(buffer, cursor, cursor_x, 88, 15);
+        /* Position number */
+        ULongToString(i + 1, line_buffer, 2, ' ');
+        Font_DrawString(buffer, line_buffer, 8, y, color);
+        
+        if (is_entry_row)
+        {
+            /* Score — show the player's score */
+            ULongToString(game_score, line_buffer, 5, ' ');
+            Font_DrawString(buffer, line_buffer, 32, y, color);
+            
+            /* Rank */
+            char rank_str[8];
+            HiScore_FormatRank(game_rank, rank_str);
+            Font_DrawString(buffer, rank_str, 88, y, color);
+            
+            /* Name — show current entry with cursor */
+            char name_display[4];
+            name_display[0] = entry_state.name[0];
+            name_display[1] = entry_state.name[1];
+            name_display[2] = entry_state.name[2];
+            name_display[3] = '\0';
+            
+            /* Draw each character — blink the active one */
+            for (int c = 0; c < 3; c++)
+            {
+                char ch[2] = { entry_state.name[c], '\0' };
+                WORD char_x = 152 + (c * 8);
+                
+                if (c == entry_state.cursor_pos && cursor_visible)
+                {
+                    Font_DrawString(buffer, ch, char_x, y, entry_color);
+                }
+                else if (c == entry_state.cursor_pos && !cursor_visible)
+                {
+                    /* Blink — clear this character */
+                    Font_DrawString(buffer, " ", char_x, y, entry_color);
+                }
+                else
+                {
+                    Font_DrawString(buffer, ch, char_x, y, entry_color);
+                }
+            }
+        }
+        else
+        {
+            HiScoreEntry *entry = &table->entries[i];
+            
+            /* Score */
+            ULongToString(entry->score, line_buffer, 5, ' ');
+            Font_DrawString(buffer, line_buffer, 32, y, color);
+            
+            /* Rank */
+            char rank_str[8];
+            HiScore_FormatRank(entry->rank, rank_str);
+            Font_DrawString(buffer, rank_str, 88, y, color);
+            
+            /* Name */
+            Font_DrawString(buffer, entry->name, 152, y, color);
+        }
+        
+        y += 15;
     }
-    
-    // Draw instructions
-    Font_DrawStringCentered(buffer, "UP/DOWN = CHANGE", 110, 15);
-    Font_DrawStringCentered(buffer, "FIRE = NEXT", 120, 15);
 }
 
 void NameEntry_HandleInput(UBYTE joystick, BOOL fire)

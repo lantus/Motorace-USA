@@ -132,7 +132,8 @@ enum StageState
     STAGE_FRONTVIEW = 3,
     STAGE_COMPLETE = 4,
     STAGE_RANKING = 5,   
-    STAGE_GAMEOVER = 6
+    STAGE_GAMEOVER = 6,
+    STAGE_GAMEOVER_ENTRY = 7
 };
 
 typedef enum {
