@@ -255,15 +255,9 @@ void HUD_ClearSpriteArea(int start_sprite, int end_sprite, int y_offset, int hei
 
 void HUD_DrawScore(ULONG score, int start_sprite, int y_offset)
 {
-    char score_string[7];  // 6 digits + null terminator
-    
-    // Clamp score to 6 digits maximum (999999)
+    char score_string[7];   
     if (score > 999999) score = 999999;
-    
-    // Format as 6-digit right-justified string with leading spaces
-    ULongToString(score, score_string, 5, '\x20');
-
-    // Draw the formatted score
+    ULongToString(score, score_string, 6, ' ');  
     HUD_DrawString(score_string, start_sprite, y_offset);
 }
 
@@ -352,8 +346,8 @@ void HUD_DrawAll()
     ULONG top_score = HiScore_GetTopScore();
     char score_buffer[6];
     
-    // Format the high score (5 digits with leading zeros or spaces)
-    ULongToString(top_score, score_buffer, 5, '0');
+    // Format the high score (6 digits with leading zeros or spaces)
+    ULongToString(top_score, score_buffer, 6, ' ');
     HUD_DrawString("HI-SCORE", 0, 0);
     HUD_DrawString(score_buffer, 1, 8);  // Draw the actual high score
    

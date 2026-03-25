@@ -2,7 +2,7 @@
 #define HISCORE_H
 
 #include <exec/types.h>
-
+ 
 #define MAX_HISCORE_ENTRIES 10
 #define HISCORE_NAME_LENGTH 3
 

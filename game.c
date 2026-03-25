@@ -943,7 +943,7 @@ void Stage_Draw()
     else if (stage_state == STAGE_GAMEOVER_ENTRY)
     {
         NameEntry_Draw(draw_buffer);
-        Game_SwapBuffers();
+        Game_ResetBitplanePointer();
     }   
 }
 
@@ -1432,10 +1432,18 @@ void Stage_Update()
                 /* Qualifies for high score — show name entry */
                 stage_state = STAGE_GAMEOVER_ENTRY;
                 
-                BlitClearScreen(draw_buffer, SCREENWIDTH << 6 | 256);
-                BlitClearScreen(display_buffer, SCREENWIDTH << 6 | 256);
+                Sprites_ClearLower();
+                Sprites_ClearHigher();
+
+                Game_ApplyPalette((UWORD *)black_palette, BLOCKSCOLORS);
+                WaitVBL();
+
+                BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+                BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+                BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
                 
                 NameEntry_Init(gameover_hiscore_pos);
+
             }
             else
             {
@@ -1446,12 +1454,15 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_GAMEOVER_ENTRY)
     {
+        Game_ApplyPalette((UWORD *)intro_colors, BLOCKSCOLORS);
+
         NameEntry_Update();
         
-        /* Handle input */
         UBYTE joy = 0;
         if (JoyUp()) joy |= 0x01;
         if (JoyDown()) joy |= 0x02;
+        if (JoyLeft()) joy |= 0x04;
+        if (JoyRight()) joy |= 0x08;
         NameEntry_HandleInput(joy, JoyFirePressed());
         
         if (NameEntry_IsComplete())

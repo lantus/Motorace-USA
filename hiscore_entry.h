@@ -3,6 +3,11 @@
 
 #include <exec/types.h>
 
+#define COL_NO      8
+#define COL_SCORE  32
+#define COL_RANK   88
+#define COL_NAME  144
+
 // State for name entry screen
 typedef struct {
     char name[4];      // 3 chars + null

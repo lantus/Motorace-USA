@@ -15,6 +15,7 @@
 #include "sprites.h"
 #include "game.h"
 #include "hiscore.h"
+#include "hiscore_entry.h"
 #include "hud.h"
 #include "font.h"
 
@@ -181,33 +182,29 @@ void HiScore_Draw(UBYTE *buffer, UWORD start_y, UBYTE color)
     y += 20;
     
     WaitBlit();
-    // Draw header
-    Font_DrawString(buffer, "NO", 8, y, color);
-    Font_DrawString(buffer, "SCORE", 32, y, color);
-    Font_DrawString(buffer, "RANK", 88, y, color);
-    Font_DrawString(buffer, "NAME", 144, y, color);
+   /* Header */
+    Font_DrawString(buffer, "NO", COL_NO, y, color);
+    Font_DrawString(buffer, "SCORE", COL_SCORE, y, color);
+    Font_DrawString(buffer, "RANK", COL_RANK, y, color);
+    Font_DrawString(buffer, "NAME", COL_NAME, y, color);
     y += 16;
-    WaitBlit();
-    // Draw each entry
+    
+    /* Entries */
     for (int i = 0; i < MAX_HISCORE_ENTRIES; i++)
     {
         HiScoreEntry *entry = &hiscore_table.entries[i];
         
-        // Position number - use your existing function
         ULongToString(i + 1, line_buffer, 2, ' ');
-        Font_DrawString(buffer, line_buffer, 8, y, color);
+        Font_DrawString(buffer, line_buffer, COL_NO, y, color);
         
-        // Score - use your existing function
-        ULongToString(entry->score, line_buffer, 5, ' ');
-        Font_DrawString(buffer, line_buffer, 32, y, color);
+        ULongToString(entry->score, line_buffer, 6, ' ');
+        Font_DrawString(buffer, line_buffer, COL_SCORE, y, color);
         
-        // Rank
         char rank_str[8];
         HiScore_FormatRank(entry->rank, rank_str);
-        Font_DrawString(buffer, rank_str, 88, y, color);
+        Font_DrawString(buffer, rank_str, COL_RANK, y, color);
         
-        // Name
-        Font_DrawString(buffer, entry->name, 152, y, color);
+        Font_DrawString(buffer, entry->name, COL_NAME, y, color);
         
         y += 15;
     }
