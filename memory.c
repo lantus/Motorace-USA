@@ -128,6 +128,6 @@ void TilesheetPool_Load(UBYTE sheet_id)
     /* Point blocksbuffer at the shared chip buffer */
     blocksbuffer = (UBYTE *)tilepool_chip_buffer;
     
-    KPrintF("TilesheetPool: loaded sheet %ld (%ld bytes)\n",
-            sheet_id, tilepool_sizes[sheet_id]);
+   // KPrintF("TilesheetPool: loaded sheet %ld (%ld bytes)\n",
+   //         sheet_id, tilepool_sizes[sheet_id]);
 }

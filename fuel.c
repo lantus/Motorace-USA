@@ -29,7 +29,7 @@ void Fuel_Initialize(void)
     
     Timer_Start(&fuel_timer, 3);
     
-    KPrintF("Fuel system initialized\n");
+   // KPrintF("Fuel system initialized\n");
 }
 
 void Fuel_Update(void)
@@ -47,7 +47,7 @@ void Fuel_Update(void)
             fuel_gauge.current_state = 0;
             fuel_gauge.current_block++;
             
-            KPrintF("Fuel block %d depleted\n", fuel_gauge.current_block - 1);
+           // KPrintF("Fuel block %ld depleted\n", fuel_gauge.current_block - 1);
             
             if (fuel_gauge.current_block >= FUEL_BLOCKS)
             {
@@ -82,12 +82,12 @@ void Fuel_Decrease(UBYTE blocks)
         fuel_gauge.current_block = FUEL_BLOCKS - 1;
         fuel_gauge.current_state = FUEL_STATES - 1;
         
-        KPrintF("=== FUEL EMPTY after collision ===\n");
+     //   KPrintF("=== FUEL EMPTY after collision ===\n");
     }
     
     fuel_gauge.needs_redraw = TRUE;
     
-    KPrintF("Fuel decreased by %d blocks (collision penalty)\n", blocks);
+   // KPrintF("Fuel decreased by %d blocks (collision penalty)\n", blocks);
 }
 
 void Fuel_Draw(void)
@@ -141,7 +141,7 @@ void Fuel_Reset(void)
     
     Timer_Start(&fuel_timer, 4);
     
-    KPrintF("Fuel reset to full\n");
+   // KPrintF("Fuel reset to full\n");
 }
 
 void Fuel_Add(UBYTE blocks)
@@ -159,7 +159,7 @@ void Fuel_Add(UBYTE blocks)
     fuel_gauge.fuel_empty = FALSE;
     fuel_gauge.needs_redraw = TRUE;   
     
-    KPrintF("Added %ld fuel blocks\n", blocks);
+  //  KPrintF("Added %ld fuel blocks\n", blocks);
 }
 
 BOOL Fuel_IsEmpty(void)

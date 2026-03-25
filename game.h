@@ -186,7 +186,11 @@ extern void DrawBlocks(LONG x,LONG y,
                         UBYTE tile_idx, UBYTE *dest);               // tile_idx = tileset we want to pull from
 
 extern void DrawBlockRun(LONG x, LONG y, UWORD block, WORD count, UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest);
-
+extern void DrawBlocksHalf(LONG x, LONG y, LONG mapx, LONG mapy, 
+    UWORD blocksperrow, UWORD blockbytessperrow, UWORD blockplanelines, 
+    BOOL deltas_only, UBYTE tile_idx, UBYTE *dest);
+extern void DrawBlockRunHalf(LONG x, LONG y, UWORD block, WORD count, 
+    UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest);
 
 void Game_Initialize(void);
 void Game_NewGame(UBYTE difficulty);

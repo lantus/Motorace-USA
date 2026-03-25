@@ -191,20 +191,18 @@ void City_DrawRoad()
     const UBYTE blockplanelines = 64;
 
     UWORD tile_offset = road_tile_idx << 5;
-    UWORD *row_ptr = mapdata + mapwidth;  // Skip row 0
-    WORD y = 64;
+    UWORD *row_ptr = mapdata;       /* Include row 0 */
+    WORD y = 0;                      /* Start at top */
 
-    for (WORD b = 1; b < 10; b++)
+    for (WORD b = 0; b < 10; b++)
     {
-        // Quick scan: does this row have ANY animated tiles?
         BOOL has_animated = FALSE;
         for (WORD c = 0; c < 12; c++)
         {
             if (row_ptr[c] >= 32) { has_animated = TRUE; break; }
         }
         
-        // Skip entirely static rows — zero blitter cost
-        if (!has_animated)
+        if (!has_animated && b > 0)  /* Never skip row 0 */
         {
             row_ptr += mapwidth;
             y += 64;
@@ -217,14 +215,16 @@ void City_DrawRoad()
             UWORD block = row_ptr[a];
             WORD run_length = 1;
 
-            if (block >= 32)
+            if (block >= 32 || (b == 0 && block > 0))  /* Row 0: draw any non-empty tile */
             {
-                block += tile_offset;
+                if (block >= 32)
+                    block += tile_offset;
 
                 WORD check = a + 1;
                 while (check < 12)
                 {
-                    UWORD next_block = row_ptr[check] + tile_offset;
+                    UWORD next_block = row_ptr[check];
+                    if (next_block >= 32) next_block += tile_offset;
                     if (next_block != block) break;
                     check++;
                 }
@@ -232,10 +232,16 @@ void City_DrawRoad()
             
                 WORD x = a << 4;
                 
-                DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
-                            blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
-                //DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
-                //            blocksperrow, blockbytesperrow, blockplanelines, screen.pristine);
+                if (b == 0)
+                {
+                    DrawBlockRunHalf(x, y + ATTRACTMODE_Y_OFFSET, block, run_length,
+                                    blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
+                }
+                else
+                {
+                    DrawBlockRun(x, y + ATTRACTMODE_Y_OFFSET, block, run_length, 
+                                blocksperrow, blockbytesperrow, blockplanelines, draw_buffer);
+                }
             }
 
             a += run_length;
@@ -282,15 +288,24 @@ void City_PreDrawRoad()
                 tmpb = 10;
             }
  
-            DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
-                    blockplanelines, FALSE, road_tile_idx, screen.bitplanes); 
-
-            DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
-                    blockplanelines, FALSE, road_tile_idx, screen.offscreen_bitplanes); 
-
-            DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
-                    blockplanelines, FALSE, road_tile_idx, screen.pristine);                     
-
+            if (b == 0)
+            {
+                DrawBlocksHalf(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                        blockplanelines, FALSE, road_tile_idx, screen.bitplanes); 
+                DrawBlocksHalf(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                        blockplanelines, FALSE, road_tile_idx, screen.offscreen_bitplanes); 
+                DrawBlocksHalf(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                        blockplanelines, FALSE, road_tile_idx, screen.pristine);                     
+            }
+            else
+            {
+                DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                        blockplanelines, FALSE, road_tile_idx, screen.bitplanes); 
+                DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                        blockplanelines, FALSE, road_tile_idx, screen.offscreen_bitplanes); 
+                DrawBlocks(x, y + ATTRACTMODE_Y_OFFSET, tmpa, tmpb, blocksperrow, blockbytesperrow, 
+                        blockplanelines, FALSE, road_tile_idx, screen.pristine);                     
+            }
         }
     }
 

@@ -419,6 +419,63 @@ __attribute__((always_inline)) inline void DrawBlock(LONG x,LONG y,LONG mapx,LON
 	
 	custom->bltsize = BLOCKPLANELINES * 64 + (BLOCKWIDTH >> 4);
 }
+
+__attribute__((always_inline)) inline void DrawBlocksHalf(LONG x, LONG y, LONG mapx, LONG mapy, 
+    UWORD blocksperrow, UWORD blockbytessperrow, UWORD blockplanelines, 
+    BOOL deltas_only, UBYTE tile_idx, UBYTE *dest)
+{
+    UWORD halfplanelines = blockplanelines >> 1;  /* 32 = bottom 8 pixels */
+    UWORD src_skip = halfplanelines * blockbytessperrow;  /* Skip top 8px in source */
+    UWORD dst_skip = halfplanelines * BITMAPBYTESPERROW;  /* Skip top 8px in dest */
+    
+    x = (x >> 3) & 0xFFFE;
+    y = (y << 4) + (y << 3);
+
+    UWORD block = mapdata[mapy * mapwidth + mapx];
+  
+    mapx = (block % blocksperrow) * (BLOCKWIDTH / 8);
+    mapy = (block / blocksperrow) * (blockplanelines * blockbytessperrow);
+
+    WaitBlit();
+    
+    custom->bltcon0 = 0x9F0;
+    custom->bltcon1 = 0;
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+    custom->bltamod = blockbytessperrow - (BLOCKWIDTH >> 3);
+    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH >> 3);
+    custom->bltapt  = blocksbuffer + mapy + mapx + src_skip;   /* Skip top half */
+    custom->bltdpt  = dest + y + x + dst_skip;                 /* Draw in bottom half */
+    
+    custom->bltsize = halfplanelines * 64 + (BLOCKWIDTH >> 4); /* Half height */
+}
+
+__attribute__((always_inline)) inline void DrawBlockRunHalf(LONG x, LONG y, UWORD block, WORD count, 
+    UWORD blocksperrow, UWORD blockbytesperrow, UWORD blockplanelines, UBYTE *dest)
+{
+    UWORD halfplanelines = blockplanelines >> 1;
+    UWORD src_skip = halfplanelines * blockbytesperrow;
+    UWORD dst_skip = halfplanelines * BITMAPBYTESPERROW;
+    
+    x = (x >> 3) & 0xFFFE;
+    y = (y << 4) + (y << 3);
+
+    UWORD mapx = (block & 15) << 1;
+    UWORD mapy = (block >> 4) * (blockplanelines * blockbytesperrow);
+    
+    WaitBlit();
+    
+    custom->bltcon0 = 0x9F0;
+    custom->bltcon1 = 0;
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+    custom->bltamod = blockbytesperrow - (BLOCKWIDTH >> 3);
+    custom->bltdmod = BITMAPBYTESPERROW - (BLOCKWIDTH >> 3);
+    custom->bltapt  = blocksbuffer + mapy + mapx + src_skip;
+    custom->bltdpt  = dest + y + x + dst_skip;
+    
+    custom->bltsize = (halfplanelines << 6) + (BLOCKWIDTH >> 4);
+}
  
 __attribute__((always_inline)) inline void DrawBlocks(LONG x,LONG y,LONG mapx,LONG mapy, UWORD blocksperrow, UWORD blockbytessperrow, UWORD blockplanelines, BOOL deltas_only, UBYTE tile_idx, UBYTE *dest)
 {
