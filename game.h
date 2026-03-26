@@ -89,12 +89,12 @@ enum GameState
 
 enum GameStages
 {
-    STAGE_LASANGELES = 0,
-    STAGE_LASVEGAS = 1,
-    STAGE_HOUSTON = 2,
-    STAGE_STLOUIS = 3,
-    STAGE_CHICAGO = 4,
-    STAGE_NEWYORK = 5
+    STAGE_LASVEGAS = 0,
+    STAGE_HOUSTON = 1,
+    STAGE_STLOUIS = 2,
+    STAGE_CHICAGO = 3,
+    STAGE_NEWYORK = 4,
+    
 };
 
 enum GameDifficulty
@@ -177,7 +177,7 @@ extern UWORD	city_colors[BLOCKSCOLORS];
 extern UWORD	desert_colors[BLOCKSCOLORS];
 extern UWORD    lv_colors[BLOCKSCOLORS];
 extern UWORD    black_palette[BLOCKSCOLORS];
-
+ 
 extern struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 extern void DrawBlock(LONG x,LONG y,LONG mapx,LONG mapy, UBYTE *dest);
 extern void DrawBlocks(LONG x,LONG y,
@@ -213,6 +213,9 @@ void Game_Reset(void);
 void GameReady_Initialize(void);
 void GameReady_Draw(void);
 void GameReady_Update(void);
+
+void Game_AdvanceStage(void);
+void Game_StartNextOverhead(void);
 
 void Stage_Initialize(void);
 void Stage_Draw(void);

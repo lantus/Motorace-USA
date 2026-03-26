@@ -42,4 +42,5 @@ void Cars_CheckForRespawn(void);
 void Cars_CheckPassing(BlitterObject *c);
 void Cars_PursuePlayer(BlitterObject *car);
 void Cars_RemoveAllFromScreen(void);
+void Cars_CheckLaneAndSteer(BlitterObject *car);
 WORD GetScrollAmount(WORD speed);

@@ -87,7 +87,7 @@ CollisionState collision_state = COLLISION_NONE;
 int collision_car_index = -1;
 UBYTE countdown_value = 5;
 
-UBYTE game_stage = STAGE_LASANGELES;
+UBYTE game_stage = STAGE_LASVEGAS;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDREDCC;
 UBYTE game_map = MAP_ATTRACT_INTRO;
@@ -201,7 +201,7 @@ void Game_Reset(void)
     Game_ResetBitplanePointer();
 
     title_state = TITLE_ATTRACT_START;
-    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
+    Game_ApplyPalette(black_palette,BLOCKSCOLORS);
     Game_SetBackGroundColor(0x125);
  
     game_state = TITLE_SCREEN;
@@ -228,13 +228,14 @@ void Game_Reset(void)
     Fuel_Initialize();
     StageProgress_Initialize(); 
 
+    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
     game_frame_count = 0;
 
 }
 
 void Game_NewGame(UBYTE difficulty)
 {
-    game_stage = STAGE_LASANGELES;
+    game_stage = STAGE_LASVEGAS;
     game_state = STAGE_START;
     game_map = MAP_OVERHEAD_LASANGELES;
     collision_state = COLLISION_NONE;
@@ -268,6 +269,80 @@ void Game_NewGame(UBYTE difficulty)
     crash_anim_frames = 0;
     
     Cars_ResetPositions();
+}
+
+void Game_StartNextOverhead(void)
+{
+    game_state = STAGE_START;
+    stage_state = STAGE_BEGIN;
+    
+    /* Keep score, fuel, rank — don't reset them */
+    
+    /* For now all stages use level 1 map (add more maps later) */
+    game_map = MAP_OVERHEAD_LASANGELES;
+    collision_state = COLLISION_NONE;
+    bike_speed = 0;
+    
+    TilesheetPool_Load(TILEPOOL_LEVEL1);
+    Game_SetMap(game_map);
+    
+    bike_position_x = 96;
+    bike_position_y = SCREENHEIGHT - 24;
+    bike_state = BIKE_STATE_STOPPED;
+    bike_invulnerable = FALSE;
+    
+    mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
+    mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
+    mapposy -= 14;
+    videoposy = mapposy % HALFBITMAPHEIGHT;
+    
+    stage_progress.mapsize = mapposy;
+    speed_accumulator = 0;
+    speed_sample_count = 0;
+    wheelie_active = FALSE;
+    wheelie_scored = FALSE;
+    crash_anim_frames = 0;
+    
+    Cars_ResetPositions();
+    
+    Game_ApplyPalette(city_colors, BLOCKSCOLORS);
+    MotorBike_Reset();
+    
+    Game_ResetBitplanePointer();
+    BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+    
+    HUD_SetSpritePositions();
+    HUD_DrawAll();
+    HUD_UpdateScore(game_score);
+    
+    Game_FillScreen();
+    Road_CacheFillVisible();
+    Game_SwapBuffers();
+    
+    Stage_ShowInfo();
+    StageProgress_SetStage(game_stage);
+    
+    Music_Stop();
+    Music_LoadModule(MUSIC_START);
+    
+    KPrintF("=== Starting stage %d ===\n", game_stage);
+}
+
+void Game_AdvanceStage(void)
+{
+    game_stage++;
+    
+    if (game_stage > STAGE_NEWYORK)
+    {
+        /* All 5 stages complete — back to attract */
+        Game_Reset();
+        return;
+    }
+    
+    /* More stages — start next overhead */
+    Game_StartNextOverhead();
 }
 
 void Game_Draw()
@@ -335,6 +410,11 @@ void Game_SetMap(UBYTE maptype)
             city_horizon = &lv_horizon;
             break;
         case MAP_OVERHEAD_LASVEGAS:
+            mapdata = (UWORD *)la_map->data;
+            mapwidth = la_map->mapwidth;
+            mapheight = la_map->mapheight;  
+          
+            city_horizon = &lv_horizon;
             break;
     }
 }
@@ -1253,6 +1333,12 @@ void Stage_Update()
             }
         }
 
+         /* Clamp bike to road viewport */
+        if (bike_position_x < 2)
+            bike_position_x = 2;
+        if (bike_position_x > SCREENWIDTH - 16)
+            bike_position_x = SCREENWIDTH - 16;
+
         StageProgress_UpdateOverhead(mapposy);
 
         Stage_CheckCompletion();
@@ -1503,30 +1589,7 @@ void Stage_ShowInfo(void)
     }
     
     // Determine stage text
-    switch(game_stage)
-    {
-        case STAGE_LASANGELES:
-            stage_text = " LOS ANGELES";
-            break;
-        case STAGE_LASVEGAS:
-            stage_text = "   LAS VEGAS";
-            break;
-        case STAGE_HOUSTON:
-            stage_text = "    HOUSTON";
-            break;
-        case STAGE_STLOUIS:
-            stage_text = "   ST.LOUIS";
-            break;
-        case STAGE_CHICAGO:
-            stage_text = "   CHICAGO";
-            break;
-        case STAGE_NEWYORK:
-            stage_text = "   NEW YORK";
-            break;
-        default:
-            stage_text = " LOS ANGELES";
-            break;
-    }
+    stage_text = " LOS ANGELES";
     
     WORD difficulty_y = videoposy + BLOCKHEIGHT + 72;
     WORD stage_y = videoposy + BLOCKHEIGHT + 128;
@@ -1622,39 +1685,42 @@ void Stage_CheckCompletion(void)
 void Stage_InitializeFrontView(void)
 {
     Game_ResetBitplanePointer();
-
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
-
+    
     bike_position_x = 80;
     bike_position_y = 200;
- 
+    
     Sprites_ClearLower();
     Sprites_ClearHigher();
-
-     /* Swap to city attract tiles for front view */
-    TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
-
-    Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
-
-    MotorBike_Reset();
-
-    Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
-    Game_SetBackGroundColor(0x00);
     
+    TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
+    Game_SetMap(MAP_FRONTVIEW_LASVEGAS);  /* All frontviews use same tilemap */
+    
+    MotorBike_Reset();
+    Game_ApplyPalette(lv_colors, BLOCKSCOLORS);
+    Game_SetBackGroundColor(0x00);
     Title_Reset();
- 
+    
     City_PreDrawRoad();
     City_OncomingCarsReset();
-
-    City_ShowCityName("LAS VEGAS");
-
+    
+    /* Per-stage city name */
+    switch (game_stage)
+    {
+        case STAGE_LASVEGAS:  City_ShowCityName("LAS VEGAS");  break;
+        case STAGE_HOUSTON:   City_ShowCityName("HOUSTON");    break;
+        case STAGE_STLOUIS:   City_ShowCityName("ST. LOUIS");  break;
+        case STAGE_CHICAGO:   City_ShowCityName("CHICAGO");    break;
+        case STAGE_NEWYORK:   City_ShowCityName("NEW YORK");   break;
+        default:              City_ShowCityName("LAS VEGAS");  break;
+    }
+    
     HUD_DrawAll();
     HUD_UpdateScore(game_score);
-
+    
     Music_Stop();
     Music_LoadModule(MUSIC_FRONTVIEW);
-
     MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
 }

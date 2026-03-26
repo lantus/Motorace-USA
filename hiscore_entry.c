@@ -40,7 +40,7 @@ void NameEntry_Init(UBYTE position)
     entry_state.active = TRUE;
     entry_state.table_position = position;
     
-    Timer_StartMs(&cursor_blink_timer, 500);
+    Timer_StartMs(&cursor_blink_timer, 250);
 }
 
 void NameEntry_Update(void)
@@ -99,12 +99,13 @@ void NameEntry_Draw(UBYTE *buffer)
             
             for (int c = 0; c < 3; c++)
             {
-                WORD char_x = COL_NAME + (c * 8);
+                WORD char_x = COL_NAME + (c << 3);
                 Font_ClearArea(buffer, char_x, y, 8, 8);
+                char ch[2] = { entry_state.name[c], '\0' };
                 
                 if (c == entry_state.cursor_pos && !cursor_visible)
                 {
-                    /* Blink off */
+                    Font_DrawString(buffer, ch, char_x, y, 0);
                 }
                 else
                 {

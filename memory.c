@@ -4,6 +4,7 @@
 #include "game.h"
 #include "bitmap.h"
 #include "map.h"
+#include "timers.h"
 #include "title.h"
 #include "memory.h"
 

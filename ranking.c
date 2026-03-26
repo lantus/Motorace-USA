@@ -90,12 +90,12 @@ void Ranking_Initialize(void)
     UBYTE checkpoint;
     switch (game_stage)
     {
-        case STAGE_LASANGELES:  city = "LAS VEGAS";  checkpoint = 1; break;
-        case STAGE_LASVEGAS:    city = "HOUSTON";    checkpoint = 2; break;
-        case STAGE_HOUSTON:     city = "ST. LOUIS";  checkpoint = 3; break;
-        case STAGE_STLOUIS:     city = "CHICAGO";    checkpoint = 4; break;
-        case STAGE_CHICAGO:     city = "NEW YORK";   checkpoint = 5; break;
-        case STAGE_NEWYORK:     city = "FINISH";     checkpoint = 6; break;
+        case STAGE_LASVEGAS:    city = "LAS VEGAS";  checkpoint = 1; break;
+        case STAGE_HOUSTON:     city = "HOUSTON";    checkpoint = 2; break;
+        case STAGE_STLOUIS:     city = "ST. LOUIS";  checkpoint = 3; break;
+        case STAGE_CHICAGO:     city = "CHICAGO";    checkpoint = 4; break;
+        case STAGE_NEWYORK:     city = "NEW YORK";   checkpoint = 5; break;
+      
         default:                city = "LAS VEGAS";  checkpoint = 1; break;
     }
 
@@ -366,7 +366,7 @@ void Ranking_Update(void)
         case RANKING_STATE_DEMO_END:
             if (Timer_HasElapsed(&display_timer))
             {
-                Game_Reset();
+                Game_AdvanceStage();
             }
             break;
         case RANKING_STATE_COMPLETE:
