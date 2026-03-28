@@ -901,9 +901,8 @@ void MotorBike_CrashAndReposition(void)
     
     Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
     WaitVBL();
-    
-    // === Reveal — restore stage palette ===
-    Game_ApplyPalette(city_colors, BLOCKSCOLORS);
+     
+    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
     
     bike_position_x = safe_x;
     bike_position_y = SCREENHEIGHT - 48;

@@ -68,13 +68,20 @@ void Title_Initialize(void)
     Title_LoadSprites();
     Title_OpenMap();
  
-    Game_LoadPalette("palettes/intro.pal", intro_colors, BLOCKSCOLORS);
-    Game_LoadPalette("palettes/cars_frontview_lv.pal", lv_colors, BLOCKSCOLORS);
+    Title_LoadAllPalettes();
+    
     Game_ApplyPalette(intro_colors, BLOCKSCOLORS);
     
     title_state = TITLE_ATTRACT_INIT;
     Title_Reset();
     title_state = TITLE_ATTRACT_START;
+}
+
+void Title_LoadAllPalettes()
+{
+    Game_LoadPalette("palettes/intro.pal", intro_colors, BLOCKSCOLORS);
+    Game_LoadPalette("palettes/cars_frontview_lv.pal", lv_colors, BLOCKSCOLORS);
+    Game_LoadPalette("palettes/level2.pal", desert_colors, BLOCKSCOLORS);
 }
 
 void Title_Draw()

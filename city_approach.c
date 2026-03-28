@@ -66,7 +66,7 @@ BlitterObject oncoming_car[8];
 BlitterObject flipped_car[4];
 BlitterObject *city_horizon;
 BlitterObject *current_car;
-
+ 
 APTR oncoming_car_restore_ptrs[4];
 APTR *oncoming_car_restore_ptr;
 

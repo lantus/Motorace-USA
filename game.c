@@ -110,7 +110,7 @@ LONG mapwidth,mapheight;
 
 UBYTE *frontbuffer,*blocksbuffer;
 UWORD *mapdata;
-
+ 
 struct BitMapEx *BlocksBitmap,*ScreenBitmap;
  
 // Tiles and TileMaps
@@ -124,6 +124,7 @@ UWORD	lv_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
 UWORD	desert_colors[BLOCKSCOLORS];
 UWORD   black_palette[BLOCKSCOLORS] = {0};
+UWORD  *current_palette; 
 
 // Used for the Countdown
 static Sprite spr_countdown_timer[4];
@@ -268,14 +269,14 @@ void Game_StartNextOverhead(void)
             TilesheetPool_Load(TILEPOOL_LEVEL1);
             game_map = MAP_OVERHEAD_LASANGELES;
             stage_music = MUSIC_START;
-            Game_ApplyPalette(lv_colors, BLOCKSCOLORS);
+            Game_ApplyPalette(current_palette, BLOCKSCOLORS);
             break;
         case STAGE_HOUSTON:
             max_stage_speed = 185;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
             game_map = MAP_OVERHEAD_LASVEGAS;
             stage_music = MUSIC_OFFROAD;
-            Game_ApplyPalette(desert_colors, BLOCKSCOLORS);
+            Game_ApplyPalette(current_palette, BLOCKSCOLORS);
             break;
         case STAGE_STLOUIS:
             max_stage_speed = 210;
@@ -443,31 +444,33 @@ void Game_SetMap(UBYTE maptype)
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
-           
+            current_palette = city_colors;
             city_horizon = &nyc_horizon;
             break;
         case MAP_OVERHEAD_LASANGELES:
             mapdata = (UWORD *)la_map->data;
             mapwidth = la_map->mapwidth;
             mapheight = la_map->mapheight;  
-          
+            current_palette = city_colors;
             city_horizon = &lv_horizon;
             break;
         case MAP_FRONTVIEW_LASVEGAS:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
-      
+            current_palette = lv_colors;
             city_horizon = &lv_horizon;
             break;
         case MAP_OVERHEAD_LASVEGAS:
             mapdata = (UWORD *)houston_map->data;
             mapwidth = houston_map->mapwidth;
             mapheight = houston_map->mapheight;  
-      
+            current_palette = desert_colors;
             city_horizon = &nyc_horizon;
             break;
     }
+
+    Game_ApplyPalette(current_palette,BLOCKSCOLORS);
 }
  
 
@@ -876,7 +879,7 @@ void GameReady_Update(void)
  
         Game_NewGame(0);
 
-        Game_ApplyPalette(city_colors,BLOCKSCOLORS);
+        Game_ApplyPalette(current_palette,BLOCKSCOLORS);
 
         MotorBike_Reset();
  
@@ -900,8 +903,7 @@ void GameReady_Update(void)
 void Stage_Initialize(void)
 {
     Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
-    Disk_LoadAsset((UBYTE *)desert_colors,"tiles/lv2_tiles.PAL");
-    
+ 
     la_map = Disk_AllocAndLoadAsset("maps/level1.map", MEMF_PUBLIC);
     houston_map = Disk_AllocAndLoadAsset("maps/level2.map", MEMF_PUBLIC);
     
@@ -1025,7 +1027,7 @@ void Stage_Draw()
             Sprites_ClearLower();
             Sprites_ClearHigher();
 
-            Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
+            Game_ApplyPalette(current_palette,BLOCKSCOLORS);
 
             Ranking_Initialize();
 
@@ -1772,7 +1774,7 @@ void Stage_InitializeFrontView(void)
 
     MotorBike_Reset();
 
-    Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
+    Game_ApplyPalette(current_palette,BLOCKSCOLORS);
     Game_SetBackGroundColor(0x00);
     
     Title_Reset();

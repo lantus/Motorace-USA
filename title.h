@@ -45,6 +45,7 @@ void Title_SaveBackground();
 void Title_RestoreLogo();
 void Title_OpenMap();
 void Title_OpenBlocks();
+void Title_LoadAllPalettes();
 
 // Attract Mode stuff
 void AttractMode_Update(void);
