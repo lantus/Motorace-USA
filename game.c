@@ -1179,6 +1179,18 @@ void Stage_Update()
         speed_accumulator += bike_speed;
         speed_sample_count++;
 
+        //#ifdef DEBUG
+        /* Debug: press fire+up+down to skip to next stage */
+        if (KeyPressed(KEY_F1))
+        {
+           stage_state = STAGE_FRONTVIEW;
+            Stage_InitializeFrontView();
+            HUD_UpdateBikeSpeed(bike_speed);
+            HUD_UpdateScore(game_score);
+            return;
+        }
+        //#endif
+
         // Update fuel gauge
         Fuel_Update();
         

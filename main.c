@@ -155,7 +155,7 @@ static void InitCopperlist(void)
 	Copper_SetBitplanePointer(BLOCKSDEPTH,planes , 0);
 
 	custom->intena = 0x7FFF;
- 
+ 	//custom->beamcon0 = 0;
 	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3;
 	custom->cop2lc = (ULONG)CopperList;	
  
@@ -181,12 +181,6 @@ void Cleanup(char *msg)
 		WaitBlit();
 		BitMapEx_Destroy(ScreenBitmap);
 	}
-
-	//if (BlocksBitmap)
-	//{
-	//	WaitBlit();
-	//	BitMapEx_Destroy(BlocksBitmap);
-	//}
 
 	if (Map) FreeMem(Map,MapSize);
 	if (MapHandle) Close(MapHandle);
