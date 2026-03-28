@@ -189,51 +189,60 @@ void Game_Initialize()
     Fuel_Initialize();
     StageProgress_Initialize();
     
+    
     scroll_speed_table_active = g_is_pal ? scroll_speed_table_pal : scroll_speed_table;
 }
 
+ 
 void Game_Reset(void)
 {
     title_state = TITLE_ATTRACT_INIT;
-
-    // Reset Positions
     Title_Reset();
-
-    current_buffer = 0;
+ 
     Game_ResetBitplanePointer();
 
+    draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
+    display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
+
+    /* Clear all screens */
+    BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+
+    /* Turn off sprites */
+    Sprites_ClearLower();
+    Sprites_ClearHigher();
+
     title_state = TITLE_ATTRACT_START;
-    Game_ApplyPalette(black_palette,BLOCKSCOLORS);
+    Game_ApplyPalette(black_palette, BLOCKSCOLORS);
     Game_SetBackGroundColor(0x125);
- 
+
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
 
-    /* Swap back to city attract tiles */
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
 
     nyc_horizon.visible = TRUE;
     nyc_horizon.off_screen = FALSE;
     nyc_horizon.x = 0;
     nyc_horizon.y = 0;
-    nyc_horizon.data_frame2 = NULL;
 
     lv_horizon.visible = TRUE;
     lv_horizon.off_screen = FALSE;
     lv_horizon.x = 0;
     lv_horizon.y = 0;
 
+    City_ResetRoadState();
+
     Game_SetMap(game_map);
-
     MotorBike_Reset();
-
     Fuel_Initialize();
-    StageProgress_Initialize(); 
+    StageProgress_Initialize();
 
-    Game_ApplyPalette(intro_colors,BLOCKSCOLORS);
+    Game_ApplyPalette(intro_colors, BLOCKSCOLORS);
     game_frame_count = 0;
-
 }
+ 
 
 void Game_AdvanceStage(void)
 {
@@ -344,6 +353,13 @@ void Game_StartNextOverhead(void)
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+
+     /* Reset draw buffer pointers */
+    draw_buffer = screen.bitplanes;
+    display_buffer = screen.offscreen_bitplanes;
+    
+    /* Reset bike speed for attract mode */
+    bike_speed = 0;
     
     HUD_SetSpritePositions();
     HUD_DrawAll();
@@ -1753,7 +1769,7 @@ void Stage_CheckCompletion(void)
     /* current_map_pos counts up from 0 to mapsize */
     LONG completion_threshold = stage_progress.mapsize - (BLOCKHEIGHT << 1);
     
-    if (stage_progress.current_map_pos >= 3000)
+    if (stage_progress.current_map_pos >= completion_threshold)
     {
         stage_state = STAGE_FRONTVIEW;
         Stage_InitializeFrontView();

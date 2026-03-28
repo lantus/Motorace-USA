@@ -92,5 +92,6 @@ WORD City_CalculateBikePerspectiveX(WORD bike_y, WORD starting_x);
 WORD City_GetBikeHorizonStartX(void);
 BOOL City_CheckCarCollision(BlitterObject *car);
 void City_UpdateBikeCrashAnimation(void);
+void City_ResetRoadState(void);
 CityApproachState City_GetApproachState(void);
 #endif

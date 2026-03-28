@@ -32,6 +32,10 @@
 
 extern volatile struct Custom *custom;
 
+static BYTE last_road_tile_idx = -1;
+static UBYTE road_draw_count = 0;
+
+
 // Starting Y positions for each scale (horizon to foreground)
 static const WORD scale_start_y[NUM_CAR_SCALES] = {
     42,   // Scale 0 starts
@@ -136,6 +140,13 @@ void City_OncomingCarsReset()
 
 }
 
+void City_ResetRoadState(void)
+{
+    last_road_tile_idx = -1;
+    road_draw_count = 0;
+    use_alt_frame = FALSE;
+}
+
 void City_BlitHorizon()
 {
     // Position
@@ -170,8 +181,6 @@ void City_BlitHorizon()
     }
 }
 
-static BYTE last_road_tile_idx = -1;
-static UBYTE road_draw_count = 0;
 
 void City_DrawRoad()
 {
