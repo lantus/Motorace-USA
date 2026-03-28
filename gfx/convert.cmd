@@ -1,4 +1,5 @@
 kingcon level1.iff ..\tiles\lv1_tiles -format=4 -interleaved -rawpalette
+kingcon level2.iff ..\tiles\lv2_tiles -format=4 -interleaved -rawpalette
 kingcon tiles_city.iff ..\tiles\city_attract -format=4 -interleaved -rawpalette
 kingcon zippyfont.iff ..\font\zippyfont -format=2
 kingcon car1.iff ..\objects\car -Interleaved -format=4 -Mask -AW

@@ -91,6 +91,7 @@ UBYTE game_stage = STAGE_LASVEGAS;
 UBYTE game_state = TITLE_SCREEN;
 UBYTE game_difficulty = FIVEHUNDREDCC;
 UBYTE game_map = MAP_ATTRACT_INTRO;
+UWORD max_stage_speed = MAX_SPEED;
 ULONG game_score;
 UBYTE game_rank;
 ULONG game_frame_count = 0;
@@ -115,8 +116,8 @@ struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 // Tiles and TileMaps
 
 RawMap *la_map;
-BitMapEx *la_tiles;
-
+RawMap *houston_map;
+ 
 // Palettes
 UWORD	intro_colors[BLOCKSCOLORS];
 UWORD	lv_colors[BLOCKSCOLORS];
@@ -233,6 +234,129 @@ void Game_Reset(void)
 
 }
 
+void Game_AdvanceStage(void)
+{
+    game_stage++;
+    
+    if (game_stage > STAGE_NEWYORK)
+    {
+        /* All 5 stages complete — back to attract */
+        Game_Reset();
+        return;
+    }
+    
+    /* More stages — start next overhead */
+    Game_StartNextOverhead();
+}
+
+void Game_StartNextOverhead(void)
+{
+    game_state = STAGE_START;
+    stage_state = STAGE_BEGIN;
+    
+    /* Keep score, fuel, rank — don't reset them */
+    
+    collision_state = COLLISION_NONE;
+    bike_speed = 0;
+    
+    /* Per-stage settings: speed, tilesheet, map, music */
+    UBYTE stage_music;
+    switch (game_stage)
+    {
+        case STAGE_LASVEGAS:
+            max_stage_speed = 210;
+            TilesheetPool_Load(TILEPOOL_LEVEL1);
+            game_map = MAP_OVERHEAD_LASANGELES;
+            stage_music = MUSIC_START;
+            Game_ApplyPalette(lv_colors, BLOCKSCOLORS);
+            break;
+        case STAGE_HOUSTON:
+            max_stage_speed = 185;
+            TilesheetPool_Load(TILEPOOL_LEVEL2);
+            game_map = MAP_OVERHEAD_LASVEGAS;
+            stage_music = MUSIC_OFFROAD;
+            Game_ApplyPalette(desert_colors, BLOCKSCOLORS);
+            break;
+        case STAGE_STLOUIS:
+            max_stage_speed = 210;
+            TilesheetPool_Load(TILEPOOL_LEVEL2);
+            game_map = MAP_OVERHEAD_HOUSTON;
+            stage_music = MUSIC_START;
+            break;
+        case STAGE_CHICAGO:
+            max_stage_speed = 210;
+            TilesheetPool_Load(TILEPOOL_LEVEL2);
+            game_map = MAP_OVERHEAD_STLOUIS;
+            stage_music = MUSIC_START;
+            break;
+        case STAGE_NEWYORK:
+            max_stage_speed = 210;
+            TilesheetPool_Load(TILEPOOL_LEVEL2);
+            game_map = MAP_OVERHEAD_CHICAGO;
+            stage_music = MUSIC_START;
+            break;
+        default:
+            max_stage_speed = 210;
+            TilesheetPool_Load(TILEPOOL_LEVEL1);
+            game_map = MAP_OVERHEAD_LASANGELES;
+            stage_music = MUSIC_START;
+            break;
+    }
+    
+    Game_SetMap(game_map);
+    CollisionMap_SetStage(game_stage);
+
+    bike_position_x = 96;
+    bike_position_y = SCREENHEIGHT - 24;
+    bike_state = BIKE_STATE_STOPPED;
+    bike_invulnerable = FALSE;
+    
+    mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
+    mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
+    mapposy -= 14;
+    videoposy = mapposy % HALFBITMAPHEIGHT;
+    
+    stage_progress.mapsize = mapposy;
+    speed_accumulator = 0;
+    speed_sample_count = 0;
+    wheelie_active = FALSE;
+    wheelie_scored = FALSE;
+    crash_anim_frames = 0;
+    
+    /* Stage 1 spawns 5 cars around bike; other stages use respawn system */
+    if (game_stage == STAGE_LASVEGAS)
+        Cars_ResetPositions();
+    else
+        Cars_ResetPositionsEmpty();
+    
+
+    MotorBike_Reset();
+    
+    Game_ResetBitplanePointer();
+    BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+    BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+    
+    HUD_SetSpritePositions();
+    HUD_DrawAll();
+    HUD_UpdateScore(game_score);
+    Fuel_DrawAll();
+    
+    Game_FillScreen();
+    Road_CacheFillVisible();
+    Game_SwapBuffers();
+    
+    Stage_ShowInfo();
+    StageProgress_SetStage(game_stage);
+    StageProgress_DrawAll();
+    HUD_UpdateRank(game_rank);
+    
+    Music_Stop();
+    Music_LoadModule(stage_music);
+    
+    KPrintF("=== Starting stage %d ===\n", game_stage);
+}
+
 void Game_NewGame(UBYTE difficulty)
 {
     game_stage = STAGE_LASVEGAS;
@@ -243,6 +367,7 @@ void Game_NewGame(UBYTE difficulty)
     game_score = 0;
     bike_speed = 0;
     game_rank = 99; // Start in 99th
+    max_stage_speed = MAX_SPEED;  /* Stage 1: full speed 210 */
 
     /* Swap to level 1 tiles */
     TilesheetPool_Load(TILEPOOL_LEVEL1);
@@ -269,80 +394,6 @@ void Game_NewGame(UBYTE difficulty)
     crash_anim_frames = 0;
     
     Cars_ResetPositions();
-}
-
-void Game_StartNextOverhead(void)
-{
-    game_state = STAGE_START;
-    stage_state = STAGE_BEGIN;
-    
-    /* Keep score, fuel, rank — don't reset them */
-    
-    /* For now all stages use level 1 map (add more maps later) */
-    game_map = MAP_OVERHEAD_LASANGELES;
-    collision_state = COLLISION_NONE;
-    bike_speed = 0;
-    
-    TilesheetPool_Load(TILEPOOL_LEVEL1);
-    Game_SetMap(game_map);
-    
-    bike_position_x = 96;
-    bike_position_y = SCREENHEIGHT - 24;
-    bike_state = BIKE_STATE_STOPPED;
-    bike_invulnerable = FALSE;
-    
-    mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
-    mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
-    mapposy -= 14;
-    videoposy = mapposy % HALFBITMAPHEIGHT;
-    
-    stage_progress.mapsize = mapposy;
-    speed_accumulator = 0;
-    speed_sample_count = 0;
-    wheelie_active = FALSE;
-    wheelie_scored = FALSE;
-    crash_anim_frames = 0;
-    
-    Cars_ResetPositions();
-    
-    Game_ApplyPalette(city_colors, BLOCKSCOLORS);
-    MotorBike_Reset();
-    
-    Game_ResetBitplanePointer();
-    BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
-    BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
-    BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
-    
-    HUD_SetSpritePositions();
-    HUD_DrawAll();
-    HUD_UpdateScore(game_score);
-    
-    Game_FillScreen();
-    Road_CacheFillVisible();
-    Game_SwapBuffers();
-    
-    Stage_ShowInfo();
-    StageProgress_SetStage(game_stage);
-    
-    Music_Stop();
-    Music_LoadModule(MUSIC_START);
-    
-    KPrintF("=== Starting stage %d ===\n", game_stage);
-}
-
-void Game_AdvanceStage(void)
-{
-    game_stage++;
-    
-    if (game_stage > STAGE_NEWYORK)
-    {
-        /* All 5 stages complete — back to attract */
-        Game_Reset();
-        return;
-    }
-    
-    /* More stages — start next overhead */
-    Game_StartNextOverhead();
 }
 
 void Game_Draw()
@@ -410,11 +461,11 @@ void Game_SetMap(UBYTE maptype)
             city_horizon = &lv_horizon;
             break;
         case MAP_OVERHEAD_LASVEGAS:
-            mapdata = (UWORD *)la_map->data;
-            mapwidth = la_map->mapwidth;
-            mapheight = la_map->mapheight;  
-          
-            city_horizon = &lv_horizon;
+            mapdata = (UWORD *)houston_map->data;
+            mapwidth = houston_map->mapwidth;
+            mapheight = houston_map->mapheight;  
+      
+            city_horizon = &nyc_horizon;
             break;
     }
 }
@@ -849,8 +900,11 @@ void GameReady_Update(void)
 void Stage_Initialize(void)
 {
     Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
+    Disk_LoadAsset((UBYTE *)desert_colors,"tiles/lv2_tiles.PAL");
+    
     la_map = Disk_AllocAndLoadAsset("maps/level1.map", MEMF_PUBLIC);
- 
+    houston_map = Disk_AllocAndLoadAsset("maps/level2.map", MEMF_PUBLIC);
+    
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);
     Sprites_LoadFromFile(COUNTDOWN_ONE,&spr_countdown_timer[1]);
@@ -1033,10 +1087,19 @@ void Stage_Update()
 
     if (stage_state == STAGE_BEGIN)
     {
-        countdown_value = 4;
-        Timer_Start(&countdown_timer, 1);  // 1 second timer
-
-        stage_state = STAGE_COUNTDOWN;
+        if (game_stage == STAGE_LASVEGAS)
+        {
+            countdown_value = 4;
+            Timer_Start(&countdown_timer, 1);
+            stage_state = STAGE_COUNTDOWN;
+        }
+        else
+        {
+            /* Skip countdown — go straight to playing */
+            stage_state = STAGE_PLAYING;
+            bike_speed = MIN_CRUISING_SPEED;
+            bike_state = BIKE_STATE_MOVING;
+        }
     }
     else if (stage_state == STAGE_COUNTDOWN)
     {
@@ -1276,9 +1339,9 @@ void Stage_Update()
         {
             // Fire button held - accelerate to max speed
             bike_speed += ACCEL_RATE;   
-            if (bike_speed > MAX_SPEED)
+            if (bike_speed > max_stage_speed)
             {
-                bike_speed = MAX_SPEED;
+                bike_speed = max_stage_speed;
             }
             bike_state = BIKE_STATE_ACCELERATING;
         }
@@ -1380,7 +1443,7 @@ void Stage_Update()
         {
             stage_state = STAGE_COMPLETE;
             Timer_Start(&stage_complete_timer, 2);
-            KPrintF("=== Stage 1 Complete! ===\n");
+            KPrintF("=== Stage %d Complete! ===\n", game_stage);
             return;
         }
 
@@ -1405,9 +1468,9 @@ void Stage_Update()
             {
                 // Fire button held - accelerate to max speed
                 bike_speed += ACCEL_RATE;   
-                if (bike_speed > MAX_SPEED)
+                if (bike_speed > max_stage_speed)
                 {
-                    bike_speed = MAX_SPEED;
+                    bike_speed = max_stage_speed;
                 }
                 
             }
@@ -1651,7 +1714,16 @@ void Game_HandleCollisions(void)
             collision_car_index = -1;
             Timer_Stop(&collision_recovery_timer);
          
-            Music_LoadModule(MUSIC_ONROAD);
+            /* Restart per-stage music */
+            switch (game_stage)
+            {
+                case STAGE_LASVEGAS:  Music_LoadModule(MUSIC_ONROAD); break;
+                case STAGE_HOUSTON:   Music_LoadModule(MUSIC_OFFROAD); break;
+                case STAGE_STLOUIS:   Music_LoadModule(MUSIC_ONROAD); break;
+                case STAGE_CHICAGO:   Music_LoadModule(MUSIC_ONROAD); break;
+                case STAGE_NEWYORK:   Music_LoadModule(MUSIC_ONROAD); break;
+                default:              Music_LoadModule(MUSIC_ONROAD); break;
+            }
 
             Fuel_Decrease(1);
             Fuel_DrawAll();
@@ -1665,19 +1737,16 @@ void Game_HandleCollisions(void)
 
 void Stage_CheckCompletion(void)
 {
-    // Check if bike reached the top of the map (end of stage)
-    // Map starts at high Y values and scrolls toward 0
+    /* Complete when bike reaches near the top of the map */
+    /* mapsize is the starting mapposy (bottom of map) */
+    /* current_map_pos counts up from 0 to mapsize */
+    LONG completion_threshold = stage_progress.mapsize - (BLOCKHEIGHT << 1);
     
-    if (stage_progress.current_map_pos >= 19120)  // Near the top/end of map
+    if (stage_progress.current_map_pos >= completion_threshold)
     {
         stage_state = STAGE_FRONTVIEW;
-
-        // clear screens and initialize frontview
         Stage_InitializeFrontView();
-
-        // pass the current speed to the frontvie
         HUD_UpdateBikeSpeed(bike_speed);
-        // pass the current score as well
         HUD_UpdateScore(game_score);
     }
 }
@@ -1685,27 +1754,35 @@ void Stage_CheckCompletion(void)
 void Stage_InitializeFrontView(void)
 {
     Game_ResetBitplanePointer();
+
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
-    
+
     bike_position_x = 80;
     bike_position_y = 200;
-    
+ 
     Sprites_ClearLower();
     Sprites_ClearHigher();
-    
+
+     /* Swap to city attract tiles for front view */
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
-    Game_SetMap(MAP_FRONTVIEW_LASVEGAS);  /* All frontviews use same tilemap */
-    
+
+    Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
+
     MotorBike_Reset();
-    Game_ApplyPalette(lv_colors, BLOCKSCOLORS);
+
+    Game_ApplyPalette(lv_colors,BLOCKSCOLORS);
     Game_SetBackGroundColor(0x00);
+    
     Title_Reset();
+ 
+    /* Reset horizon position (ranking screen shifts it down) */
+    city_horizon->y = 0;
     
     City_PreDrawRoad();
     City_OncomingCarsReset();
-    
+
     /* Per-stage city name */
     switch (game_stage)
     {
@@ -1716,11 +1793,12 @@ void Stage_InitializeFrontView(void)
         case STAGE_NEWYORK:   City_ShowCityName("NEW YORK");   break;
         default:              City_ShowCityName("LAS VEGAS");  break;
     }
-    
+
     HUD_DrawAll();
     HUD_UpdateScore(game_score);
-    
+
     Music_Stop();
     Music_LoadModule(MUSIC_FRONTVIEW);
+
     MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
 }

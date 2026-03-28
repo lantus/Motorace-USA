@@ -449,9 +449,9 @@ void AccelerateMotorBike()
 {
     bike_state = BIKE_STATE_ACCELERATING;
     bike_speed += ACCEL_RATE;
-    if (bike_speed > MAX_SPEED)
+    if (bike_speed > max_stage_speed)
     {
-        bike_speed = MAX_SPEED;
+        bike_speed = max_stage_speed;
     }
 }
 

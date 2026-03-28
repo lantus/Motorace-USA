@@ -14,7 +14,8 @@ void* Mem_AllocPublic(ULONG size);
 
 #define TILEPOOL_CITY_ATTRACT   0
 #define TILEPOOL_LEVEL1         1
-#define TILEPOOL_COUNT          2
+#define TILEPOOL_LEVEL2         2
+#define TILEPOOL_COUNT          3
 
 void TilesheetPool_Initialize(void);
 void TilesheetPool_Load(UBYTE sheet_id);

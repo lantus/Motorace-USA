@@ -50,6 +50,10 @@ static const UWORD road_scroll_pal[16] = {
 
 static const UWORD *road_scroll_table;
 
+static APTR collision_maps[5];
+static UWORD collision_widths[5];
+static UWORD collision_heights[5];
+
  
 void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count)
 {
@@ -87,16 +91,26 @@ void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count)
     road_tile_idx = road_scroll.tile_idx;
 }
  
+ 
 void CollisionMap_Load(void)
 {
-    collision_map = Disk_AllocAndLoadAsset("stages/lasvegas/collision.dat", MEMF_ANY);
-    col_map_width = mapwidth;    /* Same dimensions as tilemap */
+    collision_maps[STAGE_LASVEGAS] = Disk_AllocAndLoadAsset("stages/lasvegas/collision.dat", MEMF_ANY);
+    collision_maps[STAGE_HOUSTON]  = Disk_AllocAndLoadAsset("stages/houston/collision.dat", MEMF_ANY);
+    collision_maps[STAGE_STLOUIS]  = Disk_AllocAndLoadAsset("stages/stlouis/collision.dat", MEMF_ANY);
+    collision_maps[STAGE_CHICAGO]  = Disk_AllocAndLoadAsset("stages/chicago/collision.dat", MEMF_ANY);
+    collision_maps[STAGE_NEWYORK]  = Disk_AllocAndLoadAsset("stages/newyork/collision.dat", MEMF_ANY);
+    
+    /* Default to stage 1 */
+    CollisionMap_SetStage(STAGE_LASVEGAS);
+}
+
+void CollisionMap_SetStage(UBYTE stage)
+{
+    collision_map = collision_maps[stage];
+    col_map_width = mapwidth;
     col_map_height = mapheight;
     
-    if (collision_map)
-        KPrintF("Collision map loaded: %ldx%ld\n", col_map_width, col_map_height);
-    else
-        KPrintF("WARNING: collision.dat not found!\n");
+    KPrintF("Collision map set for stage %d: %dx%d\n", stage, col_map_width, col_map_height);
 }
 
  

@@ -95,11 +95,17 @@ void TilesheetPool_Initialize(void)
     
  
     tilepool_width[TILEPOOL_LEVEL1]  = BLOCKSWIDTH;
-    tilepool_height[TILEPOOL_LEVEL1] = BLOCKSHEIGHT;
-    tilepool_sizes[TILEPOOL_LEVEL1]  = (BLOCKSWIDTH/8) * BLOCKSDEPTH * BLOCKSHEIGHT;
+    tilepool_height[TILEPOOL_LEVEL1] = LV1_BLOCKSHEIGHT;
+    tilepool_sizes[TILEPOOL_LEVEL1]  = (BLOCKSWIDTH/8) * BLOCKSDEPTH * LV1_BLOCKSHEIGHT;
     tilepool_fast[TILEPOOL_LEVEL1]   = AllocMem(tilepool_sizes[TILEPOOL_LEVEL1], MEMF_ANY);
     Disk_LoadAsset((UBYTE *)tilepool_fast[TILEPOOL_LEVEL1], "tiles/lv1_tiles.BPL");
     
+    tilepool_width[TILEPOOL_LEVEL2]  = BLOCKSWIDTH;
+    tilepool_height[TILEPOOL_LEVEL2] = LV2_BLOCKSHEIGHT;
+    tilepool_sizes[TILEPOOL_LEVEL2]  = (BLOCKSWIDTH/8) * BLOCKSDEPTH * LV2_BLOCKSHEIGHT;
+    tilepool_fast[TILEPOOL_LEVEL2]   = AllocMem(tilepool_sizes[TILEPOOL_LEVEL2], MEMF_ANY);
+    Disk_LoadAsset((UBYTE *)tilepool_fast[TILEPOOL_LEVEL2], "tiles/lv2_tiles.BPL");
+
     /* Allocate ONE chip buffer sized to the largest */
     tilepool_chip_size = 0;
     for (int i = 0; i < TILEPOOL_COUNT; i++)

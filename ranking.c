@@ -349,30 +349,20 @@ void Ranking_Update(void)
             if (Timer_HasElapsed(&display_timer))
             {
                 
-                Timer_Start(&display_timer, 2);
+                Timer_Stop(&display_timer);
                 
                 // Clear everything and show thank you message
                 BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
                 BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
                 
-                current_ranking.rankingstate = RANKING_STATE_DEMO_END;
+                current_ranking.rankingstate = RANKING_STATE_DRAWHORIZON;
 
-                Music_LoadModule(MUSIC_GAMEOVER);
+                Game_AdvanceStage();
           
             }
             break;
         }
-        
-        case RANKING_STATE_DEMO_END:
-            if (Timer_HasElapsed(&display_timer))
-            {
-                Game_AdvanceStage();
-            }
-            break;
-        case RANKING_STATE_COMPLETE:
-            
-            break;
-  
+ 
     }
 }
 
@@ -533,13 +523,6 @@ void Ranking_Draw(UBYTE *buffer)
     else if (current_ranking.rankingstate == RANKING_STATE_COMPLETE)
     {
          
-    }
-    else if (current_ranking.rankingstate == RANKING_STATE_DEMO_END)
-    {
-        Font_DrawStringCentered(buffer, "Thank you for playing", 80, 15);
-        Font_DrawStringCentered(buffer, "Zippy Race A500 Edition", 100, 15);
-        Font_DrawStringCentered(buffer, "1 Level Demo", 120, 15);
-        Font_DrawStringCentered(buffer, "Full Game Coming Soon..", 140, 15);
     }
  
 }

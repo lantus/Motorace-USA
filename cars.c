@@ -372,6 +372,37 @@ void Cars_ResetPositions(void)
     passing_initialized = TRUE;
     cars_passed = 0;
 }
+
+void Cars_ResetPositionsEmpty(void)
+{
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        car[i].id = i;
+        car[i].visible = TRUE;
+        car[i].off_screen = TRUE;
+        car[i].needs_restore = FALSE;
+        car[i].spawning = FALSE;
+        car[i].honking = FALSE;
+        car[i].honk_timer = 0;
+        car[i].pursuit_timer = 0;
+        car[i].swerving = FALSE;
+        car[i].lateral_accum = 0;
+        car[i].swerve_timer = 0;
+        car[i].accumulator = 0;
+        car[i].anim_frame = 0;
+        car[i].anim_counter = 0;
+        car[i].has_blocked_bike = FALSE;
+        car[i].block_timer = 0;
+        car[i].speed = 0;
+        car[i].target_speed = 0;
+        
+        car_last_y[i] = 0;
+        car_was_ahead[i] = TRUE;
+    }
+    
+    passing_initialized = TRUE;
+    cars_passed = 0;
+}
  
 void Cars_RenderBOB(BlitterObject *car)
 {

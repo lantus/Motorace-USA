@@ -63,6 +63,7 @@ UBYTE Collision_GetLane(WORD world_x, WORD world_y);
 UBYTE Collision_GetSurface(WORD world_x, WORD world_y);
 void Collision_Set(WORD world_x, WORD world_y, UBYTE value);
 void CollisionMap_Load(void);
+void CollisionMap_SetStage(UBYTE stage);
 
 void Road_CacheRow(WORD world_y);
 void Road_CacheFillVisible(void);

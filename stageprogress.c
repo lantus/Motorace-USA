@@ -113,7 +113,7 @@ void StageProgress_DrawOverhead(void)
     stage_progress.needs_redraw = FALSE;
     
     // Calculate base block for current stage
-    UBYTE stage_base_block = 0;
+    UBYTE stage_base_block = stage_progress.current_stage * PROGRESS_BLOCKS_PER_STAGE;
     
     WORD base_y = 140;  // LA marker position
 

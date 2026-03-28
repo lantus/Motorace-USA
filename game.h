@@ -48,7 +48,8 @@
 #endif
 
 #define BLOCKSWIDTH 320
-#define BLOCKSHEIGHT 352
+#define LV1_BLOCKSHEIGHT 352
+#define LV2_BLOCKSHEIGHT 304
 #define BLOCKSDEPTH 4
 #define BLOCKSCOLORS (1L << BLOCKSDEPTH)
 #define BLOCKWIDTH 16
@@ -69,8 +70,7 @@
 #define BLOCKPLANELINES  (BLOCKHEIGHT * BLOCKSDEPTH)
  
 #define PALSIZE (BLOCKSCOLORS * 2)
-#define BLOCKSFILESIZE (BLOCKSWIDTH * BLOCKSHEIGHT * BLOCKSPLANES / 8 )
-
+ 
 #define TWOBLOCKS (BITMAPBLOCKSPERROW - NUMSTEPS)
 #define TWOBLOCKSTEP (NUMSTEPS - TWOBLOCKS)
 
@@ -146,6 +146,7 @@ extern UBYTE game_stage;
 extern UBYTE game_state;
 extern UBYTE game_difficulty;
 extern UBYTE game_map;
+extern UWORD max_stage_speed;
 
 extern UBYTE stage_state;
 extern UBYTE stage_complete;
@@ -209,13 +210,12 @@ void Game_ApplyPalette(UWORD *palette, int num_colors);
 void Game_SetMap(UBYTE maptype);
 void Game_HandleCollisions(void);
 void Game_Reset(void);
+void Game_AdvanceStage(void);
+void Game_StartNextOverhead(void);
 
 void GameReady_Initialize(void);
 void GameReady_Draw(void);
 void GameReady_Update(void);
-
-void Game_AdvanceStage(void);
-void Game_StartNextOverhead(void);
 
 void Stage_Initialize(void);
 void Stage_Draw(void);
