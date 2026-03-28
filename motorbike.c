@@ -749,7 +749,6 @@ void MotorBike_CrashAndReposition(void)
     Game_ApplyPalette((UWORD *)black_palette, BLOCKSCOLORS);
     WaitVBL();
     
-
     // === STEP 1: Remove ALL car BOBs from BOTH buffers ===
     // Must do this BEFORE moving mapposy or the restore Y coords are wrong
     
@@ -900,10 +899,11 @@ void MotorBike_CrashAndReposition(void)
     LONG planeadd = ((LONG)yoffset) * BITMAPBYTESPERROW * BLOCKSDEPTH;
     
     Copper_SetBitplanePointer(BLOCKSDEPTH, planes_temp, planeadd);
+   
+    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
+   
     WaitVBL();
      
-    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
-    
     bike_position_x = safe_x;
     bike_position_y = SCREENHEIGHT - 48;
     bike_world_y = mapposy + bike_position_y;

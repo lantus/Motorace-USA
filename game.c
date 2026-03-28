@@ -122,7 +122,7 @@ RawMap *houston_map;
 UWORD	intro_colors[BLOCKSCOLORS];
 UWORD	lv_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
-UWORD	desert_colors[BLOCKSCOLORS];
+UWORD	offroad_colors[BLOCKSCOLORS];
 UWORD   black_palette[BLOCKSCOLORS] = {0};
 UWORD  *current_palette; 
 
@@ -269,32 +269,37 @@ void Game_StartNextOverhead(void)
             TilesheetPool_Load(TILEPOOL_LEVEL1);
             game_map = MAP_OVERHEAD_LASANGELES;
             stage_music = MUSIC_START;
-            Game_ApplyPalette(current_palette, BLOCKSCOLORS);
+            current_palette = city_colors;
+        
             break;
         case STAGE_HOUSTON:
             max_stage_speed = 185;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
             game_map = MAP_OVERHEAD_LASVEGAS;
             stage_music = MUSIC_OFFROAD;
-            Game_ApplyPalette(current_palette, BLOCKSCOLORS);
+            current_palette = offroad_colors;
+         
             break;
         case STAGE_STLOUIS:
             max_stage_speed = 210;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
             game_map = MAP_OVERHEAD_HOUSTON;
             stage_music = MUSIC_START;
+            current_palette = city_colors;
             break;
         case STAGE_CHICAGO:
             max_stage_speed = 210;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
             game_map = MAP_OVERHEAD_STLOUIS;
             stage_music = MUSIC_START;
+            current_palette = offroad_colors;
             break;
         case STAGE_NEWYORK:
             max_stage_speed = 210;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
             game_map = MAP_OVERHEAD_CHICAGO;
             stage_music = MUSIC_START;
+            current_palette = city_colors;
             break;
         default:
             max_stage_speed = 210;
@@ -306,7 +311,7 @@ void Game_StartNextOverhead(void)
     
     Game_SetMap(game_map);
     CollisionMap_SetStage(game_stage);
-
+ 
     bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 24;
     bike_state = BIKE_STATE_STOPPED;
@@ -323,6 +328,8 @@ void Game_StartNextOverhead(void)
     wheelie_active = FALSE;
     wheelie_scored = FALSE;
     crash_anim_frames = 0;
+
+    Game_ApplyPalette(black_palette,BLOCKSCOLORS);
     
     /* Stage 1 spawns 5 cars around bike; other stages use respawn system */
     if (game_stage == STAGE_LASVEGAS)
@@ -355,6 +362,8 @@ void Game_StartNextOverhead(void)
     Music_Stop();
     Music_LoadModule(stage_music);
     
+    Game_ApplyPalette(current_palette,BLOCKSCOLORS);
+
     KPrintF("=== Starting stage %d ===\n", game_stage);
 }
 
@@ -465,12 +474,12 @@ void Game_SetMap(UBYTE maptype)
             mapdata = (UWORD *)houston_map->data;
             mapwidth = houston_map->mapwidth;
             mapheight = houston_map->mapheight;  
-            current_palette = desert_colors;
+            current_palette = offroad_colors;
             city_horizon = &nyc_horizon;
             break;
     }
 
-    Game_ApplyPalette(current_palette,BLOCKSCOLORS);
+  
 }
  
 
@@ -1744,7 +1753,7 @@ void Stage_CheckCompletion(void)
     /* current_map_pos counts up from 0 to mapsize */
     LONG completion_threshold = stage_progress.mapsize - (BLOCKHEIGHT << 1);
     
-    if (stage_progress.current_map_pos >= completion_threshold)
+    if (stage_progress.current_map_pos >= 3000)
     {
         stage_state = STAGE_FRONTVIEW;
         Stage_InitializeFrontView();
