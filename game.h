@@ -226,4 +226,6 @@ void Stage_Update(void);
 void Stage_ShowInfo(void);
 void Stage_CheckCompletion(void);
 void Stage_InitializeFrontView(void);
+void Stage_RedrawTunnelTiles(void);
+
 #endif

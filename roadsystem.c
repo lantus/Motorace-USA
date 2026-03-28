@@ -24,6 +24,7 @@
 #include "motorbike.h"
 
 BYTE road_tile_idx = 0;
+UWORD road_tile_plain = 0;
 
 typedef struct {
     UWORD tile_idx;          // Current tile index (0-14)

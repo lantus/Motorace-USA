@@ -43,6 +43,12 @@
 #define SURFACE_GRAVEL    5
 #define SURFACE_BOOST     6
 #define SURFACE_JUMP      7
+#define SURFACE_PTS100   8
+#define SURFACE_PTS200   9
+#define SURFACE_PTS500   10
+#define SURFACE_PTS700   11
+#define SURFACE_PTS1000  12
+#define SURFACE_TUNNEL   13
 
 
 #define GET_LANE(packed)    ((packed) >> 4)
@@ -51,11 +57,13 @@
 #define IS_LANE(packed)     (GET_LANE(packed) >= LANE_1 && GET_LANE(packed) <= LANE_4)
 
 #define ROAD_CACHE_SIZE 256
-
-#define ROAD_TILE_PLAIN 11
-
+ 
+extern UWORD road_tile_plain;
 extern BYTE road_tile_idx;
 extern WORD road_center_cache[ROAD_CACHE_SIZE];
+extern WORD col_map_width;
+extern WORD col_map_height;
+extern UBYTE *collision_map;
 
 void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count);
 UBYTE Collision_Get(WORD world_x, WORD world_y);

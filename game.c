@@ -279,7 +279,7 @@ void Game_StartNextOverhead(void)
             game_map = MAP_OVERHEAD_LASANGELES;
             stage_music = MUSIC_START;
             current_palette = city_colors;
-        
+             road_tile_plain = 11;
             break;
         case STAGE_HOUSTON:
             max_stage_speed = 185;
@@ -287,7 +287,7 @@ void Game_StartNextOverhead(void)
             game_map = MAP_OVERHEAD_LASVEGAS;
             stage_music = MUSIC_OFFROAD;
             current_palette = offroad_colors;
-         
+            road_tile_plain = 0;
             break;
         case STAGE_STLOUIS:
             max_stage_speed = 210;
@@ -974,6 +974,9 @@ void Stage_Draw()
         SmoothScroll();
         Cars_Update();
         bike_world_y = mapposy + bike_position_y;
+
+        Stage_RedrawTunnelTiles();
+
         Game_SwapBuffers();
  
         if (Timer_HasElapsed(&hud_update_timer))
@@ -1293,11 +1296,13 @@ void Stage_Update()
             Stage_CheckCompletion();
             return;
         }
-
-        // === CHECK FOR WHEELIE TRIGGER ===
+ 
         WORD bike_wy = mapposy + bike_position_y - g_sprite_voffset;
+
         UBYTE surface = Collision_GetSurface(bike_position_x + 8, bike_wy);
-        
+        UBYTE surface_l = Collision_GetSurface(bike_position_x, bike_wy);
+        UBYTE surface_r = Collision_GetSurface(bike_position_x + 16, bike_wy);
+
         if (surface == SURFACE_WHEELIE && !wheelie_active)
         {
             wheelie_active = TRUE;
@@ -1319,10 +1324,61 @@ void Stage_Update()
             return;
         }
 
-         /* Check for gas can across bike width */
-        UBYTE surface_l = Collision_GetSurface(bike_position_x, bike_wy);
-        UBYTE surface_r = Collision_GetSurface(bike_position_x + 16, bike_wy);
+
+        UWORD pickup_points = 0;
+        UBYTE pickup_surface = SURFACE_NORMAL;
         
+        if (surface_l >= SURFACE_PTS100 && surface_l <= SURFACE_PTS1000)
+            pickup_surface = surface_l;
+        else if (surface >= SURFACE_PTS100 && surface <= SURFACE_PTS1000)
+            pickup_surface = surface;
+        else if (surface_r >= SURFACE_PTS100 && surface_r <= SURFACE_PTS1000)
+            pickup_surface = surface_r;
+        
+        if (pickup_surface != SURFACE_NORMAL)
+        {
+            switch (pickup_surface)
+            {
+                case SURFACE_PTS100:  pickup_points = 100;  break;
+                case SURFACE_PTS200:  pickup_points = 200;  break;
+                case SURFACE_PTS500:  pickup_points = 500;  break;
+                case SURFACE_PTS700:  pickup_points = 700;  break;
+                case SURFACE_PTS1000: pickup_points = 1000; break;
+            }
+            
+            /* Find which point hit */
+            WORD hit_x = bike_position_x + 8;
+            if (surface_l == pickup_surface) hit_x = bike_position_x;
+            else if (surface_r == pickup_surface) hit_x = bike_position_x + 16;
+            
+            WORD map_x = hit_x / BLOCKWIDTH;
+            WORD map_y = bike_wy / BLOCKHEIGHT;
+            
+            /* Add score */
+            game_score += pickup_points;
+            HUD_UpdateScore(game_score);
+            
+            /* Replace tile with plain road */
+            mapdata[map_y * mapwidth + map_x] = road_tile_plain;
+            
+            /* Preserve lane, clear surface */
+            UBYTE old_col = Collision_Get(hit_x, bike_wy);
+            Collision_Set(hit_x, bike_wy, (old_col & 0xF0) | SURFACE_NORMAL);
+            
+            /* Redraw on all buffers */
+            WORD buf_y = ROUND2BLOCKHEIGHT((map_y * BLOCKHEIGHT) % EFFECTIVE_HEIGHT) << 2;
+            WORD buf_x = map_x << 4;
+            
+            DrawBlock(buf_x, buf_y, map_x, map_y, screen.bitplanes);
+            DrawBlock(buf_x, buf_y, map_x, map_y, screen.offscreen_bitplanes);
+            DrawBlock(buf_x, buf_y, map_x, map_y, screen.pristine);
+            
+            UWORD yoff = buf_y + (HALFBITMAPHEIGHT << 2);
+            DrawBlock(buf_x, yoff, map_x, map_y, screen.bitplanes);
+            DrawBlock(buf_x, yoff, map_x, map_y, screen.offscreen_bitplanes);
+            DrawBlock(buf_x, yoff, map_x, map_y, screen.pristine);
+        }
+
         if (surface_l == SURFACE_GASCAN || surface == SURFACE_GASCAN || surface_r == SURFACE_GASCAN)
         {
             WORD hit_x = bike_position_x + 8;
@@ -1335,7 +1391,7 @@ void Stage_Update()
             Fuel_Add(1);
             Fuel_DrawAll();
             
-            mapdata[map_y * mapwidth + map_x] = ROAD_TILE_PLAIN;
+            mapdata[map_y * mapwidth + map_x] = road_tile_plain;
             
             UBYTE old_col = Collision_Get(hit_x, bike_wy);
             Collision_Set(hit_x, bike_wy, (old_col & 0xF0) | SURFACE_NORMAL);
@@ -1840,4 +1896,49 @@ void Stage_InitializeFrontView(void)
     Music_LoadModule(MUSIC_FRONTVIEW);
 
     MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+}
+
+void Stage_RedrawTunnelTiles(void)
+{
+    WORD start_row = mapposy >> 4;          /* / BLOCKHEIGHT (16) */
+    WORD end_row = (mapposy + SCREENHEIGHT) >> 4;
+    
+    if (start_row < 0) start_row = 0;
+    if (++end_row > col_map_height) end_row = col_map_height;
+    
+    /* Pointer to collision map row */
+    UBYTE *col_row = collision_map + (start_row * col_map_width);
+    WORD row_y = start_row << 4;            /* row * BLOCKHEIGHT */
+    
+    for (WORD row = start_row; row < end_row; row++)
+    {
+        /* Quick scan: any tunnel tiles in this row? */
+        BOOL has_tunnel = FALSE;
+        for (WORD col = 0; col < col_map_width; col++)
+        {
+            if ((col_row[col] & 0x0F) == SURFACE_TUNNEL)
+            {
+                has_tunnel = TRUE;
+                break;
+            }
+        }
+        
+        if (has_tunnel)
+        {
+            WORD buf_y = ROUND2BLOCKHEIGHT(row_y % EFFECTIVE_HEIGHT) << 2;
+            WORD buf_x = 0;
+            
+            for (WORD col = 0; col < col_map_width; col++)
+            {
+                if ((col_row[col] & 0x0F) == SURFACE_TUNNEL)
+                {
+                    DrawBlock(buf_x, buf_y, col, row, draw_buffer);
+                }
+                buf_x += 16;
+            }
+        }
+        
+        col_row += col_map_width;
+        row_y += 16;
+    }
 }
