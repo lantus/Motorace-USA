@@ -64,6 +64,8 @@ void Ranking_Initialize(void)
     current_ranking.player_tier_index = 0;
     current_ranking.flash_state = FALSE;
     
+    current_ranking.backdrop_y = 0;
+    
     Timer_Start(&flash_timer, 0);  // Flash every 0.5 seconds
 
     // Clear screens

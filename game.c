@@ -364,7 +364,11 @@ void Game_StartNextOverhead(void)
     Road_CacheFillVisible();
     Game_SwapBuffers();
     
-    Stage_ShowInfo();
+    if (game_stage == STAGE_LASVEGAS)
+    {
+        Stage_ShowInfo();
+    }
+    
     StageProgress_SetStage(game_stage);
     StageProgress_DrawAll();
     HUD_UpdateRank(game_rank);
