@@ -15,6 +15,12 @@
  
 #define LA_SKYLINE "images/skyline_la.BPL"
 
+#define SKYLINE_NYC      0
+#define SKYLINE_VEGAS    1
+#define SKYLINE_HOUSTON  2
+#define SKYLINE_STLOUIS  3
+#define SKYLINE_CHICAGO  4
+
 #define ONCOMING_CAR_1 "objects/frontview/fv1.BPL"
 #define ONCOMING_CAR_2 "objects/frontview/fv2.BPL"
 #define ONCOMING_CAR_3 "objects/frontview/fv3.BPL"
@@ -94,4 +100,6 @@ BOOL City_CheckCarCollision(BlitterObject *car);
 void City_UpdateBikeCrashAnimation(void);
 void City_ResetRoadState(void);
 CityApproachState City_GetApproachState(void);
+void City_InitializeSkylines(void);
+void Skyline_Load(UBYTE skyline_id);
 #endif

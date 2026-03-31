@@ -227,20 +227,45 @@ BOOL LMBDown(void)
 	return ((*(UBYTE *)0xbfe001) & 64) ? FALSE : TRUE;
 }
 
-__attribute__((always_inline)) inline UBYTE ReadKeycode(void)
+ 
+static UBYTE current_keycode =  0xFF;
+
+void KeyRead(void)
 {
+ 
+    UBYTE icr = *(volatile UBYTE*)0xBFED01;
+    
+    if (!(icr & 0x08))
+    {
+        current_keycode = 0xFF;  // No new key available
+        return;
+    }
+    
+    // Read raw keycode from CIA-A SDR
     UBYTE raw = *(volatile UBYTE*)0xBFEC01;
     
-    // Acknowledge the key — toggle SP line
-    *(volatile UBYTE*)0xBFE001 |= 0x40;   // Set SP high
-    *(volatile UBYTE*)0xBFE001 &= ~0x40;  // Set SP low
+    // Acknowledge: set CIA-A CRA bit 6 (SPMODE=output) to pull SP high
+    *(volatile UBYTE*)0xBFEE01 |= 0x40;
     
-    return (raw >> 1) ^ 0x7F;
+    // Must hold for ~85μs — 3 raster lines is safe
+    for (volatile int i = 0; i < 100; i++);
+    
+    // Release: clear SPMODE back to input
+    *(volatile UBYTE*)0xBFEE01 &= ~0x40;
+    
+    // Decode: shift out up/down bit, invert
+    current_keycode = (raw >> 1) ^ 0x7F;
+    
+    // Bit 0 of raw = 0 means pressed, 1 means released
+    // If key-up event, ignore it
+    if (raw & 0x01)
+        current_keycode = 0xFF;
 }
+
 
 __attribute__((always_inline)) inline BOOL KeyPressed(UBYTE keycode)
 {
-    return (ReadKeycode() == keycode);
+    return (current_keycode == keycode);
 }
 
 void System_DisableOS()

@@ -224,15 +224,6 @@ void Game_Reset(void)
 
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
 
-    nyc_horizon.visible = TRUE;
-    nyc_horizon.off_screen = FALSE;
-    nyc_horizon.x = 0;
-    nyc_horizon.y = 0;
-
-    lv_horizon.visible = TRUE;
-    lv_horizon.off_screen = FALSE;
-    lv_horizon.x = 0;
-    lv_horizon.y = 0;
 
     City_ResetRoadState();
 
@@ -476,35 +467,35 @@ void Game_SetMap(UBYTE maptype)
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = city_colors;
-            city_horizon = &nyc_horizon;
+          
             break;
         case MAP_OVERHEAD_LASANGELES:
             mapdata = (UWORD *)la_map->data;
             mapwidth = la_map->mapwidth;
             mapheight = la_map->mapheight;  
             current_palette = city_colors;
-            city_horizon = &lv_horizon;
+           
             break;
         case MAP_FRONTVIEW_LASVEGAS:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = lv_colors;
-            city_horizon = &lv_horizon;
+           
             break;
         case MAP_OVERHEAD_LASVEGAS:
             mapdata = (UWORD *)houston_map->data;
             mapwidth = houston_map->mapwidth;
             mapheight = houston_map->mapheight;  
             current_palette = offroad_colors;
-            city_horizon = &nyc_horizon;
+         
             break;
          case MAP_FRONTVIEW_HOUSTON:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = houston_colors;
-            city_horizon = &houston_horizon;
+           
             break;       
     }
 
@@ -1863,9 +1854,14 @@ void Stage_InitializeFrontView(void)
 {
     Game_ResetBitplanePointer();
 
+    current_buffer = 0;
+    draw_buffer = screen.bitplanes;
+    display_buffer = screen.offscreen_bitplanes;
+
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+ 
 
     bike_position_x = 80;
     bike_position_y = 200;
@@ -1873,33 +1869,65 @@ void Stage_InitializeFrontView(void)
     Sprites_ClearLower();
     Sprites_ClearHigher();
 
-     /* Swap to city attract tiles for front view */
+    /* Swap to city attract tiles for front view */
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
 
+    City_ResetRoadState();
+
+    /* Per-stage: map, skyline, city name */
     switch (game_stage)
     {
-        case STAGE_LASVEGAS:  Game_SetMap(MAP_FRONTVIEW_LASVEGAS);   break;
-        case STAGE_HOUSTON:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
-        case STAGE_STLOUIS:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
-        case STAGE_CHICAGO:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
-        case STAGE_NEWYORK:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
-        default:              Game_SetMap(MAP_FRONTVIEW_LASVEGAS);   break;
+        case STAGE_LASVEGAS:
+            Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
+            Skyline_Load(SKYLINE_VEGAS);
+           
+            break;
+        case STAGE_HOUSTON:
+            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Skyline_Load(SKYLINE_HOUSTON);
+         
+            break;
+        case STAGE_STLOUIS:
+            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Skyline_Load(SKYLINE_STLOUIS);
+           
+            break;
+        case STAGE_CHICAGO:
+            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Skyline_Load(SKYLINE_CHICAGO);
+        
+            break;
+        case STAGE_NEWYORK:
+            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Skyline_Load(SKYLINE_NYC);
+          
+            break;
+        default:
+            Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
+            Skyline_Load(SKYLINE_NYC);
+           
+            break;
     }
 
     MotorBike_Reset();
 
-    Game_ApplyPalette(current_palette,BLOCKSCOLORS);
+    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
     Game_SetBackGroundColor(0x00);
     
     Title_Reset();
  
-    /* Reset horizon position (ranking screen shifts it down) */
+    /* Reset horizon — clear stale restore state from previous stage */
     city_horizon->y = 0;
+    city_horizon->old_x = 0;
+    city_horizon->old_y = 0;
+    city_horizon->prev_old_x = 0;
+    city_horizon->prev_old_y = 0;
+    city_horizon->needs_restore = FALSE;
+    city_horizon->off_screen = FALSE;
     
     City_PreDrawRoad();
     City_OncomingCarsReset();
 
-    /* Per-stage city name */
     switch (game_stage)
     {
         case STAGE_LASVEGAS:  City_ShowCityName("LAS VEGAS");  break;

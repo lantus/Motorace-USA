@@ -28,7 +28,7 @@ void Joy_ReadAll(void);
 
 UBYTE ReadKeycode(void);
 BOOL KeyPressed(UBYTE keycode);
-
+void KeyRead(void);
 BOOL JoyButton2(void);
 BOOL JoyLeft(void);
 BOOL JoyRight(void);

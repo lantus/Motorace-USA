@@ -329,6 +329,7 @@ static __attribute__((interrupt)) void interruptHandler()
 }
 static BOOL paused = FALSE;
 static UBYTE prev_key = 0;
+ 
 int main(void)
 {
 	LONG x = 0;
@@ -378,6 +379,7 @@ int main(void)
     {		 
 		WaitLine(0x13);
 
+		KeyRead();
 		//custom->color[0] = 0xF00;  // RED = game work done, waiting
 
 		Joy_ReadAll();
