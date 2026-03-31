@@ -27,39 +27,40 @@ typedef struct {
 
 typedef struct 
 {
-    UBYTE id;
-    UBYTE *data;
-    UBYTE *data_frame2;     // Second animation frame
-    WORD anim_frame;        // Current frame (0 or 1)
-    WORD anim_counter;      // Counter for frame switching      
-    UBYTE *background;      // Saved background data  
-    UBYTE *background2;     // Saved background data   (for DblBuf)
-    UBYTE *mask;            // Add this
-    WORD x, y;              // Current screen position
-    WORD old_x;             // Position 1 frame ago
-    WORD old_y;
-    WORD prev_old_x;        // Position 2 frames ago (what's in the back buffer)
-    WORD prev_old_y;
-    BOOL visible;           // Is BOB active
-    BOOL moved;             // Position changed this frame
-    BOOL needs_restore;     // Only restore if we drew last frame
-    BOOL off_screen;        // Skip blits entirely if off-screen
-    ULONG size;
-    WORD speed;             // Random max speed ~160
-    WORD accumulator;       // Fixed-point accumulator for smooth movement
-    WORD target_speed;
-    WORD saved_buffer_y;    // Track where background was saved
-    BOOL crashed;
-    UBYTE crash_timer;
-    BOOL has_blocked_bike;   // TRUE if this car has already moved to block bike
-    WORD block_timer;        // Timer for gradual movement   
-    BOOL spawning;
-    BOOL honking;
-    UBYTE honk_timer;
-    UBYTE pursuit_timer;    
-    BOOL   swerving;         /* In swerve/spinout state */
-    BYTE lateral_accum;
-    UBYTE  swerve_timer;     /* Frames remaining in swerve */
+    UBYTE   id;
+    UBYTE   *data;
+    UBYTE   *data_frame2;     // Second animation frame
+    WORD    anim_frame;        // Current frame (0 or 1)
+    WORD    anim_counter;      // Counter for frame switching      
+    UBYTE   *background;      // Saved background data  
+    UBYTE   *background2;     // Saved background data   (for DblBuf)
+    UBYTE   *mask;            // Add this
+    WORD    x, y;              // Current screen position
+    WORD    old_x;             // Position 1 frame ago
+    WORD    old_y;
+    WORD    prev_old_x;        // Position 2 frames ago (what's in the back buffer)
+    WORD    prev_old_y;
+    BOOL    visible;           // Is BOB active
+    BOOL    moved;             // Position changed this frame
+    BOOL    needs_restore;     // Only restore if we drew last frame
+    BOOL    off_screen;        // Skip blits entirely if off-screen
+    ULONG   size;
+    WORD    speed;             // Random max speed ~160
+    WORD    accumulator;       // Fixed-point accumulator for smooth movement
+    WORD    target_speed;
+    WORD    saved_buffer_y;    // Track where background was saved
+    BOOL    crashed;
+    UBYTE   crash_timer;
+    BOOL    has_blocked_bike;   // TRUE if this car has already moved to block bike
+    WORD    block_timer;        // Timer for gradual movement   
+    BOOL    spawning;
+    BOOL    honking;
+    UBYTE   honk_timer;
+    UBYTE   pursuit_timer;    
+    BOOL    swerving;         /* In swerve/spinout state */
+    BYTE    lateral_accum;
+    UBYTE   swerve_timer;     /* Frames remaining in swerve */
+    BOOL    in_tunnel;
     RestorePtrs restore;
 
 } BlitterObject;

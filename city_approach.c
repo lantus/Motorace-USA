@@ -66,6 +66,7 @@ static WORD bike_horizon_start_x = 0;
 
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
+BlitterObject houston_horizon;
 BlitterObject oncoming_car[8];
 BlitterObject flipped_car[4];
 BlitterObject *city_horizon;
@@ -92,6 +93,10 @@ void City_Initialize()
     lv_horizon.size = findSize(VEGAS_SKYLINE);
     lv_horizon.data = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_CHIP);
     lv_horizon.data_frame2 = Disk_AllocAndLoadAsset(VEGAS_SKYLINE2, MEMF_CHIP);
+
+    houston_horizon.size = findSize(HOUSTON_SKYLINE);
+    houston_horizon.data = Disk_AllocAndLoadAsset(HOUSTON_SKYLINE, MEMF_CHIP);
+    houston_horizon.data_frame2 = NULL;
  
 
     city_horizon = &nyc_horizon;

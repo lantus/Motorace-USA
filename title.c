@@ -80,7 +80,8 @@ void Title_Initialize(void)
 void Title_LoadAllPalettes()
 {
     Game_LoadPalette("palettes/intro.pal", intro_colors, BLOCKSCOLORS);
-    Game_LoadPalette("palettes/cars_frontview_lv.pal", lv_colors, BLOCKSCOLORS);
+    Game_LoadPalette("palettes/fv_lasvegas.pal", lv_colors, BLOCKSCOLORS);
+    Game_LoadPalette("palettes/fv_houston.pal", houston_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/offroad.pal", offroad_colors, BLOCKSCOLORS);
 }
 

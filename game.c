@@ -36,6 +36,7 @@
 extern volatile struct Custom *custom;
 extern BlitterObject nyc_horizon;
 extern BlitterObject lv_horizon;
+extern BlitterObject houston_horizon;
 extern BlitterObject *city_horizon;
 
 
@@ -121,6 +122,7 @@ RawMap *houston_map;
 // Palettes
 UWORD	intro_colors[BLOCKSCOLORS];
 UWORD	lv_colors[BLOCKSCOLORS];
+UWORD	houston_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
 UWORD	offroad_colors[BLOCKSCOLORS];
 UWORD   black_palette[BLOCKSCOLORS] = {0};
@@ -279,7 +281,7 @@ void Game_StartNextOverhead(void)
             game_map = MAP_OVERHEAD_LASANGELES;
             stage_music = MUSIC_START;
             current_palette = city_colors;
-             road_tile_plain = 11;
+            road_tile_plain = 11;
             break;
         case STAGE_HOUSTON:
             max_stage_speed = 185;
@@ -336,6 +338,7 @@ void Game_StartNextOverhead(void)
     speed_sample_count = 0;
     wheelie_active = FALSE;
     wheelie_scored = FALSE;
+    jump_active = FALSE;
     crash_anim_frames = 0;
 
     Game_ApplyPalette(black_palette,BLOCKSCOLORS);
@@ -418,6 +421,9 @@ void Game_NewGame(UBYTE difficulty)
     wheelie_active = FALSE;
     wheelie_scored = FALSE;
     crash_anim_frames = 0;
+
+    jump_active = FALSE;
+    Timer_Stop(&jump_timer);
     
     Cars_ResetPositions();
 }
@@ -493,6 +499,13 @@ void Game_SetMap(UBYTE maptype)
             current_palette = offroad_colors;
             city_horizon = &nyc_horizon;
             break;
+         case MAP_FRONTVIEW_HOUSTON:
+            mapdata = (UWORD *)city_attract_map->data;
+            mapwidth = city_attract_map->mapwidth;
+            mapheight = city_attract_map->mapheight;  
+            current_palette = houston_colors;
+            city_horizon = &houston_horizon;
+            break;       
     }
 
   
@@ -975,7 +988,7 @@ void Stage_Draw()
         Cars_Update();
         bike_world_y = mapposy + bike_position_y;
 
-        Stage_RedrawTunnelTiles();
+        //Stage_RedrawTunnelTiles();
 
         Game_SwapBuffers();
  
@@ -1186,7 +1199,7 @@ void Stage_Update()
         /* Debug: press fire+up+down to skip to next stage */
         if (KeyPressed(KEY_F1))
         {
-           stage_state = STAGE_FRONTVIEW;
+            stage_state = STAGE_FRONTVIEW;
             Stage_InitializeFrontView();
             HUD_UpdateBikeSpeed(bike_speed);
             HUD_UpdateScore(game_score);
@@ -1261,7 +1274,6 @@ void Stage_Update()
                         car[i].x += 3;
                 }
             }
-            
             if (Timer_HasElapsed(&wheelie_timer))
             {
                 wheelie_active = FALSE;
@@ -1272,15 +1284,15 @@ void Stage_Update()
                 Sprites_ClearHigher();     // Turn off sprites 2+3
                 //SFX_Play(SFX_LAND);
             }
-            
+
             speed_accumulator += bike_speed;
             speed_sample_count++;
             StageProgress_UpdateOverhead(mapposy);
             Stage_CheckCompletion();
             return;
         }
-        
-        
+ 
+   
         
         if (collision_state == COLLISION_TRAFFIC || collision_state == COLLISION_OFFROAD)
         {
@@ -1323,7 +1335,8 @@ void Stage_Update()
             Stage_CheckCompletion();
             return;
         }
-
+ 
+            
 
         UWORD pickup_points = 0;
         UBYTE pickup_surface = SURFACE_NORMAL;
@@ -1863,7 +1876,15 @@ void Stage_InitializeFrontView(void)
      /* Swap to city attract tiles for front view */
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
 
-    Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
+    switch (game_stage)
+    {
+        case STAGE_LASVEGAS:  Game_SetMap(MAP_FRONTVIEW_LASVEGAS);   break;
+        case STAGE_HOUSTON:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
+        case STAGE_STLOUIS:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
+        case STAGE_CHICAGO:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
+        case STAGE_NEWYORK:   Game_SetMap(MAP_FRONTVIEW_HOUSTON);    break;
+        default:              Game_SetMap(MAP_FRONTVIEW_LASVEGAS);   break;
+    }
 
     MotorBike_Reset();
 

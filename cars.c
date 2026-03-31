@@ -366,6 +366,7 @@ void Cars_ResetPositions(void)
         car[i].swerving = FALSE;
         car[i].lateral_accum= 0;
         car[i].swerve_timer = 0;
+        car[i].in_tunnel = 0;
         
     }
 
@@ -395,6 +396,7 @@ void Cars_ResetPositionsEmpty(void)
         car[i].block_timer = 0;
         car[i].speed = 0;
         car[i].target_speed = 0;
+        car[i].in_tunnel = 0; 
         
         car_last_y[i] = 0;
         car_was_ahead[i] = TRUE;
@@ -493,7 +495,31 @@ void Cars_RenderBOB(BlitterObject *car)
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
     APTR car_restore_ptrs[4];
-    
+ 
+    if (car->in_tunnel)
+    {
+        // Already inside — check car CENTER to know when fully out
+        UBYTE surface = Collision_GetSurface(car->x + 16, car->y + 32);
+        if (surface == SURFACE_TUNNEL)
+        {
+            return;  // Still inside tunnel — don't draw
+        }
+        else
+        {
+            car->in_tunnel = FALSE;  // Fully out — unlatch
+        }
+    }
+    else
+    {
+        // Not in tunnel — check AHEAD to catch entry
+        UBYTE surface = Collision_GetSurface(car->x + 16, car->y);
+        if (surface == SURFACE_TUNNEL)
+        {
+            car->in_tunnel = TRUE;    
+            return;                  
+        }
+    }
+
     // Check if BOB crosses buffer split
     if (buffer_y + clip_height > BITMAPHEIGHT)
     {

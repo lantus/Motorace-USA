@@ -178,6 +178,7 @@ extern UWORD	intro_colors[BLOCKSCOLORS];
 extern UWORD	city_colors[BLOCKSCOLORS];
 extern UWORD	offroad_colors[BLOCKSCOLORS];
 extern UWORD    lv_colors[BLOCKSCOLORS];
+extern UWORD    houston_colors[BLOCKSCOLORS];
 extern UWORD    black_palette[BLOCKSCOLORS];
 extern UWORD   *current_palette;
 

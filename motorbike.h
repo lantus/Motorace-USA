@@ -71,7 +71,8 @@ extern UWORD bike_position_y;
 extern LONG  bike_world_y;   
 extern UWORD crash_anim_frames;
 
-// TODO: Crashing, Jump, Wheelie
+extern BOOL jump_active;
+ 
 
 enum BikeState
 {
@@ -104,6 +105,8 @@ extern WORD  wheelie_speed;
 extern UWORD wheelie_anim_frames;
 extern GameTimer wheelie_timer;
 extern GameTimer invuln_timer;
+extern GameTimer jump_timer;
+
 #define MIN_CRUISING_SPEED 42  // Minimum automatic speed
  
 void MotorBike_Initialize();
