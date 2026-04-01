@@ -123,4 +123,6 @@ WORD MotorBike_GetVibrationOffset(void);
 void MotorBike_AutoAccelerate(void);
 void MotorBike_DecelerateToCruising(void);
 void MotorBike_CrashAndReposition(void);
+void MotorBike_SetDefaultPalette(void);
+void MotorBike_ResetApproachIndex(void);
 CollisionState MotorBike_CheckCollision(int *hit_car_index);

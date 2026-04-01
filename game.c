@@ -18,6 +18,7 @@
 #include "pixel.h"
 #include "sprites.h"
 #include "motorbike.h"
+#include "planes.h"
 #include "hud.h"
 #include "font.h"
 #include "title.h"
@@ -166,6 +167,8 @@ void Game_Initialize()
     
     Audio_Initialize();
     MotorBike_Initialize();
+    Planes_Initialize();
+
     HUD_InitSprites();
     HUD_SetSpritePositions();
     
@@ -188,6 +191,7 @@ void Game_Initialize()
     
     Game_SetMap(game_map);
     MotorBike_Reset();
+    MotorBike_ResetApproachIndex();
     Fuel_Initialize();
     StageProgress_Initialize();
     
@@ -229,6 +233,7 @@ void Game_Reset(void)
 
     Game_SetMap(game_map);
     MotorBike_Reset();
+    MotorBike_ResetApproachIndex();
     Fuel_Initialize();
     StageProgress_Initialize();
 
@@ -1028,10 +1033,13 @@ void Stage_Draw()
         City_RestoreOncomingCars();
         City_DrawRoad();
         City_DrawOncomingCars();
+        Planes_Restore(draw_buffer);
+        Planes_Draw(draw_buffer);
 
         WORD vibration_x = MotorBike_GetVibrationOffset();
         MotorBike_Draw(bike_position_x + vibration_x, bike_position_y, 0);
-
+        Planes_Update();
+        
         WaitBlit();
  
         Game_ResetBitplanePointer();
@@ -1053,9 +1061,14 @@ void Stage_Draw()
     else if (stage_state == STAGE_COMPLETE)
     {
         City_DrawRoad();
+        Planes_Restore(draw_buffer);
+        Planes_Update();
+        Planes_Draw(draw_buffer);
 
         if (Timer_HasElapsed(&stage_complete_timer))
         {
+            Planes_Stop();
+
             Timer_Stop(&stage_complete_timer);
             stage_state = STAGE_RANKING;
 
@@ -1617,6 +1630,11 @@ void Stage_Update()
 
         if (approach_state == CITY_STATE_INTO_HORIZON)
         {
+            if (game_stage == STAGE_HOUSTON && !Planes_IsActive() && bike_position_y < 210)
+            {
+                Planes_Start();
+            }
+
             City_UpdateHorizonTransition(&bike_position_y, &bike_speed, game_frame_count);
 
             bike_position_x = City_CalculateBikePerspectiveX(bike_position_y, 
@@ -1862,6 +1880,9 @@ void Stage_InitializeFrontView(void)
     draw_buffer = screen.bitplanes;
     display_buffer = screen.offscreen_bitplanes;
 
+    
+    Game_ApplyPalette(black_palette, BLOCKSCOLORS);
+
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
@@ -1914,9 +1935,9 @@ void Stage_InitializeFrontView(void)
     }
 
     MotorBike_Reset();
+    MotorBike_ResetApproachIndex();
 
-    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
-    Game_SetBackGroundColor(0x00);
+
     
     Title_Reset();
  
@@ -1931,6 +1952,7 @@ void Stage_InitializeFrontView(void)
     
     City_PreDrawRoad();
     City_OncomingCarsReset();
+    Planes_ResetDone();
 
     switch (game_stage)
     {
@@ -1949,6 +1971,9 @@ void Stage_InitializeFrontView(void)
     Music_LoadModule(MUSIC_FRONTVIEW);
 
     MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
+
+    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
+    Game_SetBackGroundColor(0x00);
 }
 
 void Stage_RedrawTunnelTiles(void)

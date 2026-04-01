@@ -23,6 +23,7 @@
 #include "title.h"
 #include "roadsystem.h"
 #include "motorbike.h"
+#include "planes.h"
 #include "disk.h"
 #include "font.h"
 #include "audio.h"

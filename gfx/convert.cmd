@@ -36,3 +36,7 @@ kingcon frontview\fv5_r.iff ..\objects\frontview\fv5_r -Interleaved -format=4 -M
 kingcon frontview\fv6_r.iff ..\objects\frontview\fv6_r -Interleaved -format=4 -Mask -AW
 kingcon frontview\fv7_r.iff ..\objects\frontview\fv7_r -Interleaved -format=4 -Mask -AW
 kingcon frontview\fv8_r.iff ..\objects\frontview\fv8_r -Interleaved -format=4 -Mask -AW
+
+
+kingcon fv_plane1.iff ..\objects\fv_plane1 -Interleaved -format=4 -Mask -AW
+kingcon fv_plane2.iff ..\objects\fv_plane2 -Interleaved -format=4 -Mask -AW

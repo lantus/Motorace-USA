@@ -265,7 +265,8 @@ void MotorBike_Initialize()
 void MotorBike_Reset()
 {
     if (game_map == MAP_ATTRACT_INTRO ||
-        game_map == MAP_FRONTVIEW_LASVEGAS)
+        game_map == MAP_FRONTVIEW_LASVEGAS ||
+        game_map == MAP_FRONTVIEW_HOUSTON)
     {
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
         Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
@@ -276,6 +277,11 @@ void MotorBike_Reset()
         Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
     }
  
+}
+
+void MotorBike_SetDefaultPalette()
+{
+    Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
 }
 
 void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
@@ -869,3 +875,8 @@ void MotorBike_CrashAndReposition(void)
     MotorBike_SetFrame(BIKE_FRAME_MOVING1);
 }
  
+void MotorBike_ResetApproachIndex(void)
+{
+    approach_frame_index = 1;
+    vibration_counter = 0;
+}
