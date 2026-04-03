@@ -17,6 +17,7 @@
 #include "copper.h"
 #include "pixel.h"
 #include "sprites.h"
+#include "tilesheet.h"
 #include "motorbike.h"
 #include "planes.h"
 #include "hud.h"
@@ -942,8 +943,8 @@ void Stage_Initialize(void)
 {
     Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
  
-    la_map = Disk_AllocAndLoadAsset("maps/level1.map", MEMF_PUBLIC);
-    houston_map = Disk_AllocAndLoadAsset("maps/level2.map", MEMF_PUBLIC);
+    la_map = Disk_AllocAndLoadAsset("maps/level1.map", MEMF_ANY);
+    houston_map = Disk_AllocAndLoadAsset("maps/level2.map", MEMF_ANY);
     
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);

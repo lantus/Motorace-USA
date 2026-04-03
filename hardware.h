@@ -1,3 +1,5 @@
+#ifndef _HARDWARE_H_
+#define _HARDWARE_H_
 
 #define BPL0_USEBPLCON3_F  0x1
 #define BPL0_COLOR_F       0x200
@@ -38,3 +40,8 @@ BOOL JoyFireHeld(void);
 BOOL JoyFirePressed(void);
 BOOL LMBDown(void);
  
+void System_DisableOS();
+void System_EnableOS();
+
+extern BOOL os_disabled;
+#endif

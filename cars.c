@@ -234,6 +234,8 @@ APTR *restore_ptr;
 
 void Cars_LoadSprites()
 {
+    System_EnableOS();
+
     car[0].data = Disk_AllocAndLoadAsset(CAR0_FRAME0, MEMF_CHIP);
     car[0].data_frame2 = Disk_AllocAndLoadAsset(CAR0_FRAME1, MEMF_CHIP);
 
@@ -248,6 +250,8 @@ void Cars_LoadSprites()
 
     car[4].data = Disk_AllocAndLoadAsset(CAR4_FRAME0, MEMF_CHIP);
     car[4].data_frame2 = Disk_AllocAndLoadAsset(CAR4_FRAME1, MEMF_CHIP);   
+
+    System_DisableOS();
 }
 
 void Cars_Initialize(void)

@@ -5,6 +5,7 @@
 #include <graphics/gfxbase.h>
 #include <devices/input.h>
 #include <hardware/custom.h>
+#include <hardware/intbits.h>
 #include <hardware/dmabits.h>
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -40,9 +41,6 @@ static UBYTE prev_fire_state = 0;
 
 static volatile ULONG *custom_vposr = (volatile ULONG *) 0xdff004;
 
-// System state backup
-struct View *saved_view;
-UWORD saved_intena, saved_dma, saved_adkcon;
  
 BOOL os_disabled = FALSE;
 
@@ -89,6 +87,8 @@ void KillSystem()
 	old_intena = custom->intenar | 0x8000;
 	old_adkcon = custom->adkconr | 0x8000;
 	old_intreq = custom->intreqr | 0x8000;
+    
+    os_disabled = TRUE;
 
 }
 
@@ -268,54 +268,43 @@ __attribute__((always_inline)) inline BOOL KeyPressed(UBYTE keycode)
     return (current_keycode == keycode);
 }
 
-void System_DisableOS()
+void System_DisableOS(void)
 {
-    if (os_disabled) return;
+    if (os_disabled == FALSE)
+        return;
+
+    /* Disable interrupts — back to game control */
+    Disable();
     
-    GfxBase = (struct GfxBase *)OpenLibrary("graphics.library", 0);
+    /* Take blitter back */
+    OwnBlitter();
+    WaitBlit();
     
-    // Save system state
-    saved_view = GfxBase->ActiView;
-    saved_intena = custom->intenar;
-    saved_dma = custom->dmaconr;
-    saved_adkcon = custom->adkconr;
-    
-    Forbid();
-    
-    // Remove OS display
-    LoadView(NULL);
-    WaitTOF();
-    WaitTOF();
-    
-    // Disable interrupts and DMA
+    /* Kill everything, then re-enable game hardware */
     custom->intena = 0x7FFF;
     custom->dmacon = 0x7FFF;
     
-    os_disabled = TRUE;
+    custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_RASTER | DMAF_COPPER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3 | DMAF_MASTER;
+    custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB;
 }
-
-void System_EnableOS()
+void System_EnableOS(void)
 {
-    if (!os_disabled) return;
+    if (os_disabled == FALSE)
+        return;
+
+
+    /* Wait for any in-progress blit before releasing */
+    WaitBlit();
     
-    // Stop our hardware usage
+    /* Release blitter to OS */
+    DisownBlitter();
+    
+    /* Restore OS DMA + interrupts — DOS needs disk DMA */
     custom->intena = 0x7FFF;
     custom->dmacon = 0x7FFF;
-    
-    // Restore OS state
-    custom->intena = 0x8000 | saved_intena;
-    custom->dmacon = 0x8000 | saved_dma;
-    custom->adkcon = 0x8000 | saved_adkcon;
-    
-    // Restore OS display
-    LoadView(saved_view);
-    WaitTOF();
-    WaitTOF();
-    
-    Permit();
-    
-    CloseLibrary((struct Library *)GfxBase);
-    
-    os_disabled = FALSE;
+    custom->dmacon = old_dmacon;
+    custom->intena = old_intena;
+    /* Re-enable interrupts (undoes KillSystem's Disable) */
+    /* DOS needs interrupts for disk controller */
+    Enable();
 }
-

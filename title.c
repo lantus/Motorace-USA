@@ -568,7 +568,7 @@ void Title_RestoreLogo()
 void Title_OpenMap(void)
 {
    
-	city_attract_map = Disk_AllocAndLoadAsset("maps/city_attract.map",MEMF_PUBLIC);
+	city_attract_map = Disk_AllocAndLoadAsset("maps/city_attract.map",MEMF_ANY);
 	
 	mapdata = (UWORD *)city_attract_map->data;
 	mapwidth = city_attract_map->mapwidth;

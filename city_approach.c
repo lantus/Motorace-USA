@@ -141,10 +141,10 @@ void City_InitializeSkylines(void)
     houston_skyline_size = findSize(HOUSTON_SKYLINE);
     
     // Load all to fast RAM
-    nyc_skyline_fast = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_PUBLIC);
-    lv_skyline_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_PUBLIC);
-    lv_skyline2_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE2, MEMF_PUBLIC);
-    houston_skyline_fast = Disk_AllocAndLoadAsset(HOUSTON_SKYLINE, MEMF_PUBLIC);
+    nyc_skyline_fast = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_ANY);
+    lv_skyline_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_ANY);
+    lv_skyline2_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE2, MEMF_ANY);
+    houston_skyline_fast = Disk_AllocAndLoadAsset(HOUSTON_SKYLINE, MEMF_ANY);
     
     // Find largest for each buffer
     skyline_chip_size = nyc_skyline_size;
