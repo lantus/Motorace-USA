@@ -120,6 +120,7 @@ struct BitMapEx *BlocksBitmap,*ScreenBitmap;
 
 RawMap *la_map;
 RawMap *houston_map;
+RawMap *stlouis_map;
  
 // Palettes
 UWORD	intro_colors[BLOCKSCOLORS];
@@ -127,6 +128,7 @@ UWORD	lv_colors[BLOCKSCOLORS];
 UWORD	houston_colors[BLOCKSCOLORS];
 UWORD	city_colors[BLOCKSCOLORS];
 UWORD	offroad_colors[BLOCKSCOLORS];
+UWORD	stlouis_colors[BLOCKSCOLORS];
 UWORD   black_palette[BLOCKSCOLORS] = {0};
 UWORD  *current_palette; 
 
@@ -275,7 +277,7 @@ void Game_StartNextOverhead(void)
         case STAGE_LASVEGAS:
             max_stage_speed = 210;
             TilesheetPool_Load(TILEPOOL_LEVEL1);
-            game_map = MAP_OVERHEAD_LASANGELES;
+            game_map = STAGE1_OVERHEAD;
             stage_music = MUSIC_START;
             current_palette = city_colors;
             road_tile_plain = 11;
@@ -283,36 +285,36 @@ void Game_StartNextOverhead(void)
         case STAGE_HOUSTON:
             max_stage_speed = 185;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
-            game_map = MAP_OVERHEAD_LASVEGAS;
+            game_map = STAGE2_OVERHEAD;
             stage_music = MUSIC_OFFROAD;
             current_palette = offroad_colors;
             road_tile_plain = 0;
             break;
         case STAGE_STLOUIS:
             max_stage_speed = 210;
-            TilesheetPool_Load(TILEPOOL_LEVEL2);
-            game_map = MAP_OVERHEAD_HOUSTON;
-            stage_music = MUSIC_START;
-            current_palette = city_colors;
+            TilesheetPool_Load(TILEPOOL_LEVEL3);
+            game_map = STAGE3_OVERHEAD;
+            stage_music = MUSIC_ONROAD;
+            current_palette = stlouis_colors;
             break;
         case STAGE_CHICAGO:
             max_stage_speed = 210;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
-            game_map = MAP_OVERHEAD_STLOUIS;
+            game_map = STAGE4_OVERHEAD;
             stage_music = MUSIC_START;
             current_palette = offroad_colors;
             break;
         case STAGE_NEWYORK:
             max_stage_speed = 210;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
-            game_map = MAP_OVERHEAD_CHICAGO;
+            game_map = STAGE5_OVERHEAD;
             stage_music = MUSIC_START;
             current_palette = city_colors;
             break;
         default:
             max_stage_speed = 210;
             TilesheetPool_Load(TILEPOOL_LEVEL1);
-            game_map = MAP_OVERHEAD_LASANGELES;
+            game_map = STAGE1_OVERHEAD;
             stage_music = MUSIC_START;
             break;
     }
@@ -384,14 +386,14 @@ void Game_StartNextOverhead(void)
     
     Game_ApplyPalette(current_palette,BLOCKSCOLORS);
 
-    KPrintF("=== Starting stage %d ===\n", game_stage);
+    KPrintF("=== Starting stage %ld ===\n", game_stage);
 }
 
 void Game_NewGame(UBYTE difficulty)
 {
     game_stage = STAGE_LASVEGAS;
     game_state = STAGE_START;
-    game_map = MAP_OVERHEAD_LASANGELES;
+    game_map = STAGE1_OVERHEAD;
     collision_state = COLLISION_NONE;
     game_difficulty = difficulty;
     game_score = 0;
@@ -476,37 +478,44 @@ void Game_SetMap(UBYTE maptype)
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
-            current_palette = city_colors;
+            current_palette = intro_colors;
           
             break;
-        case MAP_OVERHEAD_LASANGELES:
+        case STAGE1_OVERHEAD:
             mapdata = (UWORD *)la_map->data;
             mapwidth = la_map->mapwidth;
             mapheight = la_map->mapheight;  
             current_palette = city_colors;
            
             break;
-        case MAP_FRONTVIEW_LASVEGAS:
+        case STAGE1_FRONTVIEW:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = lv_colors;
            
             break;
-        case MAP_OVERHEAD_LASVEGAS:
+        case STAGE2_OVERHEAD:
             mapdata = (UWORD *)houston_map->data;
             mapwidth = houston_map->mapwidth;
             mapheight = houston_map->mapheight;  
             current_palette = offroad_colors;
          
             break;
-         case MAP_FRONTVIEW_HOUSTON:
+        case STAGE2_FRONTVIEW:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = houston_colors;
            
-            break;       
+            break;     
+        case STAGE3_OVERHEAD:
+            mapdata = (UWORD *)stlouis_map->data;
+            mapwidth = stlouis_map->mapwidth;
+            mapheight = stlouis_map->mapheight;  
+            current_palette = stlouis_colors;
+
+            break;          
     }
 
   
@@ -943,8 +952,9 @@ void Stage_Initialize(void)
 {
     Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
  
-    la_map = Disk_AllocAndLoadAsset("maps/level1.map", MEMF_ANY);
-    houston_map = Disk_AllocAndLoadAsset("maps/level2.map", MEMF_ANY);
+    la_map = Disk_AllocAndLoadAsset("stages/lasvegas/lv1.map", MEMF_ANY);
+    houston_map = Disk_AllocAndLoadAsset("stages/houston/lv2.map", MEMF_ANY);
+    stlouis_map = Disk_AllocAndLoadAsset("stages/stlouis/lv3.map", MEMF_ANY);
     
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);
@@ -1560,7 +1570,7 @@ void Stage_Update()
         {
             stage_state = STAGE_COMPLETE;
             Timer_Start(&stage_complete_timer, 2);
-            KPrintF("=== Stage %d Complete! ===\n", game_stage);
+            KPrintF("=== Stage %ld Complete! ===\n", game_stage);
             return;
         }
 
@@ -1904,32 +1914,32 @@ void Stage_InitializeFrontView(void)
     switch (game_stage)
     {
         case STAGE_LASVEGAS:
-            Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
+            Game_SetMap(STAGE1_FRONTVIEW);
             Skyline_Load(SKYLINE_VEGAS);
            
             break;
         case STAGE_HOUSTON:
-            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Game_SetMap(STAGE2_FRONTVIEW);
             Skyline_Load(SKYLINE_HOUSTON);
          
             break;
         case STAGE_STLOUIS:
-            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Game_SetMap(STAGE3_FRONTVIEW);
             Skyline_Load(SKYLINE_STLOUIS);
            
             break;
         case STAGE_CHICAGO:
-            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Game_SetMap(STAGE4_FRONTVIEW);
             Skyline_Load(SKYLINE_CHICAGO);
         
             break;
         case STAGE_NEWYORK:
-            Game_SetMap(MAP_FRONTVIEW_HOUSTON);
+            Game_SetMap(STAGE5_FRONTVIEW);
             Skyline_Load(SKYLINE_NYC);
           
             break;
         default:
-            Game_SetMap(MAP_FRONTVIEW_LASVEGAS);
+            Game_SetMap(STAGE1_FRONTVIEW);
             Skyline_Load(SKYLINE_NYC);
            
             break;

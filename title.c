@@ -83,6 +83,7 @@ void Title_LoadAllPalettes()
     Game_LoadPalette("palettes/fv_lasvegas.pal", lv_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/fv_houston.pal", houston_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/offroad.pal", offroad_colors, BLOCKSCOLORS);
+    Game_LoadPalette("stages/stlouis/lv3.pal", stlouis_colors, BLOCKSCOLORS);
 }
 
 void Title_Draw()
@@ -108,16 +109,7 @@ void Title_Draw()
 
             HUD_DrawAll();
             
-            #if defined (DEBUG)
-            char line_buffer[8] = {0};
-            
-            ULongToString(Mem_GetFreeChip(), line_buffer, 8, ' ');
-            Font_DrawString(draw_buffer, line_buffer, 32, 170, 9);
-            ULongToString(Mem_GetFreeFast(), line_buffer, 8, ' ');
-            Font_DrawString(draw_buffer, line_buffer, 32, 180, 10);
-            #endif
 
-          
             title_state = TITLE_ATTRACT_ACCEL;            
 
         }
@@ -568,7 +560,7 @@ void Title_RestoreLogo()
 void Title_OpenMap(void)
 {
    
-	city_attract_map = Disk_AllocAndLoadAsset("maps/city_attract.map",MEMF_ANY);
+	city_attract_map = Disk_AllocAndLoadAsset("stages/attract/attract.map",MEMF_ANY);
 	
 	mapdata = (UWORD *)city_attract_map->data;
 	mapwidth = city_attract_map->mapwidth;

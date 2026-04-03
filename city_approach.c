@@ -359,7 +359,7 @@ void City_DrawRoad()
         y += 64;
     }
 
-    if (game_map == MAP_FRONTVIEW_LASVEGAS)
+    if (game_map == STAGE1_FRONTVIEW)
     {
         if (Timer_HasElapsed(&city_skyline_anim_timer))
         {

@@ -552,7 +552,7 @@ void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer)
  
     UWORD bltsize = ((CITYSKYLINE_HEIGHT << 2) << 6) | CITYSKYLINE_WIDTH / 16;
     
-    if (game_map == MAP_FRONTVIEW_LASVEGAS)
+    if (game_map == STAGE1_FRONTVIEW)
     {
         if (Timer_HasElapsed(&horizon_anim_timer))
         {

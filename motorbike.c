@@ -265,8 +265,8 @@ void MotorBike_Initialize()
 void MotorBike_Reset()
 {
     if (game_map == MAP_ATTRACT_INTRO ||
-        game_map == MAP_FRONTVIEW_LASVEGAS ||
-        game_map == MAP_FRONTVIEW_HOUSTON)
+        game_map == STAGE1_FRONTVIEW ||
+        game_map == STAGE2_FRONTVIEW)
     {
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
         Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);

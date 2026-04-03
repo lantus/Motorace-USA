@@ -108,21 +108,16 @@ enum GameDifficulty
 enum GameMapType
 {
     MAP_ATTRACT_INTRO = 0,
-    
-    MAP_OVERHEAD_LASANGELES = 1,
-    MAP_FRONTVIEW_LASVEGAS = 2,
-
-    MAP_OVERHEAD_LASVEGAS = 3,
-    MAP_FRONTVIEW_HOUSTON = 4,
-
-    MAP_OVERHEAD_HOUSTON = 5,
-    MAP_FRONTVIEW_STLOUIS = 6,
-    
-    MAP_OVERHEAD_STLOUIS = 7,
-    MAP_FRONTVIEW_CHICAGO = 8,
-
-    MAP_OVERHEAD_CHICAGO = 9,
-    MAP_FRONTVIEW_NEWYORK = 10
+    STAGE1_OVERHEAD = 1,
+    STAGE1_FRONTVIEW = 2,
+    STAGE2_OVERHEAD = 3,
+    STAGE2_FRONTVIEW = 4,
+    STAGE3_OVERHEAD = 5,
+    STAGE3_FRONTVIEW = 6,
+    STAGE4_OVERHEAD = 7,
+    STAGE4_FRONTVIEW = 8,
+    STAGE5_OVERHEAD = 9,
+    STAGE5_FRONTVIEW = 10
 };
 
 enum StageState
@@ -179,6 +174,7 @@ extern UWORD	intro_colors[BLOCKSCOLORS];
 extern UWORD	city_colors[BLOCKSCOLORS];
 extern UWORD	offroad_colors[BLOCKSCOLORS];
 extern UWORD    lv_colors[BLOCKSCOLORS];
+extern UWORD    stlouis_colors[BLOCKSCOLORS];
 extern UWORD    houston_colors[BLOCKSCOLORS];
 extern UWORD    black_palette[BLOCKSCOLORS];
 extern UWORD   *current_palette;

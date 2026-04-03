@@ -285,14 +285,13 @@ void System_DisableOS(void)
     custom->dmacon = 0x7FFF;
     
     custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_RASTER | DMAF_COPPER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3 | DMAF_MASTER;
-    custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB;
+    custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB | INTF_EXTER;
 }
+
 void System_EnableOS(void)
 {
     if (os_disabled == FALSE)
         return;
-
-
     /* Wait for any in-progress blit before releasing */
     WaitBlit();
     
