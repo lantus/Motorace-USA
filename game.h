@@ -177,6 +177,7 @@ extern UWORD    lv_colors[BLOCKSCOLORS];
 extern UWORD    stlouis_colors[BLOCKSCOLORS];
 extern UWORD    houston_colors[BLOCKSCOLORS];
 extern UWORD    black_palette[BLOCKSCOLORS];
+extern UWORD    palette_fv_stl[BLOCKSCOLORS];
 extern UWORD   *current_palette;
 
  

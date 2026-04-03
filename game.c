@@ -130,6 +130,7 @@ UWORD	city_colors[BLOCKSCOLORS];
 UWORD	offroad_colors[BLOCKSCOLORS];
 UWORD	stlouis_colors[BLOCKSCOLORS];
 UWORD   black_palette[BLOCKSCOLORS] = {0};
+UWORD   palette_fv_stl[BLOCKSCOLORS];
 UWORD  *current_palette; 
 
 // Used for the Countdown
@@ -516,6 +517,14 @@ void Game_SetMap(UBYTE maptype)
             current_palette = stlouis_colors;
 
             break;          
+
+        case STAGE3_FRONTVIEW:
+            mapdata = (UWORD *)city_attract_map->data;
+            mapwidth = city_attract_map->mapwidth;
+            mapheight = city_attract_map->mapheight;  
+            current_palette = palette_fv_stl;    
+
+            break;     
     }
 
   

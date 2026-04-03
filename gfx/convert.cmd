@@ -12,6 +12,7 @@ kingcon skyline_nyc.iff ..\images\skyline_nyc -Interleaved -format=4
 kingcon skyline_lv.iff ..\images\skyline_lv -Interleaved -format=4
 kingcon skyline_lv2.iff ..\images\skyline_lv2 -Interleaved -format=4 
 kingcon skyline_houston.iff ..\images\skyline_houston -Interleaved -format=4 
+kingcon skyline_stl.iff ..\images\skyline_stl -Interleaved -format=4 
 
 kingcon amilogo.iff ..\images\amilogo -Interleaved -format=4
 

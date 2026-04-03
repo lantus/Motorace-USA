@@ -12,7 +12,6 @@
 #define HOUSTON_SKYLINE "images/skyline_houston.BPL"
 #define VEGAS_SKYLINE "images/skyline_lv.BPL"
 #define VEGAS_SKYLINE2 "images/skyline_lv2.BPL"
- 
 #define LA_SKYLINE "images/skyline_la.BPL"
 
 #define SKYLINE_NYC      0

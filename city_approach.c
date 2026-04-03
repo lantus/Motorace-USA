@@ -68,6 +68,7 @@ static WORD bike_horizon_start_x = 0;
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
 BlitterObject houston_horizon;
+BlitterObject stl_horizon;
 BlitterObject oncoming_car[8];
 BlitterObject flipped_car[4];
 BlitterObject *city_horizon;
@@ -78,11 +79,13 @@ static UBYTE *nyc_skyline_fast = NULL;
 static UBYTE *lv_skyline_fast = NULL;
 static UBYTE *lv_skyline2_fast = NULL;
 static UBYTE *houston_skyline_fast = NULL;
+static UBYTE *stl_skyline_fast = NULL;
 
 static ULONG nyc_skyline_size = 0;
 static ULONG lv_skyline_size = 0;
 static ULONG lv_skyline2_size = 0;
 static ULONG houston_skyline_size = 0;
+static ULONG stl_skyline_size = 0;
 
 // Shared chip buffers
 static UBYTE *skyline_chip_buffer = NULL;
@@ -139,17 +142,20 @@ void City_InitializeSkylines(void)
     lv_skyline_size = findSize(VEGAS_SKYLINE);
     lv_skyline2_size = findSize(VEGAS_SKYLINE2);
     houston_skyline_size = findSize(HOUSTON_SKYLINE);
+    stl_skyline_size = findSize(STL_SKYLINE);
     
     // Load all to fast RAM
     nyc_skyline_fast = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_ANY);
     lv_skyline_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_ANY);
     lv_skyline2_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE2, MEMF_ANY);
     houston_skyline_fast = Disk_AllocAndLoadAsset(HOUSTON_SKYLINE, MEMF_ANY);
+    stl_skyline_fast = Disk_AllocAndLoadAsset(STL_SKYLINE, MEMF_ANY);
     
     // Find largest for each buffer
     skyline_chip_size = nyc_skyline_size;
     if (lv_skyline_size > skyline_chip_size) skyline_chip_size = lv_skyline_size;
     if (houston_skyline_size > skyline_chip_size) skyline_chip_size = houston_skyline_size;
+    if (stl_skyline_size > skyline_chip_size) skyline_chip_size = stl_skyline_size;
     
     ULONG chip_size2 = lv_skyline2_size;  // Only Vegas uses frame2
     
@@ -180,6 +186,14 @@ void City_InitializeSkylines(void)
     houston_horizon.size = houston_skyline_size;
     houston_horizon.data = skyline_chip_buffer;
     houston_horizon.data_frame2 = NULL;
+
+    stl_horizon.visible = TRUE;
+    stl_horizon.off_screen = FALSE;
+    stl_horizon.x = 0;
+    stl_horizon.y = 0;
+    stl_horizon.size = houston_skyline_size;
+    stl_horizon.data = skyline_chip_buffer;
+    stl_horizon.data_frame2 = NULL;   
     
     // Load default
     Skyline_Load(SKYLINE_NYC);
@@ -224,6 +238,14 @@ void Skyline_Load(UBYTE skyline_id)
             while (longs--) *dst++ = *src++;
             city_horizon = &houston_horizon;
             break;
+
+        case SKYLINE_STLOUIS:
+            src = (ULONG *)stl_skyline_fast;
+            dst = (ULONG *)skyline_chip_buffer;
+            longs = (stl_skyline_size + 3) >> 2;
+            while (longs--) *dst++ = *src++;
+            city_horizon = &stl_horizon;
+            break;        
     }
 }
 
