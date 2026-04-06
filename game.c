@@ -299,6 +299,7 @@ void Game_StartNextOverhead(void)
             game_map = STAGE4_OVERHEAD;
             stage_music = MUSIC_OFFROAD;
             current_palette = offroad_colors;
+            road_tile_plain = 0;
             break;
         case STAGE_NEWYORK:
             max_stage_speed = 210;

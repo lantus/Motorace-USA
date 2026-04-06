@@ -266,7 +266,10 @@ void MotorBike_Reset()
 {
     if (game_map == MAP_ATTRACT_INTRO ||
         game_map == STAGE1_FRONTVIEW ||
-        game_map == STAGE2_FRONTVIEW)
+        game_map == STAGE2_FRONTVIEW ||
+        game_map == STAGE3_FRONTVIEW ||
+        game_map == STAGE4_FRONTVIEW || 
+        game_map == STAGE5_FRONTVIEW)
     {
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
         Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
