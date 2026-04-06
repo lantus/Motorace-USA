@@ -9,6 +9,7 @@
 
 #define NYC_SKYLINE "images/skyline_nyc.BPL"   // demo and nyc are the same
 #define STL_SKYLINE "images/skyline_stl.BPL"
+#define CHI_SKYLINE "images/skyline_chi.BPL"
 #define HOUSTON_SKYLINE "images/skyline_houston.BPL"
 #define VEGAS_SKYLINE "images/skyline_lv.BPL"
 #define VEGAS_SKYLINE2 "images/skyline_lv2.BPL"
