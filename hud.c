@@ -265,7 +265,7 @@ void HUD_DrawRank(UBYTE rank, int start_sprite, int y_offset)
 {
     char rank_string[3];  
     
-    ULongToString(rank, rank_string, 2, NULL);
+    ULongToString(rank, rank_string, 2,  0x10);
     
     // Draw the formatted score
     HUD_DrawString(rank_string, start_sprite, y_offset);
