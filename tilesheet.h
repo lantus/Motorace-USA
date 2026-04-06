@@ -8,7 +8,9 @@
 #define TILEPOOL_LEVEL1         1
 #define TILEPOOL_LEVEL2         2
 #define TILEPOOL_LEVEL3         3
-#define TILEPOOL_COUNT          4
+#define TILEPOOL_LEVEL4         4
+#define TILEPOOL_LEVEL5         5
+#define TILEPOOL_COUNT          6
 
 void TilesheetPool_Initialize(void);
 void TilesheetPool_Load(UBYTE sheet_id);

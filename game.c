@@ -116,11 +116,6 @@ UWORD *mapdata;
  
 struct BitMapEx *BlocksBitmap,*ScreenBitmap;
  
-// Tiles and TileMaps
-
-RawMap *la_map;
-RawMap *houston_map;
-RawMap *stlouis_map;
  
 // Palettes
 UWORD	intro_colors[BLOCKSCOLORS];
@@ -299,10 +294,10 @@ void Game_StartNextOverhead(void)
             current_palette = stlouis_colors;
             break;
         case STAGE_CHICAGO:
-            max_stage_speed = 210;
-            TilesheetPool_Load(TILEPOOL_LEVEL2);
+            max_stage_speed = 185;
+            TilesheetPool_Load(TILEPOOL_LEVEL4);
             game_map = STAGE4_OVERHEAD;
-            stage_music = MUSIC_START;
+            stage_music = MUSIC_OFFROAD;
             current_palette = offroad_colors;
             break;
         case STAGE_NEWYORK:
@@ -321,7 +316,6 @@ void Game_StartNextOverhead(void)
     }
     
     Game_SetMap(game_map);
-    CollisionMap_SetStage(game_stage);
  
     bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 24;
@@ -480,54 +474,50 @@ void Game_SetMap(UBYTE maptype)
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = intro_colors;
-          
             break;
         case STAGE1_OVERHEAD:
-            mapdata = (UWORD *)la_map->data;
-            mapwidth = la_map->mapwidth;
-            mapheight = la_map->mapheight;  
+            MapPool_Load(STAGE_LASVEGAS);
             current_palette = city_colors;
-           
             break;
         case STAGE1_FRONTVIEW:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = lv_colors;
-           
             break;
         case STAGE2_OVERHEAD:
-            mapdata = (UWORD *)houston_map->data;
-            mapwidth = houston_map->mapwidth;
-            mapheight = houston_map->mapheight;  
+            MapPool_Load(STAGE_HOUSTON);
             current_palette = offroad_colors;
-         
             break;
         case STAGE2_FRONTVIEW:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = houston_colors;
-           
             break;     
         case STAGE3_OVERHEAD:
-            mapdata = (UWORD *)stlouis_map->data;
-            mapwidth = stlouis_map->mapwidth;
-            mapheight = stlouis_map->mapheight;  
+            MapPool_Load(STAGE_STLOUIS);
             current_palette = stlouis_colors;
-
             break;          
-
         case STAGE3_FRONTVIEW:
             mapdata = (UWORD *)city_attract_map->data;
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = palette_fv_stl;    
-
-            break;     
+            break;    
+        case STAGE4_OVERHEAD:
+            MapPool_Load(STAGE_CHICAGO);
+            current_palette = offroad_colors;
+            break;         
+        case STAGE4_FRONTVIEW:
+            mapdata = (UWORD *)city_attract_map->data;
+            mapwidth = city_attract_map->mapwidth;
+            mapheight = city_attract_map->mapheight;  
+            current_palette = palette_fv_stl;    
+            break;               
     }
 
-  
+    CollisionMap_SetStage(game_stage);
 }
  
 
@@ -961,10 +951,8 @@ void Stage_Initialize(void)
 {
     Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
  
-    la_map = Disk_AllocAndLoadAsset("stages/lasvegas/lv1.map", MEMF_ANY);
-    houston_map = Disk_AllocAndLoadAsset("stages/houston/lv2.map", MEMF_ANY);
-    stlouis_map = Disk_AllocAndLoadAsset("stages/stlouis/lv3.map", MEMF_ANY);
-    
+    MapPool_Initialize();
+
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);
     Sprites_LoadFromFile(COUNTDOWN_ONE,&spr_countdown_timer[1]);
@@ -982,11 +970,7 @@ void Stage_Initialize(void)
     Sprites_BuildComposite(spr_countdown[3],2,&spr_countdown_timer[3]); 
 
     current_countdown_spr = spr_countdown[3];
- 
-    mapdata = (UWORD *)la_map->data;
-	mapwidth = la_map->mapwidth;
-	mapheight = la_map->mapheight;   
-
+  
 }
  
 
@@ -1861,7 +1845,7 @@ void Game_HandleCollisions(void)
                 case STAGE_LASVEGAS:  Music_LoadModule(MUSIC_ONROAD); break;
                 case STAGE_HOUSTON:   Music_LoadModule(MUSIC_OFFROAD); break;
                 case STAGE_STLOUIS:   Music_LoadModule(MUSIC_ONROAD); break;
-                case STAGE_CHICAGO:   Music_LoadModule(MUSIC_ONROAD); break;
+                case STAGE_CHICAGO:   Music_LoadModule(MUSIC_OFFROAD); break;
                 case STAGE_NEWYORK:   Music_LoadModule(MUSIC_ONROAD); break;
                 default:              Music_LoadModule(MUSIC_ONROAD); break;
             }

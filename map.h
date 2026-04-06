@@ -13,5 +13,8 @@ typedef struct RawMap
 	UBYTE	data[1];
 } RawMap;
 
+void MapPool_Initialize(void);
+void MapPool_Load(UBYTE stage);
+
 #endif
 

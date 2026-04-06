@@ -73,6 +73,12 @@ void TilesheetPool_Initialize(void)
     tilepool_height[TILEPOOL_LEVEL3] = LV3_BLOCKSHEIGHT;
     tilepool_sizes[TILEPOOL_LEVEL3]  = (BLOCKSWIDTH / 8) * BLOCKSDEPTH * LV3_BLOCKSHEIGHT;
 
+    /* ---- Level 4 (Chicago overhead) ---- */
+    tilepool_files[TILEPOOL_LEVEL4]  = "stages/chicago/lv4.nrv";
+    tilepool_width[TILEPOOL_LEVEL4]  = BLOCKSWIDTH;
+    tilepool_height[TILEPOOL_LEVEL4] = LV4_BLOCKSHEIGHT;
+    tilepool_sizes[TILEPOOL_LEVEL4]  = (BLOCKSWIDTH / 8) * BLOCKSDEPTH * LV4_BLOCKSHEIGHT; 
+
     /* ---- Allocate ONE chip buffer sized to the largest DECOMPRESSED sheet ---- */
     tilepool_chip_size = 0;
     for (int i = 0; i < TILEPOOL_COUNT; i++)

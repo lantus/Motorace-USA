@@ -111,7 +111,7 @@ void CollisionMap_SetStage(UBYTE stage)
     col_map_width = mapwidth;
     col_map_height = mapheight;
     
-    KPrintF("Collision map set for stage %d: %dx%d\n", stage, col_map_width, col_map_height);
+    KPrintF("Collision map set for stage %ld: %ldx%ld\n", stage, col_map_width, col_map_height);
 }
 
  
