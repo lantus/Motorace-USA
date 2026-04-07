@@ -15,6 +15,10 @@ kingcon skyline_houston.iff ..\images\skyline_houston -Interleaved -format=4
 kingcon skyline_stl.iff ..\images\skyline_stl -Interleaved -format=4 
 kingcon skyline_chi.iff ..\images\skyline_chi -Interleaved -format=4 
 
+kingcon liberty1.iff ..\images\liberty1 -format=4 -interleaved 
+kingcon liberty2.iff ..\images\liberty2 -format=4 -interleaved  
+kingcon viva_ny.iff ..\images\viva_ny -format=4 -interleaved  
+
 kingcon amilogo.iff ..\images\amilogo -Interleaved -format=4
 
 kingcon Car0_0.iff ..\objects\car0_0 -Interleaved -format=4 -Mask -AW
