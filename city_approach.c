@@ -37,6 +37,16 @@ static BYTE last_road_tile_idx = -1;
 static UBYTE road_draw_count = 0;
 
 
+static UBYTE *vivany_data = NULL;
+static UBYTE *liberty_data_f1 = NULL;
+static UBYTE *liberty_data_f2 = NULL;
+
+static BOOL  victory_active = FALSE;
+static BOOL  vivany_blitted = FALSE;
+static UBYTE liberty_frame = 0;
+static GameTimer liberty_anim_timer;
+
+
 // Starting Y positions for each scale (horizon to foreground)
 static const WORD scale_start_y[NUM_CAR_SCALES] = {
     42,   // Scale 0 starts
@@ -65,6 +75,7 @@ static GameTimer crash_recovery_timer;
 
 static WORD bike_horizon_start_x = 0;  
 
+BlitterObject attract_horizon;
 BlitterObject nyc_horizon;
 BlitterObject lv_horizon;
 BlitterObject houston_horizon;
@@ -76,19 +87,21 @@ BlitterObject *city_horizon;
 BlitterObject *current_car;
 
  
-static UBYTE *nyc_skyline_fast = NULL;
+static UBYTE *attract_skyline_fast = NULL;
 static UBYTE *lv_skyline_fast = NULL;
 static UBYTE *lv_skyline2_fast = NULL;
 static UBYTE *houston_skyline_fast = NULL;
 static UBYTE *stl_skyline_fast = NULL;
 static UBYTE *chi_skyline_fast = NULL;
+static UBYTE *nyc_skyline_fast = NULL;
 
-static ULONG nyc_skyline_size = 0;
+static ULONG attract_skyline_size = 0;
 static ULONG lv_skyline_size = 0;
 static ULONG lv_skyline2_size = 0;
 static ULONG houston_skyline_size = 0;
 static ULONG stl_skyline_size = 0;
 static ULONG chi_skyline_size = 0;
+static ULONG nyc_skyline_size = 0;
 
 // Shared chip buffers
 static UBYTE *skyline_chip_buffer = NULL;
@@ -141,27 +154,30 @@ void City_Initialize()
 void City_InitializeSkylines(void)
 {
     // Get sizes
-    nyc_skyline_size = findSize(NYC_SKYLINE);
+    attract_skyline_size = findSize(ATTRACT_SKYLINE);
     lv_skyline_size = findSize(VEGAS_SKYLINE);
     lv_skyline2_size = findSize(VEGAS_SKYLINE2);
     houston_skyline_size = findSize(HOUSTON_SKYLINE);
     stl_skyline_size = findSize(STL_SKYLINE);
     chi_skyline_size = findSize(CHI_SKYLINE);
+    nyc_skyline_size = findSize(NYC_SKYLINE);
     
     // Load all to fast RAM
-    nyc_skyline_fast = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_ANY);
+    attract_skyline_fast = Disk_AllocAndLoadAsset(ATTRACT_SKYLINE, MEMF_ANY);
     lv_skyline_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_ANY);
     lv_skyline2_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE2, MEMF_ANY);
     houston_skyline_fast = Disk_AllocAndLoadAsset(HOUSTON_SKYLINE, MEMF_ANY);
     stl_skyline_fast = Disk_AllocAndLoadAsset(STL_SKYLINE, MEMF_ANY);
     chi_skyline_fast = Disk_AllocAndLoadAsset(CHI_SKYLINE, MEMF_ANY);
+    nyc_skyline_fast = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_ANY);
     
     // Find largest for each buffer
-    skyline_chip_size = nyc_skyline_size;
+    skyline_chip_size = attract_skyline_size;
     if (lv_skyline_size > skyline_chip_size) skyline_chip_size = lv_skyline_size;
     if (houston_skyline_size > skyline_chip_size) skyline_chip_size = houston_skyline_size;
     if (stl_skyline_size > skyline_chip_size) skyline_chip_size = stl_skyline_size;
     if (chi_skyline_size > skyline_chip_size) skyline_chip_size = chi_skyline_size;
+    if (nyc_skyline_size > skyline_chip_size) skyline_chip_size = nyc_skyline_size;
     
     ULONG chip_size2 = lv_skyline2_size;  // Only Vegas uses frame2
     
@@ -169,13 +185,13 @@ void City_InitializeSkylines(void)
     skyline_chip_buffer2 = Mem_AllocChip(chip_size2);
     
     // Set up horizon structs
-    nyc_horizon.visible = TRUE;
-    nyc_horizon.off_screen = FALSE;
-    nyc_horizon.x = 0;
-    nyc_horizon.y = 0;
-    nyc_horizon.size = nyc_skyline_size;
-    nyc_horizon.data = skyline_chip_buffer;
-    nyc_horizon.data_frame2 = NULL;
+    attract_horizon.visible = TRUE;
+    attract_horizon.off_screen = FALSE;
+    attract_horizon.x = 0;
+    attract_horizon.y = 0;
+    attract_horizon.size = attract_skyline_size;
+    attract_horizon.data = skyline_chip_buffer;
+    attract_horizon.data_frame2 = NULL;
     
     lv_horizon.visible = TRUE;
     lv_horizon.off_screen = FALSE;
@@ -208,9 +224,17 @@ void City_InitializeSkylines(void)
     chi_horizon.size = chi_skyline_size;
     chi_horizon.data = skyline_chip_buffer;
     chi_horizon.data_frame2 = NULL;      
+
+    nyc_horizon.visible = TRUE;
+    nyc_horizon.off_screen = FALSE;
+    nyc_horizon.x = 0;
+    nyc_horizon.y = 0;
+    nyc_horizon.size = nyc_skyline_size;
+    nyc_horizon.data = skyline_chip_buffer;
+    nyc_horizon.data_frame2 = NULL;
     
     // Load default
-    Skyline_Load(SKYLINE_NYC);
+    Skyline_Load(SKYLINE_ATTRACT);
     city_horizon = &nyc_horizon;
     
     KPrintF("SkylinePool: chip buffer=%ld + %ld bytes\n", skyline_chip_size, chip_size2);
@@ -224,12 +248,12 @@ void Skyline_Load(UBYTE skyline_id)
     
     switch (skyline_id)
     {
-        case SKYLINE_NYC:
-            src = (ULONG *)nyc_skyline_fast;
+        case SKYLINE_ATTRACT:
+            src = (ULONG *)attract_skyline_fast;
             dst = (ULONG *)skyline_chip_buffer;
-            longs = (nyc_skyline_size + 3) >> 2;
+            longs = (attract_skyline_size + 3) >> 2;
             while (longs--) *dst++ = *src++;
-            city_horizon = &nyc_horizon;
+            city_horizon = &attract_horizon;
             break;
             
         case SKYLINE_VEGAS:
@@ -266,7 +290,14 @@ void Skyline_Load(UBYTE skyline_id)
             longs = (chi_skyline_size + 3) >> 2;
             while (longs--) *dst++ = *src++;
             city_horizon = &chi_horizon;
-            break;                 
+            break;     
+        case SKYLINE_NYC:
+            src = (ULONG *)nyc_skyline_fast;
+            dst = (ULONG *)skyline_chip_buffer;
+            longs = (nyc_skyline_size + 3) >> 2;
+            while (longs--) *dst++ = *src++;
+            city_horizon = &nyc_horizon;
+            break;                       
     }
 }
 
@@ -692,7 +723,14 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
         LONG vpos = VBeamPos();
         while (VBeamPos() - vpos < 4) ;   // brief settle
         
-        Music_LoadModule(MUSIC_CHECKPOINT);
+        if (game_stage == STAGE_NEWYORK)
+        {
+            Music_LoadModule(MUSIC_VIVA_NY);
+        }
+        else
+        {
+            Music_LoadModule(MUSIC_CHECKPOINT);
+        }
     }
 }
 
@@ -883,4 +921,104 @@ WORD City_CalculateBikePerspectiveX(WORD bike_y, WORD starting_x)
 WORD City_GetBikeHorizonStartX(void)
 {
     return bike_horizon_start_x;
+}
+
+
+void NYCVictory_Initialize(void)
+{
+    vivany_data    = Disk_AllocAndLoadAsset(VIVA_NY, MEMF_CHIP);
+    liberty_data_f1 = Disk_AllocAndLoadAsset(LIBERTY_ANIM1, MEMF_CHIP);
+    liberty_data_f2 = Disk_AllocAndLoadAsset(LIBERTY_ANIM2, MEMF_CHIP);
+}
+
+void NYCVictory_Start(void)
+{
+    victory_active = TRUE;
+    vivany_blitted = FALSE;
+    liberty_frame = 0;
+    Timer_StartMs(&liberty_anim_timer, 200);
+}
+
+void NYCVictory_Stop(void)
+{
+    victory_active = FALSE;
+    Timer_Stop(&liberty_anim_timer);
+}
+
+BOOL NYCVictory_IsActive(void)
+{
+    return victory_active;
+}
+
+void NYCVictory_Update(void)
+{
+    if (!victory_active) return;
+    
+    /* ---- Blit "VIVA! NY" once onto the skyline BOB data ---- */
+    if (!vivany_blitted && vivany_data)
+    {
+        /* Straight copy onto the skyline chip buffer — no cookie cutter.
+         * We blit directly into the skyline BOB data so it persists
+         * without needing per-frame redraws.
+         *
+         * Skyline is 192px wide = 24 bytes/plane line
+         * VIVA!NY is 96px wide = 12 bytes/plane line
+         */
+        UBYTE *dst = city_horizon->data;
+        UBYTE *src = vivany_data;
+        
+        UWORD sky_bytes_per_row = (192 / 8);          /* 24 */
+        UWORD viva_bytes_per_row = (VIVANY_WIDTH / 8); /* 12 */
+        UWORD dst_x_byte = VIVANY_X / 8;
+        
+        /* For each plane line (height * depth = 16 * 4 = 64 lines) */
+        UWORD src_mod = 0;
+        UWORD dst_mod = sky_bytes_per_row - viva_bytes_per_row;
+        
+        ULONG dst_offset = (ULONG)VIVANY_Y * sky_bytes_per_row * VIVANY_DEPTH + dst_x_byte;
+        
+        WaitBlit();
+        custom->bltcon0 = 0x9F0;      /* D = A (straight copy) */
+        custom->bltcon1 = 0;
+        custom->bltafwm = 0xFFFF;
+        custom->bltalwm = 0xFFFF;
+        custom->bltamod = src_mod;
+        custom->bltdmod = dst_mod;
+        custom->bltapt  = src;
+        custom->bltdpt  = dst + dst_offset;
+        custom->bltsize = ((VIVANY_HEIGHT * VIVANY_DEPTH) << 6) | (viva_bytes_per_row >> 1);
+        
+        vivany_blitted = TRUE;
+    }
+    
+    /* ---- Animate liberty flame ---- */
+    if (Timer_HasElapsed(&liberty_anim_timer))
+    {
+        liberty_frame ^= 1;
+        Timer_Reset(&liberty_anim_timer);
+        
+        /* Blit flame frame directly into skyline BOB data */
+        UBYTE *src = (liberty_frame == 0) ? liberty_data_f1 : liberty_data_f2;
+        UBYTE *dst = city_horizon->data;
+        
+        UWORD sky_bytes_per_row = (192 / 8);             /* 24 */
+        UWORD lib_bytes_per_row = (LIBERTY_WIDTH / 8);    /* 2 */
+        UWORD dst_x_byte = LIBERTY_X / 8;
+        
+        UWORD src_mod = 0;
+        UWORD dst_mod = sky_bytes_per_row - lib_bytes_per_row;
+        
+        ULONG dst_offset = (ULONG)LIBERTY_Y * sky_bytes_per_row * LIBERTY_DEPTH + dst_x_byte;
+        
+        WaitBlit();
+        custom->bltcon0 = 0x9F0;
+        custom->bltcon1 = 0;
+        custom->bltafwm = 0xFFFF;
+        custom->bltalwm = 0xFFFF;
+        custom->bltamod = src_mod;
+        custom->bltdmod = dst_mod;
+        custom->bltapt  = src;
+        custom->bltdpt  = dst + dst_offset;
+        custom->bltsize = ((LIBERTY_HEIGHT * LIBERTY_DEPTH) << 6) | (lib_bytes_per_row >> 1);
+    }
 }

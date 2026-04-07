@@ -167,6 +167,7 @@ void Game_Initialize()
     Audio_Initialize();
     MotorBike_Initialize();
     Planes_Initialize();
+    NYCVictory_Initialize();
 
     HUD_InitSprites();
     HUD_SetSpritePositions();
@@ -247,9 +248,23 @@ void Game_AdvanceStage(void)
     
     if (game_stage > STAGE_NEWYORK)
     {
-        /* All 5 stages complete — back to attract */
-        Game_Reset();
-        return;
+       /* Completed all 5 stages — loop with higher difficulty */
+        game_stage = STAGE_LASVEGAS;
+        
+        switch (game_difficulty)
+        {
+            case FIVEHUNDREDCC:
+                game_difficulty = SEVENFIFTYCC;
+                break;
+            case SEVENFIFTYCC:
+                game_difficulty = TWELVEHUNDREDCC;
+                break;
+            case TWELVEHUNDREDCC:
+                /* Already max difficulty — stay here */
+                break;
+        }
+        
+        NYCVictory_Stop();
     }
     
     /* More stages — start next overhead */
@@ -265,6 +280,32 @@ void Game_StartNextOverhead(void)
     
     collision_state = COLLISION_NONE;
     bike_speed = 0;
+
+     /* ---- Difficulty scaling ---- */
+    WORD base_speed;
+    WORD max_active_cars;
+    
+    switch (game_difficulty)
+    {
+        case FIVEHUNDREDCC:
+            base_speed = 210;
+            max_active_cars = 2;
+            break;
+        case SEVENFIFTYCC:
+            base_speed = 250;
+            max_active_cars = 3;
+            break;
+        case TWELVEHUNDREDCC:
+            base_speed = 300;
+            max_active_cars = 4;
+            break;
+        default:
+            base_speed = 210;
+            max_active_cars = 2;
+            break;
+    }
+    
+   // max_car_count = max_active_cars;  
     
     /* Per-stage settings: speed, tilesheet, map, music */
     UBYTE stage_music;
@@ -303,9 +344,9 @@ void Game_StartNextOverhead(void)
             break;
         case STAGE_NEWYORK:
             max_stage_speed = 210;
-            TilesheetPool_Load(TILEPOOL_LEVEL2);
+            TilesheetPool_Load(TILEPOOL_LEVEL5);
             game_map = STAGE5_OVERHEAD;
-            stage_music = MUSIC_START;
+            stage_music = MUSIC_ONROAD;
             current_palette = city_colors;
             break;
         default:
@@ -387,9 +428,9 @@ void Game_StartNextOverhead(void)
 
 void Game_NewGame(UBYTE difficulty)
 {
-    game_stage = STAGE_LASVEGAS;
+    game_stage = STAGE_NEWYORK;
     game_state = STAGE_START;
-    game_map = STAGE1_OVERHEAD;
+    game_map = STAGE5_OVERHEAD;
     collision_state = COLLISION_NONE;
     game_difficulty = difficulty;
     game_score = 0;
@@ -398,7 +439,7 @@ void Game_NewGame(UBYTE difficulty)
     max_stage_speed = MAX_SPEED;  /* Stage 1: full speed 210 */
 
     /* Swap to level 1 tiles */
-    TilesheetPool_Load(TILEPOOL_LEVEL1);
+    TilesheetPool_Load(TILEPOOL_LEVEL5);
     Game_SetMap(game_map);
 
     // Position bike near bottom of screen
@@ -515,7 +556,17 @@ void Game_SetMap(UBYTE maptype)
             mapwidth = city_attract_map->mapwidth;
             mapheight = city_attract_map->mapheight;  
             current_palette = palette_fv_stl;    
-            break;               
+            break;      
+        case STAGE5_OVERHEAD:
+            MapPool_Load(STAGE_NEWYORK);
+            current_palette = city_colors;
+            break;         
+        case STAGE5_FRONTVIEW:
+            mapdata = (UWORD *)city_attract_map->data;
+            mapwidth = city_attract_map->mapwidth;
+            mapheight = city_attract_map->mapheight;  
+            current_palette = palette_fv_stl;    
+            break;                       
     }
 
     CollisionMap_SetStage(game_stage);
@@ -1070,6 +1121,8 @@ void Stage_Draw()
         Planes_Update();
         Planes_Draw(draw_buffer);
 
+        NYCVictory_Update();
+
         if (Timer_HasElapsed(&stage_complete_timer))
         {
             Planes_Stop();
@@ -1085,13 +1138,14 @@ void Stage_Draw()
 
             Ranking_Initialize();
 
-            Music_Stop();
-
-            WaitVBL();
-
-            custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD2 ;
-
-            Music_LoadModule(MUSIC_RANKING);
+            if (game_stage != STAGE_NEWYORK)
+            {
+                Music_Stop();
+                WaitVBL();
+                custom->dmacon = DMAF_SETCLR | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD2 ;
+                Music_LoadModule(MUSIC_RANKING);
+            }
+ 
 
         }
     }
@@ -1564,6 +1618,12 @@ void Stage_Update()
         {
             stage_state = STAGE_COMPLETE;
             Timer_Start(&stage_complete_timer, 2);
+
+            if (game_stage == STAGE_NEWYORK)
+            {
+                NYCVictory_Start();
+            }
+
             KPrintF("=== Stage %ld Complete! ===\n", game_stage);
             return;
         }

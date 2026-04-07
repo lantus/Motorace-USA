@@ -7,19 +7,21 @@
 #include "timers.h"
 #include "blitter.h"
 
-#define NYC_SKYLINE "images/skyline_nyc.BPL"   // demo and nyc are the same
+#define ATTRACT_SKYLINE "images/skyline_nyc.BPL"    
 #define STL_SKYLINE "images/skyline_stl.BPL"
 #define CHI_SKYLINE "images/skyline_chi.BPL"
 #define HOUSTON_SKYLINE "images/skyline_houston.BPL"
 #define VEGAS_SKYLINE "images/skyline_lv.BPL"
 #define VEGAS_SKYLINE2 "images/skyline_lv2.BPL"
 #define LA_SKYLINE "images/skyline_la.BPL"
+#define NYC_SKYLINE "images/skyline_nyc2.BPL"   
 
-#define SKYLINE_NYC      0
+#define SKYLINE_ATTRACT  0
 #define SKYLINE_VEGAS    1
 #define SKYLINE_HOUSTON  2
 #define SKYLINE_STLOUIS  3
 #define SKYLINE_CHICAGO  4
+#define SKYLINE_NYC      5
 
 #define ONCOMING_CAR_1 "objects/frontview/fv1.BPL"
 #define ONCOMING_CAR_2 "objects/frontview/fv2.BPL"
@@ -33,6 +35,26 @@
 #define ONCOMING_CAR_6_RIGHT "objects/frontview/fv6_r.BPL"
 #define ONCOMING_CAR_7_RIGHT "objects/frontview/fv7_r.BPL"
 #define ONCOMING_CAR_8_RIGHT "objects/frontview/fv8_r.BPL"
+
+#define VIVA_NY          "images/viva_ny.BPL"
+#define LIBERTY_ANIM1    "images/liberty1.BPL"
+#define LIBERTY_ANIM2    "images/liberty2.BPL"
+
+/* Dimensions */
+#define VIVANY_WIDTH     96
+#define VIVANY_HEIGHT    16
+#define VIVANY_DEPTH     4
+
+#define LIBERTY_WIDTH    16
+#define LIBERTY_HEIGHT   24
+#define LIBERTY_DEPTH    4
+
+/* Position on skyline — tweak these to align */
+#define VIVANY_X         32
+#define VIVANY_Y         8
+
+#define LIBERTY_X        168
+#define LIBERTY_Y        0
 
 
 // Horizon vanishing point (center of road at top)
@@ -102,4 +124,12 @@ void City_ResetRoadState(void);
 CityApproachState City_GetApproachState(void);
 void City_InitializeSkylines(void);
 void Skyline_Load(UBYTE skyline_id);
+
+ 
+void NYCVictory_Initialize(void);
+void NYCVictory_Start(void);
+void NYCVictory_Stop(void);
+void NYCVictory_Update(void);
+BOOL NYCVictory_IsActive(void);
+
 #endif

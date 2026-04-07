@@ -79,6 +79,12 @@ void TilesheetPool_Initialize(void)
     tilepool_height[TILEPOOL_LEVEL4] = LV4_BLOCKSHEIGHT;
     tilepool_sizes[TILEPOOL_LEVEL4]  = (BLOCKSWIDTH / 8) * BLOCKSDEPTH * LV4_BLOCKSHEIGHT; 
 
+     /* ---- Level 5 (NYC overhead) ---- */
+    tilepool_files[TILEPOOL_LEVEL5]  = "stages/newyork/lv5.nrv";
+    tilepool_width[TILEPOOL_LEVEL5]  = BLOCKSWIDTH;
+    tilepool_height[TILEPOOL_LEVEL5] = LV5_BLOCKSHEIGHT;
+    tilepool_sizes[TILEPOOL_LEVEL5]  = (BLOCKSWIDTH / 8) * BLOCKSDEPTH * LV5_BLOCKSHEIGHT;    
+
     /* ---- Allocate ONE chip buffer sized to the largest DECOMPRESSED sheet ---- */
     tilepool_chip_size = 0;
     for (int i = 0; i < TILEPOOL_COUNT; i++)
@@ -114,7 +120,7 @@ void TilesheetPool_Load(UBYTE sheet_id)
     Disk_LoadAsset(compressed_buffer, tilepool_files[sheet_id]);
     System_DisableOS();
     
-    /* Decompress into chip buffer — pure 68000, no OS needed */
+    /* Decompress into chip buffer */
     NRV2S_Unpack(compressed_buffer, tilepool_chip_buffer);
     
     /* Clear loading message */

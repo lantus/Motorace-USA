@@ -2,6 +2,7 @@ kingcon level1.iff ..\tiles\lv1_tiles -format=4 -interleaved -rawpalette
 kingcon level2.iff ..\tiles\lv2_tiles -format=4 -interleaved -rawpalette
 kingcon level3.iff ..\tiles\lv3_tiles -format=4 -interleaved -rawpalette
 kingcon level4.iff ..\tiles\lv4_tiles -format=4 -interleaved -rawpalette
+kingcon level5.iff ..\tiles\lv5_tiles -format=4 -interleaved -rawpalette
 
 kingcon tiles_city.iff ..\tiles\city_attract -format=4 -interleaved -rawpalette
 kingcon zippyfont.iff ..\font\zippyfont -format=2
@@ -9,6 +10,7 @@ kingcon car1.iff ..\objects\car -Interleaved -format=4 -Mask -AW
 kingcon zippylogo.iff ..\objects\zippylogo -Interleaved -format=4 -Mask -AW
 
 kingcon skyline_nyc.iff ..\images\skyline_nyc -Interleaved -format=4
+kingcon skyline_nyc2.iff ..\images\skyline_nyc2 -Interleaved -format=4
 kingcon skyline_lv.iff ..\images\skyline_lv -Interleaved -format=4
 kingcon skyline_lv2.iff ..\images\skyline_lv2 -Interleaved -format=4 
 kingcon skyline_houston.iff ..\images\skyline_houston -Interleaved -format=4 
