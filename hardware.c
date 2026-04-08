@@ -11,6 +11,7 @@
 #include <proto/dos.h>
 #include <proto/graphics.h>
 #include <proto/intuition.h>
+#include "sprites.h"
 #include "hardware.h"
 
 
@@ -306,4 +307,34 @@ void System_EnableOS(void)
     /* Re-enable interrupts (undoes KillSystem's Disable) */
     /* DOS needs interrupts for disk controller */
     Enable();
+}
+
+
+void Transition_ToBlack(void)
+{
+    /* Kill sprites immediately */
+    Sprites_ClearLower();
+    Sprites_ClearHigher();
+    
+    WaitVBL();
+    
+    /* Set all 32 colors to black */
+    for (int i = 0; i < 32; i++)
+        custom->color[i] = 0x000;
+    
+    /* Wait another frame to ensure fully black */
+    WaitVBL();
+}
+
+void Transition_FromBlack(UWORD *palette, UBYTE num_colors)
+{
+  
+    
+    WaitVBL();
+    
+    /* Set all colors in one burst at top of frame */
+    for (int i = 0; i < num_colors; i++)
+        custom->color[i] = palette[i];
+    
+   
 }

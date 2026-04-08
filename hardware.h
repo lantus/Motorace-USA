@@ -43,5 +43,8 @@ BOOL LMBDown(void);
 void System_DisableOS();
 void System_EnableOS();
 
+void Transition_ToBlack(void);
+void Transition_FromBlack(UWORD *palette, UBYTE num_colors);
+
 extern BOOL os_disabled;
 #endif

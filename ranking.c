@@ -8,6 +8,7 @@
 #include "hud.h"
 #include "city_approach.h"
 #include "fuel.h"
+#include "hardware.h"
 #include "game.h"
 
 static RankingData current_ranking;
@@ -326,7 +327,7 @@ void Ranking_Update(void)
                 else
                 {
                     current_ranking.rankingstate = RANKING_STATE_FINAL_WAIT;
-                    Timer_Start(&display_timer, 2);  // Wait 2 seconds
+                    Timer_Start(&display_timer, (game_stage == STAGE_NEWYORK) ? 10 : 2);
                     KPrintF("=== Final wait ===\n");
                 }
             }
@@ -339,7 +340,7 @@ void Ranking_Update(void)
             {
                 Timer_Stop(&display_timer);
                 current_ranking.rankingstate = RANKING_STATE_FINAL_WAIT;
-                Timer_Start(&display_timer, 2);  // Wait 2 seconds
+                Timer_Start(&display_timer, (game_stage == STAGE_NEWYORK) ? 10 : 2);
                 
                 KPrintF("=== Final wait ===\n");
             }
@@ -353,6 +354,8 @@ void Ranking_Update(void)
                 
                 Timer_Stop(&display_timer);
                 
+                Transition_ToBlack();
+
                 // Clear everything and show thank you message
                 BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
                 BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);

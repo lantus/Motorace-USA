@@ -202,6 +202,8 @@ void Game_Initialize()
  
 void Game_Reset(void)
 {
+    Transition_ToBlack();
+
     title_state = TITLE_ATTRACT_INIT;
     Title_Reset();
  
@@ -239,11 +241,15 @@ void Game_Reset(void)
 
     Game_ApplyPalette(intro_colors, BLOCKSCOLORS);
     game_frame_count = 0;
+
+    Transition_FromBlack(intro_colors, BLOCKSCOLORS);
 }
  
 
 void Game_AdvanceStage(void)
 {
+    Music_Stop();
+    
     game_stage++;
     
     if (game_stage > STAGE_NEWYORK)
@@ -273,6 +279,8 @@ void Game_AdvanceStage(void)
 
 void Game_StartNextOverhead(void)
 {
+    Transition_ToBlack();
+
     game_state = STAGE_START;
     stage_state = STAGE_BEGIN;
     
@@ -422,6 +430,8 @@ void Game_StartNextOverhead(void)
     Music_LoadModule(stage_music);
     
     Game_ApplyPalette(current_palette,BLOCKSCOLORS);
+
+    Transition_FromBlack(current_palette, BLOCKSCOLORS);
 
     KPrintF("=== Starting stage %ld ===\n", game_stage);
 }
