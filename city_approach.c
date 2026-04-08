@@ -713,6 +713,12 @@ void City_UpdateHorizonTransition(WORD *bike_y, WORD *bikespeed, UWORD frame_cou
  
     if (*bike_y <= 84)
     {
+        if (game_stage == STAGE_NEWYORK && Planes_IsActive())
+        {
+            *bike_y = 84;  
+            return;
+        }
+
         Music_Stop();
  
         city_state = CITY_STATE_COMPLETE;
@@ -936,7 +942,7 @@ void NYCVictory_Start(void)
     victory_active = TRUE;
     vivany_blitted = FALSE;
     liberty_frame = 0;
-    Timer_StartMs(&liberty_anim_timer, 200);
+    Timer_StartMs(&liberty_anim_timer, 400);
 }
 
 void NYCVictory_Stop(void)
@@ -989,6 +995,8 @@ void NYCVictory_Update(void)
         custom->bltsize = ((VIVANY_HEIGHT * VIVANY_DEPTH) << 6) | (viva_bytes_per_row >> 1);
         
         vivany_blitted = TRUE;
+
+        City_BlitHorizon();
     }
     
     /* ---- Animate liberty flame ---- */
@@ -1020,5 +1028,7 @@ void NYCVictory_Update(void)
         custom->bltapt  = src;
         custom->bltdpt  = dst + dst_offset;
         custom->bltsize = ((LIBERTY_HEIGHT * LIBERTY_DEPTH) << 6) | (lib_bytes_per_row >> 1);
+
+        City_BlitHorizon();
     }
 }

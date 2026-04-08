@@ -50,7 +50,7 @@
 #define LIBERTY_DEPTH    4
 
 /* Position on skyline — tweak these to align */
-#define VIVANY_X         32
+#define VIVANY_X         48
 #define VIVANY_Y         16
 
 #define LIBERTY_X        168

@@ -1617,11 +1617,15 @@ void Stage_Update()
         if (City_OncomingCarsIsComplete())
         {
             stage_state = STAGE_COMPLETE;
-            Timer_Start(&stage_complete_timer, 2);
 
             if (game_stage == STAGE_NEWYORK)
             {
                 NYCVictory_Start();
+                Timer_Start(&stage_complete_timer, 6);
+            }
+            else
+            {
+                Timer_Start(&stage_complete_timer, 2);
             }
 
             KPrintF("=== Stage %ld Complete! ===\n", game_stage);
@@ -1698,6 +1702,11 @@ void Stage_Update()
             if (game_stage == STAGE_HOUSTON && !Planes_IsActive() && bike_position_y < 210)
             {
                 Planes_Start();
+            }
+            else if (game_stage == STAGE_NEWYORK && !Planes_IsActive() && 
+                !Planes_IsComplete() && bike_position_y < 210)
+            {
+                Planes_StartNYC();
             }
 
             City_UpdateHorizonTransition(&bike_position_y, &bike_speed, game_frame_count);
