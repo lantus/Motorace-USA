@@ -51,3 +51,6 @@ kingcon frontview\fv8_r.iff ..\objects\frontview\fv8_r -Interleaved -format=4 -M
 
 kingcon fv_plane1.iff ..\objects\fv_plane1 -Interleaved -format=4 -Mask -AW
 kingcon fv_plane2.iff ..\objects\fv_plane2 -Interleaved -format=4 -Mask -AW
+kingcon fv_plane1_rev.iff ..\objects\fv_plane1_rev -Interleaved -format=4 -Mask -AW
+kingcon fv_plane2_rev.iff ..\objects\fv_plane2_rev -Interleaved -format=4 -Mask -AW
+kingcon smoke.iff ..\objects\smoke -Interleaved -format=4 -Mask -AW
