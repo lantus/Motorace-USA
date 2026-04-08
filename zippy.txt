@@ -1,0 +1,21 @@
+          	 
+			 
+			 
+
+			
+		   Zippy Race : A500 Edition
+
+			Alpha Release		
+
+           ...code/design       	- MVG
+           ...sound/music conversion    - Estrayk
+
+	 This is a fan remake of the original Zippy Race
+	    
+                   All code written by hand.
+  
+	      The Game is not affiliated with Irem.
+	
+		     512/512 OCS Forever
+			 
+			Now Loading...

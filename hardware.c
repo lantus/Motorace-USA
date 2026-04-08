@@ -328,13 +328,9 @@ void Transition_ToBlack(void)
 
 void Transition_FromBlack(UWORD *palette, UBYTE num_colors)
 {
-  
-    
     WaitVBL();
     
     /* Set all colors in one burst at top of frame */
     for (int i = 0; i < num_colors; i++)
-        custom->color[i] = palette[i];
-    
-   
+        custom->color[i] = palette[i];   
 }

@@ -249,6 +249,7 @@ void Game_Reset(void)
 void Game_AdvanceStage(void)
 {
     Music_Stop();
+
     
     game_stage++;
     
@@ -392,11 +393,9 @@ void Game_StartNextOverhead(void)
         Cars_ResetPositions();
     else
         Cars_ResetPositionsEmpty();
-    
-
-    MotorBike_Reset();
-    
+ 
     Game_ResetBitplanePointer();
+    
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
@@ -407,11 +406,7 @@ void Game_StartNextOverhead(void)
     
     /* Reset bike speed for attract mode */
     bike_speed = 0;
-    
-    HUD_SetSpritePositions();
-    HUD_DrawAll();
-    HUD_UpdateScore(game_score);
-    Fuel_DrawAll();
+
     
     Game_FillScreen();
     Road_CacheFillVisible();
@@ -424,6 +419,15 @@ void Game_StartNextOverhead(void)
     
     StageProgress_SetStage(game_stage);
     StageProgress_DrawAll();
+    
+        
+    MotorBike_Reset();
+
+    HUD_SetSpritePositions();
+    HUD_DrawAll();
+    HUD_UpdateScore(game_score);
+    Fuel_DrawAll();
+    
     HUD_UpdateRank(game_rank);
     
     Music_Stop();
@@ -438,9 +442,9 @@ void Game_StartNextOverhead(void)
 
 void Game_NewGame(UBYTE difficulty)
 {
-    game_stage = STAGE_NEWYORK;
+    game_stage = STAGE_LASVEGAS;
     game_state = STAGE_START;
-    game_map = STAGE5_OVERHEAD;
+    game_map = STAGE1_OVERHEAD;
     collision_state = COLLISION_NONE;
     game_difficulty = difficulty;
     game_score = 0;
@@ -449,7 +453,7 @@ void Game_NewGame(UBYTE difficulty)
     max_stage_speed = MAX_SPEED;  /* Stage 1: full speed 210 */
 
     /* Swap to level 1 tiles */
-    TilesheetPool_Load(TILEPOOL_LEVEL5);
+    TilesheetPool_Load(TILEPOOL_LEVEL1);
     Game_SetMap(game_map);
 
     // Position bike near bottom of screen
@@ -1260,6 +1264,7 @@ void Stage_Update()
                 stage_state = STAGE_PLAYING;
                 Timer_Stop(&countdown_timer);
 
+                Sprites_ClearLower();
                 Sprites_ClearHigher();
 
                 Music_LoadModule(MUSIC_ONROAD);
@@ -1277,6 +1282,7 @@ void Stage_Update()
         if (KeyPressed(KEY_F1))
         {
             stage_state = STAGE_FRONTVIEW;
+
             Stage_InitializeFrontView();
             HUD_UpdateBikeSpeed(bike_speed);
             HUD_UpdateScore(game_score);
@@ -1950,6 +1956,10 @@ void Stage_CheckCompletion(void)
     if (stage_progress.current_map_pos >= completion_threshold)
     {
         stage_state = STAGE_FRONTVIEW;
+
+        Sprites_ClearLower();
+        Sprites_ClearHigher();
+        
         Stage_InitializeFrontView();
         HUD_UpdateBikeSpeed(bike_speed);
         HUD_UpdateScore(game_score);
@@ -1964,20 +1974,18 @@ void Stage_InitializeFrontView(void)
     draw_buffer = screen.bitplanes;
     display_buffer = screen.offscreen_bitplanes;
 
-    
+    Sprites_ClearLower();
+    Sprites_ClearHigher();
+
     Game_ApplyPalette(black_palette, BLOCKSCOLORS);
 
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
  
-
     bike_position_x = 80;
     bike_position_y = 200;
  
-    Sprites_ClearLower();
-    Sprites_ClearHigher();
-
     /* Swap to city attract tiles for front view */
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
 
@@ -2017,12 +2025,7 @@ void Stage_InitializeFrontView(void)
            
             break;
     }
-
-    MotorBike_Reset();
-    MotorBike_ResetApproachIndex();
-
-
-    
+ 
     Title_Reset();
  
     /* Reset horizon — clear stale restore state from previous stage */
@@ -2035,7 +2038,9 @@ void Stage_InitializeFrontView(void)
     city_horizon->off_screen = FALSE;
     
     City_PreDrawRoad();
+
     City_OncomingCarsReset();
+     
     Planes_ResetDone();
 
     switch (game_stage)
@@ -2048,15 +2053,18 @@ void Stage_InitializeFrontView(void)
         default:              City_ShowCityName("LAS VEGAS");  break;
     }
 
+    
+    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
+     
+    MotorBike_Reset();
+    MotorBike_ResetApproachIndex();
+
     HUD_DrawAll();
     HUD_UpdateScore(game_score);
-
+ 
     Music_Stop();
     Music_LoadModule(MUSIC_FRONTVIEW);
 
-    MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
-
-    Game_ApplyPalette(current_palette, BLOCKSCOLORS);
     Game_SetBackGroundColor(0x00);
 }
 

@@ -234,7 +234,7 @@ void AttractMode_ShowCredits(void)
     Font_DrawString(draw_buffer, "Music/SFX Conversion :", 8, 50, 2);     
     Font_DrawString(draw_buffer, "ESTRAYK", 12, 60, 5);     
  
-    Font_DrawStringCentered(draw_buffer, "Original Game 1983 Irem", 100, 7);  
+    Font_DrawStringCentered(draw_buffer, "Original Game 1983 Irem", 110, 6);  
     
     AttractMode_BlitAmiLogo();
     Font_DrawStringCentered(draw_buffer, "Amiga Forever", 170, 7);  
