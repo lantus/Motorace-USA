@@ -12,7 +12,7 @@
 #define KEY_ESC     0x45
 #define KEY_F1      0x50
 
-extern BOOL os_disabled;
+ 
  
 extern BOOL  g_is_pal;
 extern UWORD g_sprite_hoffset;   // Horizontal offset (usually same for both)
@@ -47,4 +47,5 @@ void Transition_ToBlack(void);
 void Transition_FromBlack(UWORD *palette, UBYTE num_colors);
 
 extern BOOL os_disabled;
+extern BOOL system_killed; 
 #endif

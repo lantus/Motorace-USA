@@ -12,9 +12,8 @@
 #include <proto/graphics.h>
 #include <proto/intuition.h>
 #include "sprites.h"
+#include "copper.h"
 #include "hardware.h"
-
-
 
 
 static UWORD old_dmacon;
@@ -42,8 +41,12 @@ static UBYTE prev_fire_state = 0;
 
 static volatile ULONG *custom_vposr = (volatile ULONG *) 0xdff004;
 
- 
+extern volatile APTR VBR;
+extern APTR saved_vectors[7];  /* 0x64, 0x68, 0x6C, 0x70, 0x74, 0x78, 0x7C */
+extern void interruptHandler(void);
+
 BOOL os_disabled = FALSE;
+BOOL system_killed = FALSE; 
 
 // VERY SLOW but seems to be working RNG (good old xorshift)
 ULONG rand() {
@@ -89,6 +92,11 @@ void KillSystem()
 	old_adkcon = custom->adkconr | 0x8000;
 	old_intreq = custom->intreqr | 0x8000;
     
+    APTR *vectors = (APTR *)((UBYTE *)VBR);
+    for (int i = 0; i < 7; i++)
+        saved_vectors[i] = vectors[0x64/4 + i];
+
+    system_killed = TRUE;
     os_disabled = TRUE;
 
 }
@@ -271,42 +279,60 @@ __attribute__((always_inline)) inline BOOL KeyPressed(UBYTE keycode)
 
 void System_DisableOS(void)
 {
-    if (os_disabled == FALSE)
-        return;
+    if (!system_killed) return;   
+    if (os_disabled) return;      
 
-    /* Disable interrupts — back to game control */
     Disable();
-    
-    /* Take blitter back */
     OwnBlitter();
     WaitBlit();
-    
-    /* Kill everything, then re-enable game hardware */
+ 
     custom->intena = 0x7FFF;
     custom->dmacon = 0x7FFF;
+ 
+    while (!(custom->intreqr & INTF_VERTB)) continue;
+		custom->dmacon = DMAF_DISK | DMAF_BLITTER;
+
+    /* Save OS vectors, reinstall game handler on level 3 only */
+    APTR *vectors = (APTR *)((UBYTE *)VBR);
+    for (int i = 0; i < 7; i++)
+        saved_vectors[i] = vectors[0x64/4 + i];
     
+    /* Reinstall game VBL handler (level 3 = 0x6C) */
+    vectors[0x6C/4] = (APTR)interruptHandler;
+
+    /* Restore game copper list before enabling display DMA */
+    custom->cop2lc = (ULONG)CopperList;	
+    custom->copjmp2 = 0;
+
     custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_RASTER | DMAF_COPPER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3 | DMAF_MASTER;
     custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB | INTF_EXTER;
+
+    os_disabled = TRUE;
 }
 
 void System_EnableOS(void)
 {
-    if (os_disabled == FALSE)
-        return;
-    /* Wait for any in-progress blit before releasing */
+    if (!system_killed) return;   
+    if (!os_disabled) return;     
+
     WaitBlit();
-    
-    /* Release blitter to OS */
+ 
     DisownBlitter();
-    
-    /* Restore OS DMA + interrupts — DOS needs disk DMA */
+
     custom->intena = 0x7FFF;
     custom->dmacon = 0x7FFF;
-    custom->dmacon = old_dmacon;
+    custom->dmacon = (DMAF_DISK | DMAF_BLITTER);
+    /* Restore ALL OS interrupt vectors */
+    APTR *vectors = (APTR *)((UBYTE *)VBR);
+    for (int i = 0; i < 7; i++)
+        vectors[0x64/4 + i] = saved_vectors[i];
+
+    custom->dmacon =  DMAF_SETCLR | DMAF_MASTER | (old_dmacon & (DMAF_DISK | DMAF_BLITTER));
     custom->intena = old_intena;
-    /* Re-enable interrupts (undoes KillSystem's Disable) */
-    /* DOS needs interrupts for disk controller */
+
     Enable();
+
+    os_disabled = FALSE;
 }
 
 

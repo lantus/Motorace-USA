@@ -43,7 +43,8 @@ struct RasInfo rasInfo;
 static UWORD SystemInts;
 static UWORD SystemDMA;
 static UWORD SystemADKCON;
-static volatile APTR VBR = 0;
+volatile APTR VBR = 0;
+APTR saved_vectors[7]; 
 static APTR SystemIrq;
 struct View *ActiView;
  
@@ -320,7 +321,7 @@ void FreeSystem()
 #define GAMEAREA_BLOCKS 28          // blocks across the game area
  
  
-static __attribute__((interrupt)) void interruptHandler() 
+__attribute__((interrupt)) void interruptHandler() 
 {
 	custom->intreq=(1<<INTB_VERTB); custom->intreq=(1<<INTB_VERTB); //reset vbl req. twice for a4000 bug.
 
