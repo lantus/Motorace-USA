@@ -64,6 +64,17 @@ void Copper_SetDataFetch(UWORD start, UWORD stop)
     CopDDFSTOP[val] = stop;
 }
  
+void Copper_SetScoreRestoreColors(void)
+{
+    /* Copy the original palette values set at top of copper list */
+    CopSCORE_C25[1] = CopCOLOR25[1];
+    CopSCORE_C26[1] = CopCOLOR26[1];
+    CopSCORE_C27[1] = CopCOLOR27[1];
+    CopSCORE_C29[1] = CopCOLOR29[1];
+    CopSCORE_C30[1] = CopCOLOR30[1];
+    CopSCORE_C31[1] = CopCOLOR31[1];
+}
+
 __attribute__((always_inline)) inline void Copper_SwapColors(UWORD color1, UWORD color2)
 {
     UWORD *wp = CopCOLOR00;

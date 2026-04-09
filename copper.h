@@ -162,6 +162,17 @@ extern WORD CopPLANE2_5H[];
 extern WORD CopPLANE2_6H[];
 extern WORD CopPLANE2_7H[];
 extern WORD CopPLANE2_8H[];
+extern WORD CopSCORE_RED[];
+extern WORD CopSCORE_WHITE[];
+extern WORD CopSCORE_BROWN[];
+extern WORD CopSCORE_WHITE2[];
+
+extern WORD CopSCORE_C25[];
+extern WORD CopSCORE_C26[];
+extern WORD CopSCORE_C27[];
+extern WORD CopSCORE_C29[];
+extern WORD CopSCORE_C30[];
+extern WORD CopSCORE_C31[];
 
 extern WORD CopVIDEOSPLITRESETMODULO[];
  
@@ -170,3 +181,4 @@ void Copper_SetPalette(int index,USHORT color);
 void Copper_SetSpritePalette(int index, USHORT color);
 void Copper_SetHUDBitplanes(const UBYTE *hud_buffer) ;
 void Copper_SwapColors(UWORD color1, UWORD color2);
+void Copper_SetScoreRestoreColors(void);

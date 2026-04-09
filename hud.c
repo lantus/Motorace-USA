@@ -79,6 +79,8 @@ void HUD_SetWhite(void)
     Copper_SetSpritePalette(13, 0xFFF);  
     Copper_SetSpritePalette(14, 0xF53);    
     Copper_SetSpritePalette(15, 0xF53);
+
+    Copper_SetScoreRestoreColors();
 }
 
  

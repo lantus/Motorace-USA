@@ -60,6 +60,8 @@ BOOL Sprites_ApplyPalette(Sprite *sheet)
 		Copper_SetSpritePalette(i, ((USHORT*)sheet->palette)[i]);
 	}
     
+    Copper_SetScoreRestoreColors();
+
     return TRUE;
 }
 

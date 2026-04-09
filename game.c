@@ -1226,7 +1226,7 @@ void Stage_Update()
                 Timer_Reset(&countdown_timer);  // Reset for next second
                 current_countdown_spr = spr_countdown[countdown_value];
                 WaitVBL();
-                WaitBlit();
+             
                 custom->intena = INTF_INTEN;
 
                 Sprites_SetPointers(current_countdown_spr, 2, SPRITEPTR_TWO_AND_THREE);

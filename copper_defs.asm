@@ -76,6 +76,18 @@
 	XDEF	CopPLANE8H
 	XDEF	CopPLANE8L
 
+	XDEF 	CopSCORE_RED
+	XDEF 	CopSCORE_BROWN
+	XDEF	CopSCORE_WHITE
+	XDEF	CopSCORE_WHITE2
+
+	XDEF	CopSCORE_C25
+	XDEF	CopSCORE_C26
+	XDEF	CopSCORE_C27
+	XDEF	CopSCORE_C29
+	XDEF	CopSCORE_C30
+	XDEF	CopSCORE_C31
+
 	XDEF	CopVIDEOSPLIT
 	XDEF	CopVIDEOSPLITMODULO
 	XDEF	CopVIDEOSPLIT2
@@ -265,6 +277,56 @@ CopPLANE8H:
 
 CopPLANE8L:
 	dc.w	$fe,0
+
+; --- HI-SCORE red sprite color region ---
+CopSCORE_RED:
+	dc.w	$3009,$FFFE		; WAIT line 42
+	dc.w	$1B2,$0F00		; COLOR25 = red
+	dc.w	$1B4,$0F00		; COLOR26 = red
+	dc.w	$1B6,$0F00		; COLOR27 = red
+	dc.w	$1BA,$0F00		; COLOR29 = red
+	dc.w	$1BC,$0F00		; COLOR30 = red
+	dc.w	$1BE,$0F00		; COLOR31 = red
+
+CopSCORE_WHITE:
+	dc.w	$3809,$FFFE		; WAIT line 54  
+	dc.w	$1B2,$0FFF		; COLOR25 = white
+	dc.w	$1B4,$0FFF		; COLOR26 = white
+	dc.w	$1B6,$0FFF		; COLOR27 = white
+	dc.w	$1BA,$0FFF		; COLOR29 = white
+	dc.w	$1BC,$0FFF		; COLOR30 = white
+	dc.w	$1BE,$0FFF		; COLOR31 = white
+
+CopSCORE_BROWN:
+	dc.w	$4109,$FFFE		; WAIT line 65  
+	dc.w	$1B2,$0d96		; COLOR25 = brown
+	dc.w	$1B4,$0d96		; COLOR26 = brown
+	dc.w	$1B6,$0d96		; COLOR27 = brown
+	dc.w	$1BA,$0d96		; COLOR29 = brown
+	dc.w	$1BC,$0d96		; COLOR30 = brown
+	dc.w	$1BE,$0d96		; COLOR31 = brown	
+
+CopSCORE_WHITE2:	
+	dc.w	$4A09,$FFFE		; then back to white
+	dc.w	$1B2,$0FFF		; COLOR25 = white
+	dc.w	$1B4,$0FFF		; COLOR26 = white
+	dc.w	$1B6,$0FFF		; COLOR27 = white
+	dc.w	$1BA,$0FFF		; COLOR29 = white
+	dc.w	$1BC,$0FFF		; COLOR30 = white
+	dc.w	$1BE,$0FFF		; COLOR31 = white	
+
+CopSCORE_C25:
+	dc.w	$1B2,$0000		; COLOR25 = restore original
+CopSCORE_C26:
+	dc.w	$1B4,$0000		; COLOR26 = restore original
+CopSCORE_C27:
+	dc.w	$1B6,$0000		; COLOR27 = restore original
+CopSCORE_C29:
+	dc.w	$1BA,$0000		; COLOR29 = restore original
+CopSCORE_C30:
+	dc.w	$1BC,$0000		; COLOR30 = restore original
+CopSCORE_C31:
+	dc.w	$1BE,$0000		; COLOR31 = restore original	
 
 CopVIDEOSPLIT:
 	dc.w	-1,-2
