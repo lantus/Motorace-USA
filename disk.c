@@ -179,7 +179,6 @@ static UBYTE *LoadFileToFast(const char *filename, ULONG *out_size)
 
     if (out_size) *out_size = (ULONG)size;
 
-    KPrintF("Preloader: loaded '%s' (%ld bytes)\n", filename, size);
     return buf;
 }
 
@@ -230,7 +229,7 @@ void Preloader_LoadAll(void)
             collisions[i].data = LoadFileToFast(collision_files[i], &collisions[i].size);
     }
 
-    /* Music — load to chip RAM (ptplayer needs chip) */
+ 
     for (int i = 0; i < MUSIC_ID_COUNT; i++)
     {
         BPTR fh = Open((CONST_STRPTR)music_files[i], MODE_OLDFILE);
@@ -248,7 +247,7 @@ void Preloader_LoadAll(void)
         {
             Read(fh, music[i].data, size);
             music[i].size = (ULONG)size;
-            KPrintF("Preloader: loaded '%s' (%ld bytes, chip)\n", music_files[i], size);
+            KPrintF("Preloader: loaded '%s' (%ld bytes)\n", music_files[i], size);
         }
         Close(fh);
     }

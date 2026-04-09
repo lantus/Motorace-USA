@@ -371,7 +371,7 @@ void Game_StartNextOverhead(void)
     bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 24;
     bike_state = BIKE_STATE_STOPPED;
-    bike_invulnerable = FALSE;
+    bike_invulnerable = TRUE;
     
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
@@ -417,7 +417,7 @@ void Game_StartNextOverhead(void)
         Stage_ShowInfo();
     }
     
-    StageProgress_SetStage(game_stage);
+    StageProgress_SetStage(game_stage-1); //UGH
     StageProgress_DrawAll();
     
     MotorBike_Reset();
@@ -459,7 +459,7 @@ void Game_NewGame(UBYTE difficulty)
     bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 24;  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
-    bike_invulnerable = FALSE;
+    bike_invulnerable = TRUE;
 
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
@@ -1007,6 +1007,8 @@ void GameReady_Update(void)
 void Stage_Initialize(void)
 {
 
+    Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
+
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);
     Sprites_LoadFromFile(COUNTDOWN_ONE,&spr_countdown_timer[1]);
@@ -1224,7 +1226,7 @@ void Stage_Update()
                 Timer_Reset(&countdown_timer);  // Reset for next second
                 current_countdown_spr = spr_countdown[countdown_value];
                 WaitVBL();
-
+                WaitBlit();
                 custom->intena = INTF_INTEN;
 
                 Sprites_SetPointers(current_countdown_spr, 2, SPRITEPTR_TWO_AND_THREE);
@@ -1307,11 +1309,11 @@ void Stage_Update()
         }
         
 
-        if (bike_invulnerable && Timer_HasElapsed(&invuln_timer))
-        {
-            bike_invulnerable = FALSE;
-            Timer_Stop(&invuln_timer);
-        }
+        //if (bike_invulnerable && Timer_HasElapsed(&invuln_timer))
+        //{
+        //    bike_invulnerable = FALSE;
+        //    Timer_Stop(&invuln_timer);
+        //}
 
         if (wheelie_active)
         {
@@ -1943,6 +1945,7 @@ void Stage_CheckCompletion(void)
     
     if (stage_progress.current_map_pos >= completion_threshold)
     {
+
         stage_state = STAGE_FRONTVIEW;
 
         Sprites_ClearLower();

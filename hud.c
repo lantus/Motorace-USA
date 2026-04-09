@@ -421,16 +421,25 @@ void HUD_DrawAll()
     HUD_UpdateRank(90);
 }
 
+void HUD_DrawTextRight(UBYTE ch, int sprite_index, int y_offset)
+{
+    /* For each sprite word line:
+     * Preserve left 8 bits (FUEL), overwrite right 8 bits (progress)
+     * 
+     * word = (word & 0xFF00) | (tile_byte & 0x00FF)
+     */
+}
+
 void HUD_DrawString(char *text, int start_sprite, int y_offset)
 {
-    int text_len = strlen(text);
-    int sprite_index = start_sprite;
-    int char_pos = 0;
+    ULONG text_len = strlen(text);
+    ULONG sprite_index = start_sprite;
+    ULONG char_pos = 0;
  
     while (char_pos < text_len && sprite_index < 4) 
     {
         char sprite_text[3] = {0}; // 2 chars per sprite + null terminator
-        int chars_in_sprite = 0;
+        ULONG chars_in_sprite = 0;
         
         // Fill current sprite with up to 2 characters
         while (chars_in_sprite < 2 && char_pos < text_len) 

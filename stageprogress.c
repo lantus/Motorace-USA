@@ -1,10 +1,30 @@
 #include "support/gcc8_c_support.h"
 #include <exec/types.h>
+#include <exec/exec.h>
+#include <graphics/gfx.h>
+#include <graphics/gfxbase.h>
+#include <hardware/custom.h>
+#include <hardware/intbits.h>
+#include <hardware/dmabits.h>
+#include <proto/exec.h>
+#include <proto/graphics.h>
+#include <proto/dos.h>
 #include "stageprogress.h"
 #include "hud.h"
 #include "game.h"
 
 StageProgress stage_progress;
+
+#define STATUS_Y  148
+
+static const WORD progress_y_offsets[15] = {
+    8, 16, 24,
+    29, 36, 44,
+    49, 56, 64,
+    69, 76, 84,
+    89, 96, 100,
+};
+
 
 static const char* progress_pieces[PROGRESS_STATES] = 
 {
@@ -19,6 +39,7 @@ static const char* progress_pieces[PROGRESS_STATES] =
     "\x20\x97"   // PIECE_8 - Full
 };
 
+ 
 void StageProgress_Initialize(void)
 {
     stage_progress.current_stage = 0;  // Start at LA
@@ -95,93 +116,71 @@ void StageProgress_UpdateFrontview(UBYTE cars_passed, UBYTE total_cars)
 
 void StageProgress_DrawOverhead(void)
 {
-    static UBYTE last_overhead_state = 0xFF;  // Track previous state  
+    static UBYTE last_overhead_state = 0xFF;
     static UBYTE last_overhead_block = 0xFF;
 
     if (!stage_progress.needs_redraw) return;
 
-     if (stage_progress.overhead_state == last_overhead_state && 
+    if (stage_progress.overhead_state == last_overhead_state && 
         stage_progress.overhead_block == last_overhead_block)
-    {
-        return;  // No change, skip drawing
-    }
+        return;
     
-    // State changed - update and draw
     last_overhead_state = stage_progress.overhead_state;
     last_overhead_block = stage_progress.overhead_block;
-    
     stage_progress.needs_redraw = FALSE;
     
-    // Calculate base block for current stage
-    UBYTE stage_base_block = stage_progress.current_stage * PROGRESS_BLOCKS_PER_STAGE;
+    UBYTE block = (stage_progress.current_stage * PROGRESS_BLOCKS_PER_STAGE) 
+                  + stage_progress.overhead_block;
     
-    WORD base_y = 140;  // LA marker position
-
-    UBYTE block = stage_base_block + stage_progress.overhead_block;
+    if (block >= 15) return;
     
-    const char *piece = progress_pieces[stage_progress.overhead_state];
-    
-    WORD y_offset = base_y - (block * 8);
-  
-    HUD_DrawString((char*)piece, 1, y_offset);
+    char *tile = (char *)progress_pieces[stage_progress.overhead_state];
+    WORD y_offset = STATUS_Y - progress_y_offsets[block];
  
+    UWORD *sprite = hud_sprites.sprite_data[1];
+    HUD_DrawCharToSprite(sprite, tile[1], 8, y_offset);
 }
 
 void StageProgress_DrawFrontview(void)
 {
-    static UBYTE last_frontview_state = 0xFF;   
-    
+    static UBYTE last_frontview_state = 0xFF;
+
     if (!stage_progress.needs_redraw) return;
-    
-    // Only draw if state actually changed
+
     if (stage_progress.frontview_state == last_frontview_state)
-    {
-        return;  // No change, skip drawing
-    }
+        return;
     
-    // State changed - update and draw
     last_frontview_state = stage_progress.frontview_state;
-    
     stage_progress.needs_redraw = FALSE;
     
-    // Calculate base block for current stage
-    UBYTE stage_base_block = stage_progress.current_stage * PROGRESS_BLOCKS_PER_STAGE;
+    /* Frontview is always the 3rd block (index 2) within the stage */
+    UBYTE block = (stage_progress.current_stage * PROGRESS_BLOCKS_PER_STAGE) + 2;
     
-    WORD base_y = 140;  // LA marker position
-
-    // Frontview is always the 3rd block (index 2)
-    UBYTE block = stage_base_block + 2;
-    
-    const char *piece = progress_pieces[stage_progress.frontview_state];
-    
-    WORD y_offset = base_y - (block * 8);
+    if (block >= 15) return;
   
-    HUD_DrawString((char*)piece, 1, y_offset);
-
-    KPrintF("Frontview progress - Block %d, frontview_state=%d\n", 
-            block, stage_progress.frontview_state);
+    char *tile = (char *)progress_pieces[stage_progress.frontview_state];
+    WORD y_offset = STATUS_Y - progress_y_offsets[block];
+    
+    UWORD *sprite = hud_sprites.sprite_data[1];
+    HUD_DrawCharToSprite(sprite, tile[1], 8, y_offset);
+ 
 }
 
 void StageProgress_DrawAllEmpty(void)
 {
-    //  Force all blocks to show as empty (PIECE_0)
-    WORD base_y = 140;
-    
-    for (UBYTE block = 0; block < 12; block++)
+    for (UBYTE block = 0; block < 15; block++)
     {
-        WORD y_offset = base_y - (block * 8);
+        WORD y_offset = STATUS_Y - progress_y_offsets[block];
         HUD_ClearSpriteBlock(1, y_offset);
-        HUD_DrawString((char*)progress_pieces[0], 1, y_offset);  
+        HUD_DrawString((char*)progress_pieces[0], 1, y_offset);
     }
-    
-    KPrintF("Stage progress - all blocks drawn as EMPTY\n");
+
+    WaitBlit();
 }
 
 void StageProgress_DrawAll(void)
 {
-    WORD base_y = 140;
- 
-    for (UBYTE block = 0; block < 12; block++)
+     for (UBYTE block = 0; block < 15; block++)
     {
         UBYTE block_stage = block / PROGRESS_BLOCKS_PER_STAGE;
         UBYTE block_within_stage = block % PROGRESS_BLOCKS_PER_STAGE;
@@ -190,43 +189,39 @@ void StageProgress_DrawAll(void)
         
         if (block_stage < stage_progress.current_stage)
         {
-            // Previous stages - all full
+            /* Previous stages — all full */
             piece = progress_pieces[PROGRESS_STATES - 1];
         }
         else if (block_stage == stage_progress.current_stage)
         {
-            // Current stage
+            /* Current stage */
             if (block_within_stage < 2)
             {
-                // Overhead blocks
+                /* Overhead blocks */
                 if (block_within_stage < stage_progress.overhead_block)
-                {
                     piece = progress_pieces[PROGRESS_STATES - 1];
-                }
                 else if (block_within_stage == stage_progress.overhead_block)
-                {
                     piece = progress_pieces[stage_progress.overhead_state];
-                }
                 else
-                {
                     piece = progress_pieces[0];
-                }
             }
             else
             {
-                // Frontview block
+                /* Frontview block */
                 piece = progress_pieces[stage_progress.frontview_state];
             }
         }
         else
         {
-            // Future stages - empty
+            /* Future stages — empty */
             piece = progress_pieces[0];
         }
         
-        WORD y_offset = base_y - (block * 8);
+        WORD y_offset = STATUS_Y - progress_y_offsets[block];
         HUD_DrawString((char*)piece, 1, y_offset);
     }
+
+    WaitBlit();
 }
 
 void StageProgress_FillAll(void)
