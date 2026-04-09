@@ -72,6 +72,9 @@ void HUD_UpdateScore(ULONG score);
 void HUD_UpdateSpeed();
 void HUD_UpdateRank(UBYTE rank);
 void HUD_ClearSpriteBlock(int sprite_index, WORD y_start);
+void HUD_Update1UPFlash(void);
+void HUD_Init1UPFlash(void);
+void HUD_Show1UP(void);
 
 char *GetOrdinalSuffix(UBYTE number);
 void ULongToString(ULONG value, char *buffer, int width, char pad_char);

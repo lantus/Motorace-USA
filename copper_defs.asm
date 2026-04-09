@@ -88,6 +88,13 @@
 	XDEF	CopSCORE_C30
 	XDEF	CopSCORE_C31
 
+	XDEF	Cop1UP_C25
+	XDEF	Cop1UP_C26
+	XDEF	Cop1UP_C27
+	XDEF	Cop1UP_C29
+	XDEF	Cop1UP_C30
+	XDEF	Cop1UP_C31
+
 	XDEF	CopVIDEOSPLIT
 	XDEF	CopVIDEOSPLITMODULO
 	XDEF	CopVIDEOSPLIT2
@@ -296,6 +303,24 @@ CopSCORE_WHITE:
 	dc.w	$1BA,$0FFF		; COLOR29 = white
 	dc.w	$1BC,$0FFF		; COLOR30 = white
 	dc.w	$1BE,$0FFF		; COLOR31 = white
+
+
+; --- 1UP flash region ---
+Cop1UP:
+	dc.w	$3809,$FFFE		; WAIT line 60 (adjust to 1UP Y)
+Cop1UP_C25:
+	dc.w	$1B2,$0FFF		; toggled from C
+Cop1UP_C26:
+	dc.w	$1B4,$0FFF
+Cop1UP_C27:
+	dc.w	$1B6,$0FFF
+Cop1UP_C29:
+	dc.w	$1BA,$0FFF
+Cop1UP_C30:
+	dc.w	$1BC,$0FFF
+Cop1UP_C31:
+	dc.w	$1BE,$0FFF
+
 
 CopSCORE_BROWN:
 	dc.w	$4109,$FFFE		; WAIT line 65  

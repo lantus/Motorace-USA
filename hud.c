@@ -4,6 +4,7 @@
 #include "copper.h"
 #include "memory.h"
 #include "sprites.h"
+#include "copper.h"
 #include "hiscore.h"
 #include "hud.h"
 #include "timers.h"
@@ -15,6 +16,9 @@
 HUDSprites hud_sprites;
 
 static UBYTE last_speed;
+
+static GameTimer oneup_flash_timer;
+static BOOL oneup_visible = TRUE;
 
 void HUD_InitSprites(void)
 {
@@ -53,6 +57,40 @@ void HUD_InitSpriteData(UWORD *sprite_data, UWORD x, UWORD y, UWORD height)
     // End marker
     sprite_data[2 + height * 2] = 0;
     sprite_data[2 + height * 2 + 1] = 0;
+}
+
+void HUD_Init1UPFlash(void)
+{
+    oneup_visible = TRUE;
+    Timer_StartMs(&oneup_flash_timer, 300);
+}
+
+void HUD_Update1UPFlash(void)
+{
+    if (Timer_HasElapsed(&oneup_flash_timer))
+    {
+        oneup_visible = !oneup_visible;
+        Timer_Reset(&oneup_flash_timer);
+        
+        UWORD color = oneup_visible ? 0x0FFF : 0x0000;
+        
+        Cop1UP_C25[1] = color;
+        Cop1UP_C26[1] = color;
+        Cop1UP_C27[1] = color;
+        Cop1UP_C29[1] = color;
+        Cop1UP_C30[1] = color;
+        Cop1UP_C31[1] = color;
+    }
+}
+
+void HUD_Show1UP(void)
+{
+    Cop1UP_C25[1] = 0x0FFF;
+    Cop1UP_C26[1] = 0x0FFF;
+    Cop1UP_C27[1] = 0x0FFF;
+    Cop1UP_C29[1] = 0x0FFF;
+    Cop1UP_C30[1] = 0x0FFF;
+    Cop1UP_C31[1] = 0x0FFF;
 }
 
 void HUD_SetSpritePointers(void)

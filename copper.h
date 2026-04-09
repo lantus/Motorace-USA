@@ -174,6 +174,13 @@ extern WORD CopSCORE_C29[];
 extern WORD CopSCORE_C30[];
 extern WORD CopSCORE_C31[];
 
+extern WORD Cop1UP_C25[];
+extern WORD Cop1UP_C26[];
+extern WORD Cop1UP_C27[];
+extern WORD Cop1UP_C29[];
+extern WORD Cop1UP_C30[];
+extern WORD Cop1UP_C31[];
+
 extern WORD CopVIDEOSPLITRESETMODULO[];
  
 void Copper_SetBitplanePointer(int plane, const UBYTE **planes, LONG offset);

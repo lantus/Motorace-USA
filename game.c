@@ -250,7 +250,6 @@ void Game_AdvanceStage(void)
 {
     Music_Stop();
 
-    
     game_stage++;
     
     if (game_stage > STAGE_NEWYORK)
@@ -479,6 +478,8 @@ void Game_NewGame(UBYTE difficulty)
     Timer_Stop(&jump_timer);
     
     Cars_ResetPositions();
+
+    HUD_Init1UPFlash();
 }
 
 void Game_Draw()
@@ -1264,6 +1265,8 @@ void Stage_Update()
     else if (stage_state == STAGE_PLAYING)
     {
 
+        HUD_Update1UPFlash();
+
         speed_accumulator += bike_speed;
         speed_sample_count++;
 
@@ -1589,6 +1592,8 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_FRONTVIEW)
     {
+        HUD_Update1UPFlash();
+
          // Update fuel gauge
         Fuel_Update();
         
@@ -1745,10 +1750,14 @@ void Stage_Update()
     }
     else if (stage_state == STAGE_RANKING)
     {
+        HUD_Show1UP();
+
         Ranking_Update();
     }
     else if (stage_state == STAGE_GAMEOVER)
     {
+        HUD_Show1UP();
+
         /* First frame — set up */
         if (!Timer_IsActive(&gameover_timer))
         {
