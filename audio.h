@@ -35,14 +35,15 @@ typedef struct __attribute__((packed)) {
 
 
 /* music */
-#define MUSIC_START         0
-#define MUSIC_ONROAD        1
-#define MUSIC_FRONTVIEW     2
-#define MUSIC_RANKING       3
-#define MUSIC_GAMEOVER      4
-#define MUSIC_OFFROAD       5
-#define MUSIC_CHECKPOINT    6
-#define MUSIC_VIVA_NY       7
+#define MUSIC_START       0
+#define MUSIC_CHECKPOINT  1
+#define MUSIC_FRONTVIEW   2
+#define MUSIC_GAMEOVER    3
+#define MUSIC_OFFROAD     4
+#define MUSIC_ONROAD      5
+#define MUSIC_RANKING     6
+#define MUSIC_VIVA_NY     7
+#define MUSIC_COUNT       8
 
 /* API */
 void Audio_Initialize(void);

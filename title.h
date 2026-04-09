@@ -5,7 +5,7 @@
 #define CITY_ATTRACT "images/city_attract.BPL"
 #define AMIGA_LOGO "images/amilogo.BPL"
 
-extern RawMap *city_attract_map;
+//extern RawMap *city_attract_map;
 //extern BitMapEx *city_attract_tiles;
 extern UBYTE title_state;
 

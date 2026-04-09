@@ -21,7 +21,7 @@
 #include "pixel.h"
 #include "sprites.h"
 #include "hardware.h"
-
+#include "disk.h"
 #include "cars.h"
 #include "audio.h"
 #include "tilesheet.h"
@@ -104,31 +104,6 @@ void TilesheetPool_Initialize(void)
 void TilesheetPool_Load(UBYTE sheet_id)
 {
     if (sheet_id >= TILEPOOL_COUNT) return;
-    
-    /* Show loading message */
-    if (draw_buffer)
-    {
-        //Font_DrawStringCentered(draw_buffer, "LOADING PLEASE WAIT...", 120, 15);
-        Game_ResetBitplanePointer();
-        Copper_SetPalette(0, 0x000);
-        Copper_SetPalette(15, 0xFFF);
-        WaitVBL();
-    }
-    
-    /* Load compressed data into temp buffer */
-    System_EnableOS();
-    Disk_LoadAsset(compressed_buffer, tilepool_files[sheet_id]);
-    System_DisableOS();
-    
-    /* Decompress into chip buffer */
-    NRV2S_Unpack(compressed_buffer, tilepool_chip_buffer);
-    
-    /* Clear loading message */
-    Font_ClearArea(draw_buffer, 0, 120, SCREENWIDTH, 8);
-    Copper_SetPalette(15, 0x000);
-    
+    Preloader_UnpackTilesheet(sheet_id, tilepool_chip_buffer);
     blocksbuffer = (UBYTE *)tilepool_chip_buffer;
-   
-    KPrintF("Chip Ram Free: %ld\n", Mem_GetFreeChip());
-    KPrintF("Fast Ram Free: %ld\n", Mem_GetFreeFast());
 }

@@ -11,6 +11,7 @@
 #include <proto/dos.h>
 #include "game.h"
 #include "map.h"
+#include "roadsystem.h"
 #include "hardware.h"
 #include "bitmap.h"
 #include "blitter.h"
@@ -357,6 +358,13 @@ int main(void)
 
 	Write(Output(), (APTR)"\n", 2);
 	Write(Output(), (APTR)"Starting up...\n", 16);
+
+	/* Load ALL assets while OS is alive */
+    Preloader_Init();
+    Preloader_LoadAll();
+
+	MapPool_Initialize();        
+    CollisionMap_Initialize();  
 
 	Game_Initialize();
 	OpenDisplay();

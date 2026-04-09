@@ -40,7 +40,7 @@ void StageProgress_SetStage(UBYTE stage)
 
     HUD_ClearSpriteBlock(1, 140);
     
-    KPrintF("Stage progress set to stage %d\n", stage);
+    KPrintF("Stage progress set to stage %ld\n", stage);
 }
 
 void StageProgress_UpdateOverhead(LONG mapposy)

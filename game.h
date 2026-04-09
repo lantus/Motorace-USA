@@ -93,11 +93,13 @@ enum GameState
 
 enum GameStages
 {
-    STAGE_LASVEGAS = 0,
-    STAGE_HOUSTON = 1,
-    STAGE_STLOUIS = 2,
-    STAGE_CHICAGO = 3,
-    STAGE_NEWYORK = 4,
+    STAGE_ATTRACT = 0,      // Attract/FrontView
+    STAGE_LASVEGAS = 1,
+    STAGE_HOUSTON = 2,
+    STAGE_STLOUIS = 3,
+    STAGE_CHICAGO = 4,
+    STAGE_NEWYORK = 5,
+    STAGE_COUNT = 6
     
 };
 

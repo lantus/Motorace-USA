@@ -35,40 +35,32 @@ static ULONG map_sizes[5];
 static UBYTE *map_buffer = NULL;
 static ULONG map_buffer_size = 0;
 
+/* Raw uncompressed sizes — largest determines buffer */
+static const ULONG map_raw_sizes[5] = {
+    29652,  /* lv1 */
+    34956,  /* lv2 */
+    32628,  /* lv3 */
+    35820,  /* lv4 */
+    34764,  /* lv5 */
+};
+
 void MapPool_Initialize(void)
 {
-    map_files[0] = "stages/lasvegas/lv1.map";
-    map_files[1] = "stages/houston/lv2.map";
-    map_files[2] = "stages/stlouis/lv3.map";
-    map_files[3] = "stages/chicago/lv4.map";
-    map_files[4] = "stages/newyork/lv5.map";
-    
-    map_sizes[0] = findSize(map_files[0]);
-    map_sizes[1] = findSize(map_files[1]);
-    map_sizes[2] = findSize(map_files[2]);
-    map_sizes[3] = findSize(map_files[3]);
-    map_sizes[4] = findSize(map_files[4]);
-    
-    /* Find largest */
+    /* Find largest uncompressed map */
     map_buffer_size = 0;
     for (int i = 0; i < 5; i++)
-        if (map_sizes[i] > map_buffer_size)
-            map_buffer_size = map_sizes[i];
+        if (map_raw_sizes[i] > map_buffer_size)
+            map_buffer_size = map_raw_sizes[i];
     
     map_buffer = AllocMem(map_buffer_size, MEMF_ANY);
     
-    KPrintF("MapPool: buffer=%ld bytes (largest of 5 maps)\n", map_buffer_size);
+    KPrintF("MapPool: decompression buffer=%ld bytes\n", map_buffer_size);
 }
 
-void MapPool_Load(UBYTE stage)
+void MapPool_Load(UBYTE stage_id)
 {
-    if (stage > 4) return;
+    Preloader_UnpackMap(stage_id, map_buffer);
     
-    System_EnableOS();
-    Disk_LoadAsset(map_buffer, map_files[stage]);
-    System_DisableOS();
-    
-    /* Point the shared RawMap at the buffer */
     RawMap *loaded = (RawMap *)map_buffer;
     mapdata = (UWORD *)loaded->data;
     mapwidth = loaded->mapwidth;

@@ -39,7 +39,7 @@ APTR *zippy_logo_restore_ptr;
 static UWORD title_frames = 0;
 static UWORD title_flash_counter = 0;
  
-RawMap *city_attract_map;
+//RawMap *city_attract_map;
 //BitMapEx *city_attract_tiles;
 
 GameTimer attract_timer;
@@ -85,6 +85,7 @@ void Title_LoadAllPalettes()
     Game_LoadPalette("palettes/fv_stl.pal", palette_fv_stl, BLOCKSCOLORS);
     Game_LoadPalette("palettes/offroad.pal", offroad_colors, BLOCKSCOLORS);
     Game_LoadPalette("stages/stlouis/lv3.pal", stlouis_colors, BLOCKSCOLORS);
+    
 }
 
 void Title_Draw()
@@ -560,12 +561,12 @@ void Title_RestoreLogo()
 
 void Title_OpenMap(void)
 {
-   
-	city_attract_map = Disk_AllocAndLoadAsset("stages/attract/attract.map",MEMF_ANY);
+    MapPool_Load(STAGE_ATTRACT);
+	//city_attract_map = Disk_AllocAndLoadAsset("stages/attract/attract.map",MEMF_ANY);
 	
-	mapdata = (UWORD *)city_attract_map->data;
-	mapwidth = city_attract_map->mapwidth;
-	mapheight = city_attract_map->mapheight;   
+	//mapdata = (UWORD *)city_attract_map->data;
+	//mapwidth = city_attract_map->mapwidth;
+	//mapheight = city_attract_map->mapheight;   
 }
  
 void Title_OpenBlocks(void)

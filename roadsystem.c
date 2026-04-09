@@ -50,11 +50,7 @@ static const UWORD road_scroll_pal[16] = {
 };
 
 static const UWORD *road_scroll_table;
-
-static APTR collision_maps[5];
-static UWORD collision_widths[5];
-static UWORD collision_heights[5];
-
+ 
  
 void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count)
 {
@@ -92,26 +88,41 @@ void UpdateRoadScroll(UWORD bike_speed, UWORD frame_count)
     road_tile_idx = road_scroll.tile_idx;
 }
  
- 
-void CollisionMap_Load(void)
+ static const ULONG collision_raw_sizes[STAGE_COUNT] = {
+    0, 
+    14820,  /* lv1 */
+    17472,  /* lv2 */
+    16308,  /* lv3 */
+    17904,  /* lv4 */
+    17376,  /* lv5 */
+};
+
+static UBYTE *collision_buffer = NULL;
+static ULONG  collision_buffer_size = 0;
+
+void CollisionMap_Initialize(void)
 {
-    collision_maps[STAGE_LASVEGAS] = Disk_AllocAndLoadAsset("stages/lasvegas/collision.dat", MEMF_ANY);
-    collision_maps[STAGE_HOUSTON]  = Disk_AllocAndLoadAsset("stages/houston/collision.dat", MEMF_ANY);
-    collision_maps[STAGE_STLOUIS]  = Disk_AllocAndLoadAsset("stages/stlouis/collision.dat", MEMF_ANY);
-    collision_maps[STAGE_CHICAGO]  = Disk_AllocAndLoadAsset("stages/chicago/collision.dat", MEMF_ANY);
-    collision_maps[STAGE_NEWYORK]  = Disk_AllocAndLoadAsset("stages/newyork/collision.dat", MEMF_ANY);
+    /* Find largest uncompressed collision */
+    collision_buffer_size = 0;
+    for (int i = 0; i < 5; i++)
+        if (collision_raw_sizes[i] > collision_buffer_size)
+            collision_buffer_size = collision_raw_sizes[i];
     
-    /* Default to stage 1 */
-    CollisionMap_SetStage(STAGE_LASVEGAS);
+    collision_buffer = AllocMem(collision_buffer_size, MEMF_ANY);
+    KPrintF("CollisionPool: decompression buffer=%ld bytes\n", collision_buffer_size);
 }
 
 void CollisionMap_SetStage(UBYTE stage)
 {
-    collision_map = collision_maps[stage];
+    /* Decompress from Preloader's fast RAM into shared buffer */
+    Preloader_UnpackCollision(stage, collision_buffer);
+    
+    collision_map = collision_buffer;
     col_map_width = mapwidth;
     col_map_height = mapheight;
     
-    KPrintF("Collision map set for stage %ld: %ldx%ld\n", stage, col_map_width, col_map_height);
+    KPrintF("Collision map set for stage %ld: %ldx%ld\n", 
+            (ULONG)stage, (ULONG)col_map_width, (ULONG)col_map_height);
 }
 
  

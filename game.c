@@ -181,7 +181,7 @@ void Game_Initialize()
     Game_SetBackGroundColor(0x125);
     
     Stage_Initialize();
-    CollisionMap_Load();
+ 
     
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
@@ -420,7 +420,6 @@ void Game_StartNextOverhead(void)
     StageProgress_SetStage(game_stage);
     StageProgress_DrawAll();
     
-        
     MotorBike_Reset();
 
     HUD_SetSpritePositions();
@@ -526,67 +525,59 @@ void Game_SetMap(UBYTE maptype)
     switch (maptype)
     {
         case MAP_ATTRACT_INTRO:
-            mapdata = (UWORD *)city_attract_map->data;
-            mapwidth = city_attract_map->mapwidth;
-            mapheight = city_attract_map->mapheight;  
+            MapPool_Load(STAGE_ATTRACT);
             current_palette = intro_colors;
+           
             break;
         case STAGE1_OVERHEAD:
             MapPool_Load(STAGE_LASVEGAS);
             current_palette = city_colors;
+            CollisionMap_SetStage(STAGE_LASVEGAS);
             break;
         case STAGE1_FRONTVIEW:
-            mapdata = (UWORD *)city_attract_map->data;
-            mapwidth = city_attract_map->mapwidth;
-            mapheight = city_attract_map->mapheight;  
+            MapPool_Load(STAGE_ATTRACT);
             current_palette = lv_colors;
             break;
         case STAGE2_OVERHEAD:
             MapPool_Load(STAGE_HOUSTON);
             current_palette = offroad_colors;
+            CollisionMap_SetStage(STAGE_HOUSTON);
             break;
         case STAGE2_FRONTVIEW:
-            mapdata = (UWORD *)city_attract_map->data;
-            mapwidth = city_attract_map->mapwidth;
-            mapheight = city_attract_map->mapheight;  
+            MapPool_Load(STAGE_ATTRACT);
             current_palette = houston_colors;
             break;     
         case STAGE3_OVERHEAD:
             MapPool_Load(STAGE_STLOUIS);
             current_palette = stlouis_colors;
+            CollisionMap_SetStage(STAGE_STLOUIS);
             break;          
         case STAGE3_FRONTVIEW:
-            mapdata = (UWORD *)city_attract_map->data;
-            mapwidth = city_attract_map->mapwidth;
-            mapheight = city_attract_map->mapheight;  
+             MapPool_Load(STAGE_ATTRACT);
             current_palette = palette_fv_stl;    
             break;    
         case STAGE4_OVERHEAD:
             MapPool_Load(STAGE_CHICAGO);
             current_palette = offroad_colors;
+            CollisionMap_SetStage(STAGE_CHICAGO); 
             break;         
         case STAGE4_FRONTVIEW:
-            mapdata = (UWORD *)city_attract_map->data;
-            mapwidth = city_attract_map->mapwidth;
-            mapheight = city_attract_map->mapheight;  
+            MapPool_Load(STAGE_ATTRACT);
             current_palette = palette_fv_stl;    
             break;      
         case STAGE5_OVERHEAD:
             MapPool_Load(STAGE_NEWYORK);
             current_palette = city_colors;
+            CollisionMap_SetStage(STAGE_NEWYORK);  
             break;         
         case STAGE5_FRONTVIEW:
-            mapdata = (UWORD *)city_attract_map->data;
-            mapwidth = city_attract_map->mapwidth;
-            mapheight = city_attract_map->mapheight;  
+            MapPool_Load(STAGE_ATTRACT);
             current_palette = palette_fv_stl;    
             break;                       
     }
 
-    CollisionMap_SetStage(game_stage);
+   
 }
- 
-
  
 __attribute__((always_inline)) WORD GetScrollAmount(WORD speed)
 {
@@ -1015,9 +1006,6 @@ void GameReady_Update(void)
 
 void Stage_Initialize(void)
 {
-    Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
- 
-    MapPool_Initialize();
 
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);

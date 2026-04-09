@@ -276,65 +276,7 @@ __attribute__((always_inline)) inline BOOL KeyPressed(UBYTE keycode)
 {
     return (current_keycode == keycode);
 }
-
-void System_DisableOS(void)
-{
-    if (!system_killed) return;   
-    if (os_disabled) return;      
-
-    Disable();
-    OwnBlitter();
-    WaitBlit();
  
-    custom->intena = 0x7FFF;
-    custom->dmacon = 0x7FFF;
- 
-    while (!(custom->intreqr & INTF_VERTB)) continue;
-		custom->dmacon = DMAF_DISK | DMAF_BLITTER;
-
-    /* Save OS vectors, reinstall game handler on level 3 only */
-    APTR *vectors = (APTR *)((UBYTE *)VBR);
-    for (int i = 0; i < 7; i++)
-        saved_vectors[i] = vectors[0x64/4 + i];
-    
-    /* Reinstall game VBL handler (level 3 = 0x6C) */
-    vectors[0x6C/4] = (APTR)interruptHandler;
-
-    /* Restore game copper list before enabling display DMA */
-    custom->cop2lc = (ULONG)CopperList;	
-    custom->copjmp2 = 0;
-
-    custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_RASTER | DMAF_COPPER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3 | DMAF_MASTER;
-    custom->intena = INTF_SETCLR | INTF_INTEN | INTF_VERTB | INTF_EXTER;
-
-    os_disabled = TRUE;
-}
-
-void System_EnableOS(void)
-{
-    if (!system_killed) return;   
-    if (!os_disabled) return;     
-
-    WaitBlit();
- 
-    DisownBlitter();
-
-    custom->intena = 0x7FFF;
-    custom->dmacon = 0x7FFF;
-    custom->dmacon = (DMAF_DISK | DMAF_BLITTER);
-    /* Restore ALL OS interrupt vectors */
-    APTR *vectors = (APTR *)((UBYTE *)VBR);
-    for (int i = 0; i < 7; i++)
-        vectors[0x64/4 + i] = saved_vectors[i];
-
-    custom->dmacon =  DMAF_SETCLR | DMAF_MASTER | (old_dmacon & (DMAF_DISK | DMAF_BLITTER));
-    custom->intena = old_intena;
-
-    Enable();
-
-    os_disabled = FALSE;
-}
-
 
 void Transition_ToBlack(void)
 {
