@@ -24,16 +24,16 @@ static HiScoreTable hiscore_table;
 
 // Default high score table (from your image)
 static const HiScoreEntry default_scores[MAX_HISCORE_ENTRIES] = {
-    {6000, 01, "AMI"},
-    {3270, 03, "RRT"},
-    {2900, 02, "ESE"},
-    {2480, 10, "MEM"},
-    {2190, 00, "NUO"},     // 0 = Retire
-    {1610, 11, "OSI"},
-    {1330, 00, "TAI"},     // 0 = Retire
-    {960,  40, "IEO"},    
-    {720,  40, "DIM"},    
-    {500,  00, "MVG"}      // 0 = Retire
+    {68000, 01, "AMI"},
+    {32700, 03, "RRT"},
+    {29000, 02, "ESE"},
+    {24800, 10, "MEM"},
+    {21900, 00, "NUO"},     // 0 = Retire
+    {16100, 11, "OSI"},
+    {13300, 00, "TAI"},     // 0 = Retire
+    {9600,  40, "IEO"},    
+    {7200,  40, "DIM"},    
+    {5000,  00, "MVG"}      // 0 = Retire
 };
 
 static ULONG displayed_hiscore = 0;
@@ -91,7 +91,7 @@ UBYTE HiScore_Insert(ULONG score, UBYTE rank, const char *name)
     // HiScore_Save();
     
     displayed_hiscore = hiscore_table.entries[0].score;
-    
+
     return insert_pos + 1;  // Return 1-based position
 }
 
