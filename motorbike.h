@@ -70,10 +70,7 @@ extern UWORD bike_position_x;
 extern UWORD bike_position_y;
 extern LONG  bike_world_y;   
 extern UWORD crash_anim_frames;
-
-extern BOOL jump_active;
  
-
 enum BikeState
 {
     BIKE_STATE_STOPPED = 0,

@@ -119,8 +119,7 @@ static UBYTE current_sprite_count = 2;  // Track whether using 2 or 4 sprites
 BOOL  wheelie_active = FALSE;
 BOOL  wheelie_scored = FALSE;
 WORD  wheelie_speed = 0;
-BOOL  jump_active = FALSE;
-
+ 
 UWORD wheelie_anim_frames = 0;
 UWORD crash_anim_frames = 0;
 UBYTE crash_spin_frame = 0;
@@ -128,6 +127,17 @@ UBYTE crash_spin_frame = 0;
 GameTimer wheelie_timer;
 GameTimer invuln_timer;
 GameTimer jump_timer;
+
+static const USHORT palette_750cc[8] = {
+    0x000,  /* 0: black */
+    0x0BF,  /* 1: light blue */
+    0xFFF,  /* 2: white */
+    0xD60,  /* 3: orange */
+    0xDF0,  /* 4: yellow-green */
+    0xD00,  /* 5: red */
+    0x00F,  /* 6: blue */
+    0x002,  /* 7: dark blue */
+};
 
 void MotorBike_Initialize()
 {
@@ -272,19 +282,29 @@ void MotorBike_Reset()
         game_map == STAGE5_FRONTVIEW)
     {
         MotorBike_SetFrame(BIKE_FRAME_APPROACH1);
-        Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
     }
     else
     {
         MotorBike_SetFrame(BIKE_FRAME_MOVING1);
-        Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
     }
+
+    MotorBike_SetDefaultPalette();
  
 }
 
 void MotorBike_SetDefaultPalette()
 {
-    Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
+    if (game_difficulty == SEVENFIFTYCC)
+    {
+        for (int i = 0; i < 8; i++)
+            Copper_SetSpritePalette(i, palette_750cc[i]);
+        
+        Copper_SetScoreRestoreColors();
+    }
+    else
+    {
+        Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
+    }
 }
 
 void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
@@ -846,8 +866,7 @@ void MotorBike_CrashAndReposition(void)
     bike_world_y = mapposy + bike_position_y;
     bike_speed = MIN_CRUISING_SPEED;
     bike_state = BIKE_STATE_MOVING;
-    jump_active = FALSE;
-    Timer_Stop(&jump_timer);
+  
 
     // === STEP 5: Update copper for new scroll position ===
     const UBYTE* planes_temp[BLOCKSDEPTH];

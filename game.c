@@ -370,7 +370,7 @@ void Game_StartNextOverhead(void)
     bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 24;
     bike_state = BIKE_STATE_STOPPED;
-    bike_invulnerable = TRUE;
+    bike_invulnerable = FALSE;
     
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
@@ -382,7 +382,7 @@ void Game_StartNextOverhead(void)
     speed_sample_count = 0;
     wheelie_active = FALSE;
     wheelie_scored = FALSE;
-    jump_active = FALSE;
+    
     crash_anim_frames = 0;
 
     Game_ApplyPalette(black_palette,BLOCKSCOLORS);
@@ -458,7 +458,7 @@ void Game_NewGame(UBYTE difficulty)
     bike_position_x = 96;
     bike_position_y = SCREENHEIGHT - 24;  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
-    bike_invulnerable = TRUE;
+    bike_invulnerable = FALSE;
 
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
@@ -473,9 +473,7 @@ void Game_NewGame(UBYTE difficulty)
     wheelie_active = FALSE;
     wheelie_scored = FALSE;
     crash_anim_frames = 0;
-
-    jump_active = FALSE;
-    Timer_Stop(&jump_timer);
+ 
     
     Cars_ResetPositions();
 
@@ -1369,11 +1367,11 @@ void Stage_Update()
         }
         
 
-        //if (bike_invulnerable && Timer_HasElapsed(&invuln_timer))
-        //{
-        //    bike_invulnerable = FALSE;
-        //    Timer_Stop(&invuln_timer);
-        //}
+        if (bike_invulnerable && Timer_HasElapsed(&invuln_timer))
+        {
+            bike_invulnerable = FALSE;
+            Timer_Stop(&invuln_timer);
+        }
 
         if (wheelie_active)
         {
@@ -1434,7 +1432,6 @@ void Stage_Update()
             return;
         }
  
-   
         
         if (collision_state == COLLISION_TRAFFIC || collision_state == COLLISION_OFFROAD)
         {
@@ -1456,7 +1453,7 @@ void Stage_Update()
         UBYTE surface = Collision_GetSurface(bike_position_x + 8, bike_wy);
         UBYTE surface_l = Collision_GetSurface(bike_position_x, bike_wy);
         UBYTE surface_r = Collision_GetSurface(bike_position_x + 16, bike_wy);
-
+    
         if ((surface == SURFACE_WHEELIE  || 
             surface == SURFACE_JUMP ) && !wheelie_active)
         {

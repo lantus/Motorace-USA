@@ -57,7 +57,8 @@ BOOL Sprites_ApplyPalette(Sprite *sheet)
 {
     for(int i=0; i < 16; i++)
 	{
-		Copper_SetSpritePalette(i, ((USHORT*)sheet->palette)[i]);
+		USHORT color = ((USHORT*)sheet->palette)[i];
+        Copper_SetSpritePalette(i, color);
 	}
     
     Copper_SetScoreRestoreColors();
