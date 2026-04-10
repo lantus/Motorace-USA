@@ -1196,6 +1196,63 @@ void Stage_Draw()
     }   
 }
 
+static void CheckBonusPickups(void)
+{
+    WORD bike_wy = mapposy + bike_position_y - g_sprite_voffset;
+    UBYTE surface = Collision_GetSurface(bike_position_x + 8, bike_wy);
+    UBYTE surface_l = Collision_GetSurface(bike_position_x, bike_wy);
+    UBYTE surface_r = Collision_GetSurface(bike_position_x + 16, bike_wy);
+
+    UWORD pickup_points = 0;
+    UBYTE pickup_surface = SURFACE_NORMAL;
+    
+    if (surface_l >= SURFACE_PTS100 && surface_l <= SURFACE_PTS1000)
+        pickup_surface = surface_l;
+    else if (surface >= SURFACE_PTS100 && surface <= SURFACE_PTS1000)
+        pickup_surface = surface;
+    else if (surface_r >= SURFACE_PTS100 && surface_r <= SURFACE_PTS1000)
+        pickup_surface = surface_r;
+    
+    if (pickup_surface != SURFACE_NORMAL)
+    {
+        switch (pickup_surface)
+        {
+            case SURFACE_PTS100:  pickup_points = 100;  break;
+            case SURFACE_PTS200:  pickup_points = 200;  break;
+            case SURFACE_PTS500:  pickup_points = 500;  break;
+            case SURFACE_PTS700:  pickup_points = 700;  break;
+            case SURFACE_PTS1000: pickup_points = 1000; break;
+        }
+        
+        WORD hit_x = bike_position_x + 8;
+        if (surface_l == pickup_surface) hit_x = bike_position_x;
+        else if (surface_r == pickup_surface) hit_x = bike_position_x + 16;
+        
+        WORD map_x = hit_x >> 4;
+        WORD map_y = bike_wy >> 4;
+        
+        game_score += pickup_points;
+        HUD_UpdateScore(game_score);
+        
+        mapdata[map_y * mapwidth + map_x] = road_tile_plain;
+        
+        UBYTE old_col = Collision_Get(hit_x, bike_wy);
+        Collision_Set(hit_x, bike_wy, (old_col & 0xF0) | SURFACE_NORMAL);
+        
+        WORD buf_y = ROUND2BLOCKHEIGHT((map_y << 4) % EFFECTIVE_HEIGHT) << 2;
+        WORD buf_x = map_x << 4;
+        
+        DrawBlock(buf_x, buf_y, map_x, map_y, screen.bitplanes);
+        DrawBlock(buf_x, buf_y, map_x, map_y, screen.offscreen_bitplanes);
+        DrawBlock(buf_x, buf_y, map_x, map_y, screen.pristine);
+        
+        UWORD yoff = buf_y + (HALFBITMAPHEIGHT << 2);
+        DrawBlock(buf_x, yoff, map_x, map_y, screen.bitplanes);
+        DrawBlock(buf_x, yoff, map_x, map_y, screen.offscreen_bitplanes);
+        DrawBlock(buf_x, yoff, map_x, map_y, screen.pristine);
+    }
+}
+
 void Stage_Update()
 {
     game_frame_count++;
@@ -1369,6 +1426,11 @@ void Stage_Update()
             speed_sample_count++;
             StageProgress_UpdateOverhead(mapposy);
             Stage_CheckCompletion();
+
+            if (bike_state == BIKE_STATE_JUMP )
+            {
+                CheckBonusPickups();
+            }
             return;
         }
  
