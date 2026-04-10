@@ -158,6 +158,8 @@ static UBYTE gameover_hiscore_pos = 0;  /* 0 = doesn't qualify */
 // Bike repositioning stuff
 BOOL bike_invulnerable = FALSE;
  
+WORD bike_wy = 0;
+
 void Game_Initialize()
 {
     Timer_Init();
@@ -450,6 +452,7 @@ void Game_NewGame(UBYTE difficulty)
     bike_speed = 0;
     game_rank = 99; // Start in 99th
     max_stage_speed = MAX_SPEED;  /* Stage 1: full speed 210 */
+    road_tile_plain = 11;
 
     /* Swap to level 1 tiles */
     TilesheetPool_Load(TILEPOOL_LEVEL1);
@@ -1197,7 +1200,6 @@ void Stage_Draw()
 
 static void CheckBonusPickups(void)
 {
-    WORD bike_wy = mapposy + bike_position_y - g_sprite_voffset;
     UBYTE surface = Collision_GetSurface(bike_position_x + 8, bike_wy);
     UBYTE surface_l = Collision_GetSurface(bike_position_x, bike_wy);
     UBYTE surface_r = Collision_GetSurface(bike_position_x + 16, bike_wy);
@@ -1449,7 +1451,7 @@ void Stage_Update()
             return;
         }
  
-        WORD bike_wy = mapposy + bike_position_y - g_sprite_voffset;
+        bike_wy = mapposy + bike_position_y - g_sprite_voffset;
 
         UBYTE surface = Collision_GetSurface(bike_position_x + 8, bike_wy);
         UBYTE surface_l = Collision_GetSurface(bike_position_x, bike_wy);
@@ -1506,9 +1508,8 @@ void Stage_Update()
             if (surface_l == pickup_surface) hit_x = bike_position_x;
             else if (surface_r == pickup_surface) hit_x = bike_position_x + 16;
             
-            WORD map_x = hit_x / BLOCKWIDTH;
-            WORD map_y = bike_wy / BLOCKHEIGHT;
-            
+            WORD map_x = hit_x >> 4;
+            WORD map_y = bike_wy >> 4;
             /* Add score */
             game_score += pickup_points;
             HUD_UpdateScore(game_score);
@@ -1540,8 +1541,8 @@ void Stage_Update()
             if (surface_l == SURFACE_GASCAN) hit_x = bike_position_x;
             else if (surface_r == SURFACE_GASCAN) hit_x = bike_position_x + 16;
             
-            WORD map_x = hit_x / BLOCKWIDTH;
-            WORD map_y = bike_wy / BLOCKHEIGHT;
+            WORD map_x = hit_x >> 4;
+            WORD map_y = bike_wy >> 4;
             
             Fuel_Add(1);
             Fuel_DrawAll();
