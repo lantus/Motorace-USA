@@ -139,6 +139,17 @@ static const USHORT palette_750cc[8] = {
     0x002,  /* 7: dark blue */
 };
 
+static const USHORT palette_1200cc[8] = {
+    0x000,  /* 0: black */
+    0xFFF,  /* 1: white */
+    0x0F0,  /* 2: green */
+    0xD60,  /* 3: orange */
+    0xDF0,  /* 4: yellow-green */
+    0xD00,  /* 5: red */
+    0x00F,  /* 6: blue */
+    0x002,  /* 7: dark blue */
+};
+
 void MotorBike_Initialize()
 {
     Sprites_LoadFromFile(BIKE_MOVING1,&spr_rsrc_bike_moving1);
@@ -294,17 +305,21 @@ void MotorBike_Reset()
 
 void MotorBike_SetDefaultPalette()
 {
-    if (game_difficulty == SEVENFIFTYCC)
+    const USHORT *palette;
+    
+    switch (game_difficulty)
     {
-        for (int i = 0; i < 8; i++)
-            Copper_SetSpritePalette(i, palette_750cc[i]);
-        
-        Copper_SetScoreRestoreColors();
+        case SEVENFIFTYCC:    palette = palette_750cc;  break;
+        case TWELVEHUNDREDCC: palette = palette_1200cc; break;
+        default:
+            Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
+            return;
     }
-    else
-    {
-        Sprites_ApplyPalette(&spr_rsrc_approach_bike_frame1);
-    }
+    
+    for (int i = 0; i < 8; i++)
+        Copper_SetSpritePalette(i, palette[i]);
+    
+    Copper_SetScoreRestoreColors();
 }
 
 void MotorBike_Draw(WORD x, UWORD y, UBYTE state)
