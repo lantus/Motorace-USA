@@ -5,8 +5,7 @@
 #define CITY_ATTRACT "images/city_attract.BPL"
 #define AMIGA_LOGO "images/amilogo.BPL"
 
-//extern RawMap *city_attract_map;
-//extern BitMapEx *city_attract_tiles;
+ 
 extern UBYTE title_state;
 
 #define ATTRACTMODE_Y_OFFSET 192
@@ -23,6 +22,8 @@ extern UBYTE title_state;
 #define AMI_LOGO_WIDTH 32
 #define AMI_LOGO_HEIGHT 32
 #define AMI_LOGO_WIDTH_WORDS 2
+
+#define ATTRACT_MAX_SPEED 210
 
 enum TitleState {
     TITLE_ATTRACT_INIT = 0,

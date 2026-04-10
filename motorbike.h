@@ -3,7 +3,7 @@
 #define DECEL_RATE 2         // Speed decrease per frame when coasting
 
 #define MIN_SPEED 0
-#define MAX_SPEED 210
+ 
 
 typedef enum {
     BIKE_FRAME_MOVING1 = 0,

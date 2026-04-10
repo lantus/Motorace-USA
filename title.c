@@ -346,14 +346,14 @@ void Title_Update()
     {
         // Slower acceleration - more cinematic buildup
         bike_speed += 1;  // Changed from ACCEL_RATE (2) to 1
-        if (bike_speed > MAX_SPEED)
+        if (bike_speed > ATTRACT_MAX_SPEED)
         {
-            bike_speed = MAX_SPEED;
+            bike_speed = ATTRACT_MAX_SPEED;
         }
         
         UpdateRoadScroll(bike_speed, title_frames);
 
-        if (bike_speed >= MAX_SPEED)
+        if (bike_speed >= ATTRACT_MAX_SPEED)
         {
             if (Timer_IsActive(&attract_timer) == FALSE)
             {
