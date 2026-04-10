@@ -90,6 +90,7 @@ void NameEntry_Draw(UBYTE *buffer)
         
         if (is_entry_row)
         {
+            /* Draw player's pending entry */
             ULongToString(game_score, line_buffer, 6, ' ');
             Font_DrawString(buffer, line_buffer, COL_SCORE, y, color);
             
@@ -104,19 +105,24 @@ void NameEntry_Draw(UBYTE *buffer)
                 char ch[2] = { entry_state.name[c], '\0' };
                 
                 if (c == entry_state.cursor_pos && !cursor_visible)
-                {
                     Font_DrawString(buffer, ch, char_x, y, 0);
-                }
                 else
-                {
-                    char ch[2] = { entry_state.name[c], '\0' };
                     Font_DrawString(buffer, ch, char_x, y, entry_color);
-                }
             }
         }
         else
         {
-            HiScoreEntry *entry = &table->entries[i];
+            /* Rows below insertion read one entry higher (shifted down) */
+            UBYTE table_idx = (i >= insert_idx) ? i - 1 : i;
+            
+            /* Don't read past table end */
+            if (table_idx >= MAX_HISCORE_ENTRIES)
+            {
+                y += 15;
+                continue;
+            }
+            
+            HiScoreEntry *entry = &table->entries[table_idx];
             
             ULongToString(entry->score, line_buffer, 6, ' ');
             Font_DrawString(buffer, line_buffer, COL_SCORE, y, color);

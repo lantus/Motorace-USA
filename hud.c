@@ -323,8 +323,16 @@ void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset)
 
 void HUD_UpdateScore(ULONG score)
 {
-    game_score = score;
-    HUD_DrawScore(game_score, 1, 24);
+    char score_buffer[6];
+    ULongToString(score, score_buffer, 6, ' ');
+    HUD_DrawString(score_buffer, 1, 24);
+
+     /* Update hi-score if beaten */
+    if (score >= HiScore_GetTopScore())
+    {
+        ULongToString(score, score_buffer, 6, ' ');
+        HUD_DrawString(score_buffer, 1, 8);
+    }
 }
 
 void HUD_UpdateBikeSpeed(ULONG bike_speed)
