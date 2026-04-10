@@ -344,6 +344,7 @@ void Game_StartNextOverhead(void)
             game_map = STAGE3_OVERHEAD;
             stage_music = MUSIC_ONROAD;
             current_palette = stlouis_colors;
+            road_tile_plain = 1;
             break;
         case STAGE_CHICAGO:
             max_stage_speed = 185;
@@ -359,6 +360,7 @@ void Game_StartNextOverhead(void)
             game_map = STAGE5_OVERHEAD;
             stage_music = MUSIC_ONROAD;
             current_palette = city_colors;
+            road_tile_plain = 1; 
             break;
         default:
             max_stage_speed = 210;
@@ -1581,7 +1583,10 @@ void Stage_Update()
             
             bike_state = BIKE_STATE_BRAKING;
 
-            SFX_Play(SFX_BRAKE);
+            if ((game_frame_count & 7) == 0)
+            {
+                SFX_Play(SFX_BRAKE);
+            }
         }
 
         // === ACCELERATION LOGIC ===
