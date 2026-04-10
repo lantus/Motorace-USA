@@ -1321,10 +1321,14 @@ void Stage_Update()
         if (wheelie_active)
         {
             //bike_speed = wheelie_speed;
-            bike_state = BIKE_STATE_WHEELIE;
+            //bike_state = BIKE_STATE_WHEELIE;
 
-            if ((game_frame_count & 7) == 0)
-                SFX_Play(SFX_SKID);
+            // No skid if offroad over jump
+            if (bike_state == BIKE_STATE_WHEELIE )
+            {
+                if ((game_frame_count & 7) == 0)
+                    SFX_Play(SFX_SKID);
+            }
             
             // Clear the landing path — push cars out of the way
           
@@ -1391,12 +1395,15 @@ void Stage_Update()
         UBYTE surface_l = Collision_GetSurface(bike_position_x, bike_wy);
         UBYTE surface_r = Collision_GetSurface(bike_position_x + 16, bike_wy);
 
-        if (surface == SURFACE_WHEELIE && !wheelie_active)
+        if ((surface == SURFACE_WHEELIE  || 
+            surface == SURFACE_JUMP ) && !wheelie_active)
         {
             wheelie_active = TRUE;
             wheelie_speed = 150;
-            Timer_Start(&wheelie_timer, 2);
-            bike_state = BIKE_STATE_WHEELIE;
+
+            Timer_Start(&wheelie_timer,  surface == SURFACE_JUMP ? 1 : 2);
+            
+            bike_state = surface == SURFACE_JUMP  ? BIKE_STATE_JUMP : BIKE_STATE_WHEELIE;
             wheelie_anim_frames = 0;  // Reset animation counter
             
             if (!wheelie_scored)
@@ -1412,7 +1419,6 @@ void Stage_Update()
             return;
         }
  
-            
 
         UWORD pickup_points = 0;
         UBYTE pickup_surface = SURFACE_NORMAL;

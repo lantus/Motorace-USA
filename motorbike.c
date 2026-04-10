@@ -374,7 +374,8 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 
          bike_anim_lr_frames++;
     }
-    else if (state == BIKE_STATE_WHEELIE)
+    else if (state == BIKE_STATE_WHEELIE || 
+             state == BIKE_STATE_JUMP)
     {
         if (Timer_GetRemainingMs(&wheelie_timer) <= 500)  
         {
