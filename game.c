@@ -323,7 +323,7 @@ void Game_StartNextOverhead(void)
     switch (game_stage)
     {
         case STAGE_LASVEGAS:
-            max_stage_speed = 210;
+            max_stage_speed = base_speed;
             TilesheetPool_Load(TILEPOOL_LEVEL1);
             game_map = STAGE1_OVERHEAD;
             stage_music = MUSIC_START;
@@ -331,7 +331,7 @@ void Game_StartNextOverhead(void)
             road_tile_plain = 11;
             break;
         case STAGE_HOUSTON:
-            max_stage_speed = 185;
+            max_stage_speed =  (base_speed * 4) / 5;
             TilesheetPool_Load(TILEPOOL_LEVEL2);
             game_map = STAGE2_OVERHEAD;
             stage_music = MUSIC_OFFROAD;
@@ -339,7 +339,7 @@ void Game_StartNextOverhead(void)
             road_tile_plain = 0;
             break;
         case STAGE_STLOUIS:
-            max_stage_speed = 210;
+            max_stage_speed = base_speed;
             TilesheetPool_Load(TILEPOOL_LEVEL3);
             game_map = STAGE3_OVERHEAD;
             stage_music = MUSIC_ONROAD;
@@ -347,7 +347,7 @@ void Game_StartNextOverhead(void)
             road_tile_plain = 1;
             break;
         case STAGE_CHICAGO:
-            max_stage_speed = 185;
+            max_stage_speed =  (base_speed * 4) / 5;
             TilesheetPool_Load(TILEPOOL_LEVEL4);
             game_map = STAGE4_OVERHEAD;
             stage_music = MUSIC_OFFROAD;
@@ -355,7 +355,7 @@ void Game_StartNextOverhead(void)
             road_tile_plain = 0;
             break;
         case STAGE_NEWYORK:
-            max_stage_speed = 210;
+            max_stage_speed = base_speed;
             TilesheetPool_Load(TILEPOOL_LEVEL5);
             game_map = STAGE5_OVERHEAD;
             stage_music = MUSIC_ONROAD;
@@ -363,7 +363,7 @@ void Game_StartNextOverhead(void)
             road_tile_plain = 1; 
             break;
         default:
-            max_stage_speed = 210;
+            max_stage_speed = base_speed;
             TilesheetPool_Load(TILEPOOL_LEVEL1);
             game_map = STAGE1_OVERHEAD;
             stage_music = MUSIC_START;
@@ -1834,6 +1834,9 @@ void Stage_Update()
         if (!Timer_IsActive(&gameover_timer))
         {
            
+             /* Record best rank at moment of game over */
+            Game_RecordBestRank();
+            
             Timer_Start(&gameover_timer, 6);
             Timer_StartMs(&gameover_flash_timer, 300);
             gameover_text_visible = TRUE;
@@ -2183,4 +2186,15 @@ void Stage_RedrawTunnelTiles(void)
         col_row += col_map_width;
         row_y += 16;
     }
+}
+
+void Game_RecordBestRank(void)
+{
+    if (game_rank < todays_best_rank)
+        todays_best_rank = game_rank;
+}
+
+UBYTE Game_GetTodaysBestRank(void)
+{
+    return todays_best_rank;
 }

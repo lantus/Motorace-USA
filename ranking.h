@@ -43,6 +43,8 @@ typedef struct {
     RankingState rankingstate;   
 } RankingData;
 
+extern UBYTE todays_best_rank;
+
 // Initialize ranking system
 void Ranking_Initialize(void);
 

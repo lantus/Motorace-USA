@@ -224,6 +224,9 @@ void GameReady_Initialize(void);
 void GameReady_Draw(void);
 void GameReady_Update(void);
 
+void Game_RecordBestRank(void);
+UBYTE Game_GetTodaysBestRank(void);
+
 void Stage_Initialize(void);
 void Stage_Draw(void);
 void Stage_Update(void);

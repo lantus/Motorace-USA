@@ -18,6 +18,8 @@ static GameTimer scroll_timer;
 static GameTimer horizon_timer;
 static GameTimer horizon_anim_timer;
 static GameTimer display_timer;
+ 
+UBYTE todays_best_rank = 99;
 
 #define TOTAL_RANKING_TIERS 18
 #define VISIBLE_RANKINGS 7
@@ -80,13 +82,14 @@ void Ranking_Initialize(void)
         avg_speed = (UWORD)(speed_accumulator / speed_sample_count);
     
     // === Check for new record ===
-    static UBYTE todays_best_rank = 99;
-    BOOL new_record = FALSE;
+     BOOL new_record = FALSE;
     if (game_rank < todays_best_rank)
     {
         todays_best_rank = game_rank;
         new_record = TRUE;
     }
+    
+    current_ranking.todays_best_rank = todays_best_rank;
     
     // === City name = destination (where you're arriving) ===
     const char *city;
@@ -258,7 +261,7 @@ void Ranking_Update(void)
                 Timer_Stop(&flash_timer);
                 current_ranking.flash_state = TRUE;  // Keep it red
                 current_ranking.rankingstate = RANKING_STATE_SOLID_RED;
-                Timer_Start(&bonus_timer, 0);  // Start bonus depletion immediately
+                Timer_StartMs(&bonus_timer, 125);  // Start bonus depletion 
               
             }
             break;
@@ -276,26 +279,30 @@ void Ranking_Update(void)
         
         case RANKING_STATE_BONUS_DEPLETING:
         {
-            static UWORD bonus_counter = 0;
-            bonus_counter++;
-            
-            //  Deplete 100 points every 2 frames (30 times per second)
-            if (bonus_counter >= 8 && current_ranking.bonus_remaining > 0)
+            if (Timer_HasElapsed(&bonus_timer))
             {
-                bonus_counter = 0;
-                UWORD amount = (current_ranking.bonus_remaining >= 100) ? 100 : current_ranking.bonus_remaining;
-                current_ranking.bonus_remaining -= amount;
-                game_score += amount;
-            }
-            
-            // When bonus depleted, show final stats
-            if (current_ranking.bonus_remaining == 0)
-            {
-                BlitClearArea(screen.bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
-                BlitClearArea(screen.offscreen_bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
-
-                current_ranking.rankingstate = RANKING_STATE_SHOW_SPEED;
-                Timer_Start(&display_timer, 1);  // Show for 1 second
+                if (current_ranking.bonus_remaining > 0)
+                {
+                    UWORD amount = (current_ranking.bonus_remaining >= 100) ? 100 : current_ranking.bonus_remaining;
+                    current_ranking.bonus_remaining -= amount;
+                    game_score += amount;
+                    
+                    if (!Fuel_IsFull())
+                        Fuel_AddPoints(amount<<2);
+                    
+                    SFX_Play(SFX_OVERHEADOVERTAKE);
+                    Timer_StartMs(&bonus_timer, 125);
+                }
+                
+                if (current_ranking.bonus_remaining == 0)
+                {
+                    BlitClearArea(screen.bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
+                    BlitClearArea(screen.offscreen_bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
+                    
+                    current_ranking.rankingstate = RANKING_STATE_SHOW_SPEED;
+                    Timer_Stop(&bonus_timer);
+                    Timer_Start(&display_timer, 1);
+                }
             }
             break;
         }
@@ -471,26 +478,8 @@ void Ranking_Draw(UBYTE *buffer)
     }
     else if (current_ranking.rankingstate == RANKING_STATE_BONUS_DEPLETING)
     {
-        if (current_ranking.bonus_remaining  > 0)
-        {
-            UWORD amount = (current_ranking.bonus_remaining >= 100) ? 100 : current_ranking.bonus_remaining;
-            current_ranking.bonus_remaining -= amount;
-
-            if (!Fuel_IsFull())
-            {
-                Fuel_AddPoints(amount);   
-                Fuel_DrawAll();
-
-                if ((game_frame_count % 4) == 0 )
-                {
-                    SFX_Play(SFX_OVERHEADOVERTAKE);
-                }
-            }
-            else
-            {
-                HUD_UpdateScore(game_score); 
-            }
-        }
+        HUD_UpdateScore(game_score);
+        Fuel_DrawAll();
 
     }
     else if (current_ranking.rankingstate >= RANKING_STATE_SHOW_SPEED && 
