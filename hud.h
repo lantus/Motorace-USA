@@ -65,8 +65,8 @@ void HUD_DrawAll();
 void HUD_DrawText(char *text, int sprite_col, int y_offset);
 void HUD_DrawString(char *text, int start_sprite, int y_offset);
  
-void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset);
-void HUD_UpdateBikeSpeed(ULONG bike_speed);
+void HUD_DrawBikeSpeed(UWORD speed, int start_sprite, int y_offset);
+void HUD_UpdateBikeSpeed(UWORD bike_speed);
 void HUD_SetSpritePositions(void);
 void HUD_UpdateScore(ULONG score);
 void HUD_UpdateSpeed();

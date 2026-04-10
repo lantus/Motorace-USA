@@ -15,7 +15,7 @@
 
 HUDSprites hud_sprites;
 
-static UBYTE last_speed;
+static UWORD last_speed;
 
 static GameTimer oneup_flash_timer;
 static BOOL oneup_visible = TRUE;
@@ -311,7 +311,7 @@ void HUD_DrawRank(UBYTE rank, int start_sprite, int y_offset)
     HUD_DrawString(rank_string, start_sprite, y_offset);
 }
 
-void HUD_DrawBikeSpeed(UBYTE speed, int start_sprite, int y_offset)
+void HUD_DrawBikeSpeed(UWORD speed, int start_sprite, int y_offset)
 {
     char speed_string[4];  
  
@@ -335,7 +335,7 @@ void HUD_UpdateScore(ULONG score)
     }
 }
 
-void HUD_UpdateBikeSpeed(ULONG bike_speed)
+void HUD_UpdateBikeSpeed(UWORD bike_speed)
 {
     last_speed = bike_speed;
     HUD_DrawBikeSpeed(last_speed, 1, 192); 

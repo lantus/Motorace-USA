@@ -22,14 +22,7 @@ static const char* fuel_pieces[FUEL_STATES] = {
 
 void Fuel_Initialize(void)
 {
-    fuel_gauge.current_block = 0;
-    fuel_gauge.current_state = 0;
-    fuel_gauge.fuel_empty = FALSE;
-    fuel_gauge.needs_redraw = TRUE;   
-    
-    Timer_Start(&fuel_timer, 3);
-    
-   // KPrintF("Fuel system initialized\n");
+   Fuel_Reset();
 }
 
 void Fuel_Update(void)
@@ -139,9 +132,18 @@ void Fuel_Reset(void)
     fuel_gauge.fuel_empty = FALSE;
     fuel_gauge.needs_redraw = TRUE;
     
-    Timer_Start(&fuel_timer, 4);
+    UBYTE drain_interval;
+    switch (game_difficulty)
+    {
+        case FIVEHUNDREDCC:    drain_interval = 3; break;
+        case SEVENFIFTYCC:     drain_interval = 2; break;
+        case TWELVEHUNDREDCC:  drain_interval = 2; break;
+        default:               drain_interval = 3; break;
+    }
     
-   // KPrintF("Fuel reset to full\n");
+    Timer_Start(&fuel_timer, drain_interval);
+    
+    KPrintF("Fuel reset to full with drain_interval %ld  seconds\n",drain_interval );
 }
 
 void Fuel_Add(UBYTE blocks)
