@@ -256,7 +256,8 @@ void Game_AdvanceStage(void)
     {
        /* Completed all 5 stages — loop with higher difficulty */
         game_stage = STAGE_LASVEGAS;
-        
+        game_rank = 99;  /* Reset rank for new loop */
+
         switch (game_difficulty)
         {
             case FIVEHUNDREDCC:
