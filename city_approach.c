@@ -801,9 +801,11 @@ void City_CopyPristineBackground(BlitterObject *car)
  
 void City_ShowCityName(const char *city_name)
 {
+    WORD name_y = g_is_pal ? 220 : 204;
+
     // Draw city name on all buffers
-    Font_DrawStringCentered(screen.bitplanes, (char*)city_name, 220, 7);  
-    Font_DrawStringCentered(screen.offscreen_bitplanes, (char*)city_name, 220, 7);
+    Font_DrawStringCentered(screen.bitplanes, (char*)city_name, name_y, 7);  
+    Font_DrawStringCentered(screen.offscreen_bitplanes, (char*)city_name, name_y, 7);
     
     // Start 3-second timer
     Timer_Start(&city_name_timer,3);
