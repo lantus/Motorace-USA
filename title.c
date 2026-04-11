@@ -476,7 +476,7 @@ void Title_Reset()
     title_frames = 0;
 
     bike_position_x = 80;
-    bike_position_y = 200;
+    bike_position_y = g_is_pal ? 200 : 184;
 
     bike_anim_frame = 0;
 

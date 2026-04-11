@@ -449,7 +449,7 @@ void Game_StartNextOverhead(void)
     Game_SetMap(game_map);
  
     bike_position_x = 96;
-    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 48);
+    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 56);
     bike_state = BIKE_STATE_STOPPED;
     bike_invulnerable = FALSE;
     
@@ -554,7 +554,7 @@ void Game_NewGame(UBYTE difficulty)
 
     // Position bike near bottom of screen
     bike_position_x = 96;
-    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 48);  // Near bottom
+    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 56);  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
     bike_invulnerable = FALSE;
 
