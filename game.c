@@ -449,7 +449,7 @@ void Game_StartNextOverhead(void)
     Game_SetMap(game_map);
  
     bike_position_x = 96;
-    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 32);
+    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 48);
     bike_state = BIKE_STATE_STOPPED;
     bike_invulnerable = FALSE;
     
@@ -554,7 +554,7 @@ void Game_NewGame(UBYTE difficulty)
 
     // Position bike near bottom of screen
     bike_position_x = 96;
-    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 32);  // Near bottom
+    bike_position_y = SCREENHEIGHT - (g_is_pal ? 24 : 48);  // Near bottom
     bike_state = BIKE_STATE_STOPPED; 
     bike_invulnerable = FALSE;
 
@@ -2170,7 +2170,7 @@ void Stage_InitializeFrontView(void)
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
  
     bike_position_x = 80;
-    bike_position_y = 200;
+    bike_position_y = g_is_pal ? 200 : 184;
  
     /* Swap to city attract tiles for front view */
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);

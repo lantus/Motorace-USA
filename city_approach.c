@@ -801,7 +801,7 @@ void City_CopyPristineBackground(BlitterObject *car)
  
 void City_ShowCityName(const char *city_name)
 {
-    WORD name_y = g_is_pal ? 220 : 204;
+    WORD name_y = g_is_pal ? 220 : 200;
 
     // Draw city name on all buffers
     Font_DrawStringCentered(screen.bitplanes, (char*)city_name, name_y, 7);  
@@ -826,9 +826,11 @@ BOOL City_IsCityNameComplete(void)
         UWORD text_width = Font_MeasureText("LAS VEGAS");
         UWORD x = (VIEWPORT_WIDTH - text_width) >> 1;
         x &= 0xFFF8;
+
+        WORD name_y = g_is_pal ? 220 : 200;
         
-        Font_RestoreFromPristine(screen.bitplanes, x, 220, text_width, CHAR_HEIGHT);
-        Font_RestoreFromPristine(screen.offscreen_bitplanes, x, 220, text_width, CHAR_HEIGHT);
+        Font_RestoreFromPristine(screen.bitplanes, x, name_y, text_width, CHAR_HEIGHT);
+        Font_RestoreFromPristine(screen.offscreen_bitplanes, x, name_y, text_width, CHAR_HEIGHT);
         
         city_state = CITY_STATE_ACTIVE;   
         
