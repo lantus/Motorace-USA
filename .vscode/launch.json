@@ -26,6 +26,8 @@
             "preLaunchTask": "compile",
             "name": "Amiga 1200",
             "config": "A1200",
+            "chipmem": "2m",
+            "fastmem": "8M",
             "program": "${workspaceFolder}/${config:amiga.program}",
             "kickstart": "${config:amiga.rom-paths.A1200}",
             "internalConsoleOptions": "openOnSessionStart"
@@ -36,6 +38,8 @@
             "preLaunchTask": "compile",
             "name": "Amiga 4000",
             "config": "A4000",
+            "chipmem" :"2m",
+            "fastmem": "8M",
             "program": "${workspaceFolder}/${config:amiga.program}",
             "kickstart": "${config:amiga.rom-paths.A4000}",
             "internalConsoleOptions": "openOnSessionStart"

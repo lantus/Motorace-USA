@@ -52,7 +52,7 @@ void Timer_Init(void)
     
     Write(Output(), (APTR)"Loading Zippy Race\n", 20);
     Write(Output(), (APTR)" \n", 3);
-    Write(Output(), (APTR)"Alpha Release\n", 15);
+    Write(Output(), (APTR)"Alpha Release 2\n", 17);
 
     g_is_pal = timer_refresh_rate == 60 ? FALSE : TRUE;     
     

@@ -323,7 +323,7 @@ void HUD_DrawBikeSpeed(UWORD speed, int start_sprite, int y_offset)
 
 void HUD_UpdateScore(ULONG score)
 {
-    char score_buffer[6];
+    char score_buffer[7];
     ULongToString(score, score_buffer, 6, ' ');
     HUD_DrawString(score_buffer, 1, 24);
 
@@ -392,7 +392,7 @@ void HUD_DrawAll()
     const UBYTE status_y = 40;
 
     ULONG top_score = HiScore_GetTopScore();
-    char score_buffer[6];
+    char score_buffer[7];
     
     // Format the high score (6 digits with leading zeros or spaces)
     ULongToString(top_score, score_buffer, 6, ' ');

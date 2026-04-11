@@ -222,7 +222,7 @@ void AttractMode_DrawText(void)
 
     Font_DrawStringCentered(draw_buffer, COPYRIGHT "1983 IREM CORP", 148, 5);
 
-    Font_DrawStringCentered(draw_buffer,  "ALPHA RELEASE", 86, 6);
+    Font_DrawStringCentered(draw_buffer,  "ALPHA RELEASE 2", 86, 6);
 
 
 }
