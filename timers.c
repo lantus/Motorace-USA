@@ -50,7 +50,9 @@ void Timer_Init(void)
 
     
     
-    Write(Output(), (APTR)"Loading Zippy Race...\n", 23);
+    Write(Output(), (APTR)"Loading Zippy Race\n", 20);
+    Write(Output(), (APTR)" \n", 3);
+    Write(Output(), (APTR)"Alpha Release\n", 15);
 
     g_is_pal = timer_refresh_rate == 60 ? FALSE : TRUE;     
     
@@ -62,6 +64,8 @@ void Timer_Init(void)
     {
         Write(Output(), (APTR)"60hz NTSC Detected\n", 20);
     }
+    Write(Output(), (APTR)" \n", 3);
+    Write(Output(), (APTR)"Yes I need to optimize files. Please Be Patient...\n", 52);
 }
 
 // Call this in your VBlank interrupt handler

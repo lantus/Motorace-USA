@@ -1882,6 +1882,12 @@ void Stage_Update()
                 bike_position_x += 2;
                 bike_state = BIKE_STATE_FRONTVIEW_RIGHT;
             }
+
+            /* Clamp bike to road viewport */
+            if (bike_position_x < 8)
+                bike_position_x = 8;
+            if (bike_position_x > SCREENWIDTH - 40)
+                bike_position_x = SCREENWIDTH - 40;
             
         }
 
