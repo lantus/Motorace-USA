@@ -15,6 +15,7 @@
 #include "bitmap.h"
 #include "copper.h"
 #include "pixel.h"
+#include "fuel.h"
 #include "sprites.h"
 #include "memory.h"
 #include "blitter.h"
@@ -622,7 +623,11 @@ void Cars_CheckAllCollisions(void)
             {
                 car[i].honking = TRUE;
                 car[i].honk_timer = 0;
-                SFX_Play(SFX_HORN);
+
+                if (fuel_alarm_active == FALSE)
+                {
+                    SFX_Play(SFX_HORN);
+                }
             }
             car[i].honk_timer++;
             if (car[i].honk_timer > 360)
@@ -1257,7 +1262,10 @@ void Cars_CheckPassing(BlitterObject *c)
     if (car_was_ahead[c->id] && car_is_behind)
     {
         // Car was ahead, now clearly behind — bike passed it
-        SFX_Play(SFX_OVERHEADOVERTAKE);
+        if (fuel_alarm_active == FALSE)
+        {
+            SFX_Play(SFX_OVERHEADOVERTAKE);
+        }
         game_score += 500;
         cars_passed++;
         

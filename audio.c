@@ -150,11 +150,12 @@ static void SFX_Load8SVX(const char *filename, UBYTE sfx_id, UWORD sample_rate, 
 
 void SFX_LoadAll(void)
 {
-    SFX_Load8SVX("sfx/crashskid.8svx", SFX_CRASHSKID, 22050, 1);
-    SFX_Load8SVX("sfx/horn.8svx", SFX_HORN, 22050, 1);
-    SFX_Load8SVX("sfx/skid.8svx", SFX_SKID, 22050, 1);
-    SFX_Load8SVX("sfx/overtake.8svx", SFX_OVERHEADOVERTAKE, 22050, 1);
-    SFX_Load8SVX("sfx/fvovertake.8svx", SFX_FRONTVIEWOVERTAKE, 22050, 1);
+    SFX_Load8SVX("sfx/crashskid.8svx", SFX_CRASHSKID, 22050, 2);
+    SFX_Load8SVX("sfx/horn.8svx", SFX_HORN, 22050, 3);
+    SFX_Load8SVX("sfx/skid.8svx", SFX_SKID, 22050, 3);
+    SFX_Load8SVX("sfx/overtake.8svx", SFX_OVERHEADOVERTAKE, 22050, 2);
+    SFX_Load8SVX("sfx/fvovertake.8svx", SFX_FRONTVIEWOVERTAKE, 22050, 2);
+    SFX_Load8SVX("sfx/empty.8svx", SFX_EMPTY, 22050, 1);
 
     sfx_table[SFX_BRAKE] = sfx_table[SFX_SKID];
     sfx_table[SFX_BRAKE].sfx_per = 250;

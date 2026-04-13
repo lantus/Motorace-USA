@@ -134,7 +134,8 @@ enum StageState
     STAGE_COMPLETE = 4,
     STAGE_RANKING = 5,   
     STAGE_GAMEOVER = 6,
-    STAGE_GAMEOVER_ENTRY = 7
+    STAGE_GAMEOVER_ENTRY = 7,
+    STAGE_FUEL_EMPTY = 8
 };
 
 typedef enum {

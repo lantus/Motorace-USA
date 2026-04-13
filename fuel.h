@@ -6,6 +6,8 @@
 #define FUEL_BLOCKS 13
 #define FUEL_STATES 9  // 0-8 (0=full, 8=empty)
 
+extern BOOL fuel_alarm_active;
+
 // Fuel gauge state
 typedef struct {
     UBYTE current_block;     // 0-12 (which block is currently depleting)

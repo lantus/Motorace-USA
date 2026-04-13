@@ -290,7 +290,9 @@ void Ranking_Update(void)
                 
                 if (current_ranking.bonus_remaining == 0)
                 {
-                      
+                    BlitClearArea(screen.bitplanes, 0, 154, VIEWPORT_WIDTH, 160);
+                    BlitClearArea(screen.offscreen_bitplanes, 0, 154, VIEWPORT_WIDTH, 160);
+
                     current_ranking.rankingstate = RANKING_STATE_SHOW_SPEED;
                     Timer_Stop(&bonus_timer);
                     Timer_Start(&display_timer, 1);
@@ -362,6 +364,8 @@ void Ranking_Update(void)
                 current_ranking.rankingstate = RANKING_STATE_DRAWHORIZON;
 
                 Game_AdvanceStage();
+
+                fuel_alarm_active = FALSE;
           
             }
             break;

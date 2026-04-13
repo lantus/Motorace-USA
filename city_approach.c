@@ -622,7 +622,10 @@ void City_DrawOncomingCars(void)
                 {
                     if (frontview_bike_crashed == FALSE)
                     {
-                        SFX_Play(SFX_FRONTVIEWOVERTAKE);
+                        if (fuel_alarm_active == FALSE)
+                        {
+                            SFX_Play(SFX_FRONTVIEWOVERTAKE);
+                        }
                         Timer_Start(&spawn_timer, CAR_SPAWN_TIMER);
                     }
                 }

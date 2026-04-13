@@ -23,6 +23,7 @@
 #include "hud.h"
 #include "font.h"
 #include "title.h"
+#include "fuel.h"
 #include "hiscore.h"
 #include "hiscore_entry.h"
 #include "blitter.h"
@@ -224,6 +225,9 @@ static UBYTE gameover_hiscore_pos = 0;  /* 0 = doesn't qualify */
 
 // puddle timer
 static UBYTE puddle_timer = 0;
+
+// "Empty" text 
+static WORD fuel_empty_y = 0;
 
 // Bike repositioning stuff
 BOOL bike_invulnerable = FALSE;
@@ -1231,6 +1235,20 @@ void Stage_Draw()
         StageProgress_DrawFrontview();
       
     }
+    else if (stage_state == STAGE_FUEL_EMPTY)
+    {
+        if (gameover_text_visible)
+        {
+            Font_DrawStringCentered(draw_buffer, "EMPTY", fuel_empty_y, 9);
+        }
+        else
+        {
+            /* Restore background instead of clearing to black */
+            Font_RestoreFromPristine(draw_buffer, 0, fuel_empty_y, SCREENWIDTH, 8);
+        }
+        
+        Game_SwapBuffers();
+    }
     else if (stage_state == STAGE_COMPLETE)
     {
         City_DrawRoad();
@@ -1457,25 +1475,16 @@ void Stage_Update()
         // Check if fuel is empty
         if (Fuel_IsEmpty())
         {
-            // Slow bike to a stop
+            
             bike_speed = 0;
+            stage_state = STAGE_FUEL_EMPTY;
             
-            // Transition to game over
-            stage_state = STAGE_GAMEOVER;
- 
-            // Turn off Bike
-            Sprites_ClearLower();
-            Sprites_ClearHigher();
-            
-            Game_ApplyPalette((UWORD *)black_palette, BLOCKSCOLORS);
-            WaitVBL();
-
-            BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
-            BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
-            BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
-
-            Music_LoadModule(MUSIC_GAMEOVER); 
-
+            fuel_empty_y = videoposy + BLOCKHEIGHT + 128;
+           
+            Timer_Start(&gameover_timer, 4);
+            Timer_StartMs(&gameover_flash_timer, 200);
+            gameover_text_visible = TRUE;
+            Music_Stop();
             return;
         }
         
@@ -1494,8 +1503,11 @@ void Stage_Update()
             // No skid if offroad over jump
             if (bike_state == BIKE_STATE_WHEELIE )
             {
-                if ((game_frame_count & 7) == 0)
-                    SFX_Play(SFX_SKID);
+                if (fuel_alarm_active == FALSE)
+                {
+                    if ((game_frame_count & 7) == 0)
+                        SFX_Play(SFX_SKID);
+                }
             }
             
             // Clear the landing path — push cars out of the way
@@ -1682,8 +1694,11 @@ void Stage_Update()
         {
             if (puddle_timer == 0)
             {
-                puddle_timer = 18;
-                SFX_Play(SFX_SKID);
+                if (fuel_alarm_active == FALSE)
+                {
+                    puddle_timer = 18;
+                    SFX_Play(SFX_SKID);
+                }
             }
         }
 
@@ -1693,8 +1708,11 @@ void Stage_Update()
             puddle_timer--;
             bike_state = BIKE_STATE_MOVING;  /* No steering animation */
             
-            if ((puddle_timer & 3) == 0)
-                SFX_Play(SFX_SKID);
+            if (fuel_alarm_active == FALSE)
+            {
+                if ((puddle_timer & 3) == 0)
+                    SFX_Play(SFX_SKID);
+            }
             
             /* Skip all input — bike just cruises forward */
             StageProgress_UpdateOverhead(mapposy);
@@ -1713,7 +1731,10 @@ void Stage_Update()
 
             if ((game_frame_count & 7) == 0)
             {
-                SFX_Play(SFX_BRAKE);
+                if (fuel_alarm_active == FALSE)
+                {
+                    SFX_Play(SFX_BRAKE);
+                }
             }
         }
 
@@ -1789,6 +1810,36 @@ void Stage_Update()
         StageProgress_UpdateOverhead(mapposy);
 
         Stage_CheckCompletion();
+    }
+    else if (stage_state == STAGE_FUEL_EMPTY)
+    {
+        /* Flash "EMPTY" */
+        if (Timer_HasElapsed(&gameover_flash_timer))
+        {
+            gameover_text_visible = !gameover_text_visible;
+            Timer_Reset(&gameover_flash_timer);
+        }
+        
+        /* After 2 seconds, proceed to game over */
+        if (Timer_HasElapsed(&gameover_timer))
+        {
+            Timer_Stop(&gameover_timer);
+            Timer_Stop(&gameover_flash_timer);
+            
+            stage_state = STAGE_GAMEOVER;
+            
+            Sprites_ClearLower();
+            Sprites_ClearHigher();
+            
+            Game_ApplyPalette((UWORD *)black_palette, BLOCKSCOLORS);
+            WaitVBL();
+            
+            BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
+            BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
+            BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
+            
+            Music_LoadModule(MUSIC_GAMEOVER);
+        }
     }
     else if (stage_state == STAGE_FRONTVIEW)
     {

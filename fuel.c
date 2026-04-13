@@ -2,11 +2,15 @@
 #include <exec/types.h>
 #include "fuel.h"
 #include "timers.h"
+#include "audio.h"
 #include "hud.h"
 #include "game.h"
 
 static FuelGauge fuel_gauge;
 static GameTimer fuel_timer;
+
+static GameTimer fuel_alarm_timer;
+BOOL fuel_alarm_active = FALSE;
 
 static const char* fuel_pieces[FUEL_STATES] = {
     "\x20\x2b",  // EMPTY0 - Full
@@ -40,20 +44,34 @@ void Fuel_Update(void)
             fuel_gauge.current_state = 0;
             fuel_gauge.current_block++;
             
-           // KPrintF("Fuel block %ld depleted\n", fuel_gauge.current_block - 1);
-            
             if (fuel_gauge.current_block >= FUEL_BLOCKS)
             {
                 fuel_gauge.fuel_empty = TRUE;
                 fuel_gauge.current_block = FUEL_BLOCKS - 1;
                 fuel_gauge.current_state = FUEL_STATES - 1;
-                
-                KPrintF("=== FUEL EMPTY - GAME OVER ===\n");
+                fuel_alarm_active = FALSE;
+                return;
             }
         }
         
-    
+        /* Start alarm on last block */
+        if (fuel_gauge.current_block >= FUEL_BLOCKS - 1 && !fuel_alarm_active)
+        {
+            fuel_alarm_active = TRUE;
+            Timer_StartMs(&fuel_alarm_timer, 600);
+        } 
+        
         fuel_gauge.needs_redraw = TRUE;
+    }
+    
+    /* Rapid beeping while on last block */
+    if (fuel_alarm_active)
+    {
+        if (Timer_HasElapsed(&fuel_alarm_timer))
+        {
+            SFX_Play(SFX_EMPTY);
+            Timer_Reset(&fuel_alarm_timer);
+        }
     }
 }
 
@@ -127,6 +145,8 @@ void Fuel_DrawAll(void)
 
 void Fuel_Reset(void)
 {
+    fuel_alarm_active = FALSE;
+
     fuel_gauge.current_block = 0;
     fuel_gauge.current_state = 0;
     fuel_gauge.fuel_empty = FALSE;
@@ -156,6 +176,9 @@ void Fuel_Add(UBYTE blocks)
     {
         fuel_gauge.current_block = 0;
     }
+
+     if (fuel_gauge.current_block < FUEL_BLOCKS - 1)
+        fuel_alarm_active = FALSE;
     
     fuel_gauge.current_state = 0;
     fuel_gauge.fuel_empty = FALSE;

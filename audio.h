@@ -31,7 +31,8 @@ typedef struct __attribute__((packed)) {
 #define SFX_SKID              4
 #define SFX_CRASHSKID         5
 #define SFX_BRAKE             6
-#define SFX_MAX               7
+#define SFX_EMPTY             7
+#define SFX_MAX               8
 
 
 /* music */
