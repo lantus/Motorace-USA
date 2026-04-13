@@ -323,7 +323,7 @@ Cop1UP_C31:
 
 
 CopSCORE_BROWN:
-	dc.w	$4109,$FFFE		; WAIT line 65  
+	dc.w	$4009,$FFFE		; WAIT line 64  
 	dc.w	$1B2,$0d96		; COLOR25 = brown
 	dc.w	$1B4,$0d96		; COLOR26 = brown
 	dc.w	$1B6,$0d96		; COLOR27 = brown
