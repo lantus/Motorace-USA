@@ -149,11 +149,24 @@ void Title_Draw()
  
     if (title_state == TITLE_ATTRACT_LOGO_DROP)
     { 
+         /* Only wait if beam is still in the logo area */
+        WORD logo_bottom = zippy_logo.y + ZIPPY_LOGO_HEIGHT + 44;
+        if (logo_bottom < 44) logo_bottom = 44;
+        if (logo_bottom > 260) logo_bottom = 260;
+        
+        ULONG vpos = *(volatile ULONG*)0xDFF004;
+        WORD beam_y = (vpos >> 8) & 511;
+        
+        if (beam_y < logo_bottom)
+        {
+            WaitVBeam(logo_bottom);
+        }
+
         // Blit Logo
         Title_RestoreLogo();
         Title_SaveBackground();
         Title_BlitLogo();
- 
+
         if (Timer_HasElapsed(&logo_flash_timer) == FALSE)
         {
             if (title_flash_counter % 4 == 0) 
@@ -529,7 +542,7 @@ void Title_SaveBackground()
 
     APTR background = zippy_logo.background;
  
-    UWORD source_mod = (SCREENWIDTH / 8) - (6 * 2);  
+    UWORD source_mod = (SCREENWIDTH >> 3) - (12);  
     UWORD dest_mod = 0;  // Tight-packed
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
@@ -538,7 +551,7 @@ void Title_SaveBackground()
     UBYTE *source = draw_buffer;
     UBYTE *dest = background;
     
-    BlitBobSimpleSave(SCREENWIDTH/2, x, y, admod, bltsize, source, dest);
+    BlitBobSimpleSave(SCREENWIDTH>>1, x, y, admod, bltsize, source, dest);
 }
 
 void Title_RestoreLogo()
@@ -549,7 +562,7 @@ void Title_RestoreLogo()
     APTR background = zippy_logo.background;
  
     UWORD source_mod = 0;   
-    UWORD dest_mod = (SCREENWIDTH / 8) - (6 * 2); 
+    UWORD dest_mod = (SCREENWIDTH >> 3) - (12); 
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
     
     UWORD bltsize = ((ZIPPY_LOGO_HEIGHT << 2) << 6) | 6;  // 192 lines, 6 words
@@ -557,7 +570,7 @@ void Title_RestoreLogo()
     UBYTE *source = background;
     UBYTE *dest = draw_buffer;
     
-    BlitBobSimple(SCREENWIDTH/2, old_x, old_y, admod, bltsize, source, dest);
+    BlitBobSimple(SCREENWIDTH>>1, old_x, old_y, admod, bltsize, source, dest);
     
     zippy_logo.old_x = zippy_logo.x;
     zippy_logo.old_y = zippy_logo.y;

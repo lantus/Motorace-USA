@@ -22,6 +22,7 @@
 #include "hud.h"
 #include "cars.h"
 #include "hardware.h"
+#include "title.h"
 #include "timers.h"
 #include "audio.h"
 
@@ -400,7 +401,8 @@ int main(void)
 		if (stage_state == STAGE_PLAYING || 
 			stage_state == STAGE_FRONTVIEW ||
 			stage_state == STAGE_COUNTDOWN ||
-			stage_state == STAGE_RANKING)
+			stage_state == STAGE_RANKING ||
+		 	title_state == TITLE_ATTRACT_LOGO_DROP)
 		{
 			current_buffer = 1 - current_buffer;
 		}
