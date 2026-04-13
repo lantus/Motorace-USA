@@ -384,9 +384,17 @@ void Ranking_Draw(UBYTE *buffer)
     if (current_ranking.rankingstate < RANKING_STATE_BONUS_DEPLETING)
     {
         y = 8;
-        Font_DrawStringCentered(buffer, "CHECKPOINT #", y, 13);
-        ULongToString(current_ranking.checkpoint_number, line_buffer, 2, ' ');
-        Font_DrawString(buffer, line_buffer, 136, y, 13);
+
+        if (game_stage == STAGE_NEWYORK)
+        {
+            Font_DrawStringCentered(buffer, "CONGRATULATION", y, 13);
+        }
+        else
+        {
+            Font_DrawStringCentered(buffer, "CHECKPOINT # ", y, 13);
+            ULongToString(current_ranking.checkpoint_number, line_buffer, 2, ' ');
+            Font_DrawString(buffer, line_buffer, 136, y, 13);
+        }
 
         y = 16;
         Font_DrawStringCentered(buffer, current_ranking.city_name, y, 12);
@@ -486,14 +494,16 @@ void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer)
 {
     city_horizon->y = y_offset;
 
-    WORD x = city_horizon->x;
+    WORD x = city_horizon->x + 8;   /* Shift dest right 8px */
     WORD y = y_offset;
 
-    UWORD source_mod = 0; 
-    UWORD dest_mod = (SCREENWIDTH - CITYSKYLINE_WIDTH) / 8;
+    UWORD clipped_width = CITYSKYLINE_WIDTH - 16;  /* 8px off each side */
+    
+    UWORD source_mod = 2;   /* Skip 1 byte left + 1 byte right per line */
+    UWORD dest_mod = (SCREENWIDTH - clipped_width) >> 3;
     ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
  
-    UWORD bltsize = ((CITYSKYLINE_HEIGHT << 2) << 6) | CITYSKYLINE_WIDTH / 16;
+    UWORD bltsize = ((CITYSKYLINE_HEIGHT << 2) << 6) | (clipped_width >> 4);
     
     if (game_map == STAGE1_FRONTVIEW)
     {
@@ -505,17 +515,13 @@ void Ranking_DrawCityBackdrop(WORD y_offset,UBYTE *buffer)
     }   
 
     UBYTE *source;
-
     if (use_alt_frame == TRUE)
-    {
         source = (UBYTE*)&city_horizon->data_frame2[0];
-    }
     else
-    {
         source = (UBYTE*)&city_horizon->data[0];
-    }
- 
-    //   Only blit to the specified buffer (not all 3 buffers)
+    
+    source += 1;  /* Skip first 8 pixels (1 byte) */
+
     BlitBobSimple(SCREENWIDTH_WORDS, x, y, admod, bltsize, source, buffer);
 }
 
