@@ -397,7 +397,21 @@ void Ranking_Draw(UBYTE *buffer)
         }
 
         y = 16;
-        Font_DrawStringCentered(buffer, current_ranking.city_name, y, 12);
+        char city_buf[24];
+        city_buf[0] = 0x22;
+        city_buf[1] = ' ';
+        
+        int len = 0;
+        while (current_ranking.city_name[len] && len < 15) len++;
+        
+        for (int i = 0; i < len; i++)
+            city_buf[2 + i] = current_ranking.city_name[i];
+        
+        city_buf[2 + len] = ' ';
+        city_buf[3 + len] = 0x22;
+        city_buf[4 + len] = '\0';
+        
+        Font_DrawStringCentered(buffer, city_buf, y, 12);
 
         y = 96;
         Font_DrawString(buffer, "RANK", 10, y, 12);
