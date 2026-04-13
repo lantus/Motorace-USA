@@ -44,6 +44,10 @@ BOOL LMBDown(void);
 void Transition_ToBlack(void);
 void Transition_FromBlack(UWORD *palette, UBYTE num_colors);
 
+void Startup_SetProgramDir(void);
+void Startup_Cleanup(void);
+void Startup_Init(void);
+
 extern BOOL os_disabled;
 extern BOOL system_killed; 
 #endif

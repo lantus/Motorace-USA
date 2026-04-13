@@ -9,6 +9,9 @@
 #include <proto/exec.h>
 #include <proto/graphics.h>
 #include <proto/dos.h>
+#include <dos/dosextens.h>
+#include <workbench/startup.h>
+
 #include "game.h"
 #include "map.h"
 #include "roadsystem.h"
@@ -49,6 +52,11 @@ volatile APTR VBR = 0;
 APTR saved_vectors[7]; 
 static APTR SystemIrq;
 struct View *ActiView;
+
+static struct WBStartup *wb_msg = NULL;
+static BPTR progdir = 0;
+static BPTR prevdir = 0;
+static BOOL from_cli = FALSE;
  
 /* write definitions for dmaconw */
 #define DMAF_SETCLR  0x8000
@@ -106,9 +114,7 @@ static void InitCopperlist(void)
 {
 	WORD	*wp;
 	LONG l;
-
-	WaitVBL();
-
+ 
 	custom->dmacon = 0x7FFF;
  
 	// plane pointers
@@ -158,9 +164,10 @@ static void InitCopperlist(void)
 	Copper_SetBitplanePointer(BLOCKSDEPTH,planes , 0);
 
 	custom->intena = 0x7FFF;
- 	//custom->beamcon0 = 0;
+ 	
 	custom->dmacon = DMAF_SETCLR | DMAF_BLITTER | DMAF_COPPER | DMAF_RASTER | DMAF_MASTER | DMAF_SPRITE | DMAF_AUD0 | DMAF_AUD1 | DMAF_AUD2 | DMAF_AUD3;
 	custom->cop2lc = (ULONG)CopperList;	
+	custom->copjmp2 = 0;  /* Strobe copper to start */
  
 };
 
@@ -247,44 +254,7 @@ void WaitVbl()
         // Loop until bit 0 goes low
     }
 }
-
  
-void TakeSystem() 
-{
-	Forbid();
-	//Save current interrupts and DMA settings so we can restore them upon exit. 
-	SystemADKCON=custom->adkconr;
-	SystemInts=custom->intenar;
-	SystemDMA=custom->dmaconr;
-	ActiView=GfxBase->ActiView; //store current view
-
-	LoadView(0);
-	WaitTOF();
-	WaitTOF();
-
-	WaitVbl();
-	WaitVbl();
-
-	OwnBlitter();
-	WaitBlit();	
-	Disable();
-	
-	custom->intena=0x7fff;//disable all interrupts
-	custom->intreq=0x7fff;//Clear any interrupts that were pending
-	
-	custom->dmacon=0x7fff;//Clear all DMA channels
-
-	//set all colors black
-	for(int a=0;a<32;a++)
-		custom->color[a]=0;
-
-	WaitVbl();
-	WaitVbl();
-
-	VBR=GetVBR();
-	SystemIrq=GetInterruptHandler(); //store interrupt register
-}
-
 void FreeSystem()
 { 
 	WaitVbl();
@@ -310,6 +280,13 @@ void FreeSystem()
 	WaitBlit();	
 	DisownBlitter();
 	Enable();
+
+	/* Re-enable caches */
+    if (SysBase->AttnFlags & AFF_68020)
+    {
+        CacheControl(CACRF_EnableI | CACRF_EnableD, 
+                     CACRF_EnableI | CACRF_EnableD);
+    }
 
 	LoadView(ActiView);
 	WaitTOF();
@@ -339,6 +316,8 @@ int main(void)
     SysBase = *((struct ExecBase**)4UL);
 	custom = (struct Custom*)0xdff000;
  
+	Startup_Init();
+
 	// We will use the graphics library only to locate and restore the system copper list once we are through.
 
 	GfxBase = (struct GfxBase *)OpenLibrary((CONST_STRPTR)"graphics.library",0);
@@ -357,8 +336,13 @@ int main(void)
 	WaitVbl();
     Delay(10);
 
-	Write(Output(), (APTR)"\n", 2);
-	Write(Output(), (APTR)"Starting up...\n", 16);
+	Startup_SetProgramDir();
+
+    if (!wb_msg)
+    {
+        Write(Output(), (APTR)"\n", 2);
+        Write(Output(), (APTR)"Starting up...\n", 16);
+    }
 
 	/* Load ALL assets while OS is alive */
     Preloader_Init();
@@ -389,8 +373,8 @@ int main(void)
     {		 
 		WaitLine(0x13);
 
-		KeyRead();
-		//custom->color[0] = 0xF00;  // RED = game work done, waiting
+		//KeyRead();
+		//custom->color[0] = 0x0F0;  // G = game work done, waiting
 
 		Joy_ReadAll();
 
@@ -422,4 +406,57 @@ int main(void)
 	CloseLibrary((struct Library*)GfxBase);
 
     return 0;
+}
+
+void Startup_Init(void)
+{
+    struct Process *proc = (struct Process *)FindTask(NULL);
+    struct CommandLineInterface *cli = (struct CommandLineInterface *)(proc->pr_CLI * 4);
+
+    if (!cli)
+    {
+        /* Workbench launch */
+        WaitPort(&proc->pr_MsgPort);
+        wb_msg = (struct WBStartup *)GetMsg(&proc->pr_MsgPort);
+        progdir = wb_msg->sm_ArgList[0].wa_Lock;
+    }
+    else
+    {
+        from_cli = TRUE;
+    }
+}
+
+void Startup_SetProgramDir(void)
+{
+    if (from_cli)
+    {
+        struct Process *proc = (struct Process *)FindTask(NULL);
+        struct CommandLineInterface *cli = (struct CommandLineInterface *)(proc->pr_CLI * 4);
+
+        /* BCPL string: first byte = length */
+        unsigned char *p = (unsigned char *)(cli->cli_CommandName * 4);
+        char cmd[200];
+        memcpy(cmd, p + 1, p[0]);
+        cmd[p[0]] = 0;
+
+        BPTR prglock = Lock(cmd, SHARED_LOCK);
+        progdir = ParentDir(prglock);
+        UnLock(prglock);
+    }
+
+    prevdir = CurrentDir(progdir);
+}
+
+void Startup_Cleanup(void)
+{
+    CurrentDir(prevdir);
+
+    if (from_cli)
+        UnLock(progdir);
+
+    if (wb_msg)
+    {
+        Forbid();
+        ReplyMsg((struct Message *)wb_msg);
+    }
 }

@@ -44,6 +44,7 @@ static volatile ULONG *custom_vposr = (volatile ULONG *) 0xdff004;
 extern volatile APTR VBR;
 extern APTR saved_vectors[7];  /* 0x64, 0x68, 0x6C, 0x70, 0x74, 0x78, 0x7C */
 extern void interruptHandler(void);
+extern APTR GetVBR(void);
 
 BOOL os_disabled = FALSE;
 BOOL system_killed = FALSE; 
@@ -71,10 +72,19 @@ void KillSystem()
 
 	oldview = GfxBase->ActiView;
 	
+	Forbid();
 	LoadView(0);
 	WaitTOF();
 	WaitTOF();
+
+    VBR = GetVBR();
  
+	/* Disable CPU caches on 020+ */
+    if (SysBase->AttnFlags & AFF_68020)
+    {
+        CacheControl(0, CACRF_EnableI | CACRF_EnableD | CACRF_CopyBack);
+        CacheClearU();
+    }
 
 	// lock blitter
 
@@ -98,7 +108,6 @@ void KillSystem()
 
     system_killed = TRUE;
     os_disabled = TRUE;
-
 }
 
 void ActivateSystem(void)
@@ -142,6 +151,13 @@ void ActivateSystem(void)
 	if (inputreq) DeleteIORequest(inputreq);
 	if (inputmp) DeleteMsgPort(inputmp);
 
+	 /* Re-enable caches */
+    if (SysBase->AttnFlags & AFF_68020)
+    {
+        CacheControl(CACRF_EnableI | CACRF_EnableD, 
+                     CACRF_EnableI | CACRF_EnableD);
+    }
+	
 	// reset old view
 
 	LoadView(oldview);
