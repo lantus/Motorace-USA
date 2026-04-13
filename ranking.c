@@ -195,12 +195,7 @@ void Ranking_Update(void)
                 Timer_Reset(&horizon_timer);
                 if (current_ranking.backdrop_y < 30)
                 {
-                    // Draw backdrop to BOTH buffers
-                    if (!current_ranking.backdrop_drawn_both)
-                    {
-                        Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.bitplanes);
-                        Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.offscreen_bitplanes);
-                    }
+                     
                     
                     current_ranking.backdrop_y += 2;
                 }
@@ -208,8 +203,7 @@ void Ranking_Update(void)
                 {
                     current_ranking.backdrop_y = 30;
 
-                    Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.bitplanes);
-                    Ranking_DrawCityBackdrop(current_ranking.backdrop_y, screen.offscreen_bitplanes);
+                    
 
                     current_ranking.rankingstate = RANKING_STATE_SCROLLING;
                     current_ranking.backdrop_drawn_both = TRUE;
@@ -296,9 +290,7 @@ void Ranking_Update(void)
                 
                 if (current_ranking.bonus_remaining == 0)
                 {
-                    BlitClearArea(screen.bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
-                    BlitClearArea(screen.offscreen_bitplanes, 0, 155, VIEWPORT_WIDTH, 100);
-                    
+                      
                     current_ranking.rankingstate = RANKING_STATE_SHOW_SPEED;
                     Timer_Stop(&bonus_timer);
                     Timer_Start(&display_timer, 1);
@@ -383,87 +375,55 @@ void Ranking_Draw(UBYTE *buffer)
     char line_buffer[32];
     UWORD y;
 
-    if (current_ranking.rankingstate == RANKING_STATE_DRAWHORIZON && 
-        !current_ranking.backdrop_drawn_both)
-    {
-        Ranking_DrawCityBackdrop(current_ranking.backdrop_y, buffer);
+    /* Always draw backdrop at current position */
+    Ranking_DrawCityBackdrop(current_ranking.backdrop_y, buffer);
+    
+    if (current_ranking.rankingstate == RANKING_STATE_DRAWHORIZON)
         return;
-    }
 
     if (current_ranking.rankingstate < RANKING_STATE_BONUS_DEPLETING)
     {
-        // Draw checkpoint title
         y = 8;
         Font_DrawStringCentered(buffer, "CHECKPOINT #", y, 13);
-
         ULongToString(current_ranking.checkpoint_number, line_buffer, 2, ' ');
         Font_DrawString(buffer, line_buffer, 136, y, 13);
 
-        // Draw city name
         y = 16;
         Font_DrawStringCentered(buffer, current_ranking.city_name, y, 12);
 
-        // Draw headers
         y = 96;
         Font_DrawString(buffer, "RANK", 10, y, 12);
         Font_DrawString(buffer, "POINTS", 120, y, 12);
     
-        // Draw 7 visible ranking tiers
         y = 110;
         for (UBYTE i = 0; i < VISIBLE_RANKINGS; i++)
         {
             UBYTE tier_index = current_ranking.scroll_offset + i;
-            if (tier_index >= TOTAL_RANKING_TIERS + PADDING_TIERS) break;
+            if (tier_index >= TOTAL_RANKING_TIERS) break;
             
             const RankingTier *tier = &all_rankings[tier_index];
-            
-            if (tier_index >= TOTAL_RANKING_TIERS)
-            {
-                break;  // Hit padding, stop drawing
-            }
 
-            // Determine color - flash red if this is player's tier
-            UBYTE color = 13;  // White
+            UBYTE color = 13;
             if (tier_index == current_ranking.player_tier_index && current_ranking.flash_state)
-            {
-                color = 12;  // Red (flash)
-            }
+                color = 12;
             
-            char formatted_line[20];
-            UBYTE pos = 0;
-
-            // Build points string
             char points_str[10];
             ULongToString(tier->points, points_str, 5, ' ');
 
-            // Calculate dash count
             UBYTE rank_len = strlen(tier->rank_text);
             UBYTE points_len = strlen(points_str);
-    
-            WORD points_x = 100;  // Fixed X position for points (15 chars * 8 = 120)
+            WORD points_x = 100;
             WORD rank_end_x = 10 + (rank_len * 8);
             UBYTE dash_count = (points_x - rank_end_x) / 8;
 
-            if (tier_index > 3)   
-            {
-                dash_count += 1;
-            }
-            if (tier_index > 14)  
-            {
-                dash_count += 1;
-            }
-            if (tier_index == 17)  
-            {
-                dash_count += 2;
-            }
+            if (tier_index > 3)    dash_count += 1;
+            if (tier_index > 14)   dash_count += 1;
+            if (tier_index == 17)  dash_count += 2;
 
             WORD x = 10;
-
-            // Draw rank text
             Font_DrawString(buffer, (char*)tier->rank_text, x, y, color);
             x += rank_len * 8;
 
-            // Draw dashes up to fixed points position
             for (UBYTE d = 0; d < dash_count; d++)
             {
                 Font_DrawString(buffer, DASH_PIECE, x, y, color);
@@ -480,12 +440,10 @@ void Ranking_Draw(UBYTE *buffer)
     {
         HUD_UpdateScore(game_score);
         Fuel_DrawAll();
-
     }
     else if (current_ranking.rankingstate >= RANKING_STATE_SHOW_SPEED && 
              current_ranking.rankingstate <= RANKING_STATE_FINAL_WAIT)
     {
-        // Show average speed (always visible once shown)
         if (current_ranking.rankingstate >= RANKING_STATE_SHOW_SPEED)
         {
             y = 154;
@@ -495,7 +453,6 @@ void Ranking_Draw(UBYTE *buffer)
             Font_DrawString(buffer, KMH_PIECE, 158, y, 13);
         }
         
-        // Show today's best (visible once shown)
         if (current_ranking.rankingstate >= RANKING_STATE_SHOW_BEST)
         {
             y = 174;
@@ -506,7 +463,6 @@ void Ranking_Draw(UBYTE *buffer)
             Font_DrawString(buffer, suffix, 132, y, 15);
         }
         
-        // Show new record (visible once shown)
         if (current_ranking.rankingstate >= RANKING_STATE_SHOW_RECORD && 
             current_ranking.new_record)
         {
@@ -514,11 +470,6 @@ void Ranking_Draw(UBYTE *buffer)
             Font_DrawStringCentered(buffer, "YOU SET A NEW RECORD", y, 12);
         }
     }
-    else if (current_ranking.rankingstate == RANKING_STATE_COMPLETE)
-    {
-         
-    }
- 
 }
 
 RankingData* Ranking_GetData(void)
