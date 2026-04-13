@@ -222,6 +222,9 @@ static GameTimer gameover_flash_timer;
 static BOOL gameover_text_visible = TRUE;
 static UBYTE gameover_hiscore_pos = 0;  /* 0 = doesn't qualify */
 
+// puddle timer
+static UBYTE puddle_timer = 0;
+
 // Bike repositioning stuff
 BOOL bike_invulnerable = FALSE;
  
@@ -1674,9 +1677,29 @@ void Stage_Update()
             return;
         }
 
+        /* In the surface check area */
         if (surface == SURFACE_PUDDLE)
         {
-           SFX_Play(SFX_SKID);
+            if (puddle_timer == 0)
+            {
+                puddle_timer = 18;
+                SFX_Play(SFX_SKID);
+            }
+        }
+
+        /* Before the input handling section */
+        if (puddle_timer > 0)
+        {
+            puddle_timer--;
+            bike_state = BIKE_STATE_MOVING;  /* No steering animation */
+            
+            if ((puddle_timer & 3) == 0)
+                SFX_Play(SFX_SKID);
+            
+            /* Skip all input — bike just cruises forward */
+            StageProgress_UpdateOverhead(mapposy);
+            Stage_CheckCompletion();
+            return;
         }
 
         // === BRAKE — button 2 or pull down ===
