@@ -430,6 +430,7 @@ void Game_StartNextOverhead(void)
     
     /* Per-stage settings: speed, tilesheet, map, music */
     UBYTE stage_music;
+    WORD start_offset = 0;
     switch (game_stage)
     {
         case STAGE_LASVEGAS:
@@ -439,6 +440,7 @@ void Game_StartNextOverhead(void)
             stage_music = MUSIC_START;
             current_palette = city_colors;
             road_tile_plain = 11;
+            start_offset = -15;
             break;
         case STAGE_HOUSTON:
             max_stage_speed =   base_speed - 25;
@@ -447,6 +449,7 @@ void Game_StartNextOverhead(void)
             stage_music = MUSIC_OFFROAD;
             current_palette = offroad_colors;
             road_tile_plain = 0;
+         
             break;
         case STAGE_STLOUIS:
             max_stage_speed = base_speed;
@@ -455,6 +458,7 @@ void Game_StartNextOverhead(void)
             stage_music = MUSIC_ONROAD;
             current_palette = stlouis_colors;
             road_tile_plain = 1;
+       
             break;
         case STAGE_CHICAGO:
             max_stage_speed =   base_speed - 25;
@@ -463,6 +467,7 @@ void Game_StartNextOverhead(void)
             stage_music = MUSIC_OFFROAD;
             current_palette = offroad_colors;
             road_tile_plain = 0;
+       
             break;
         case STAGE_NEWYORK:
             max_stage_speed = base_speed;
@@ -471,12 +476,14 @@ void Game_StartNextOverhead(void)
             stage_music = MUSIC_ONROAD;
             current_palette = city_colors;
             road_tile_plain = 1; 
+      
             break;
         default:
             max_stage_speed = base_speed;
             TilesheetPool_Load(TILEPOOL_LEVEL1);
             game_map = STAGE1_OVERHEAD;
             stage_music = MUSIC_START;
+        
             break;
     }
     
@@ -489,7 +496,7 @@ void Game_StartNextOverhead(void)
     
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
-    mapposy -= 14;
+    mapposy -= start_offset;
     videoposy = mapposy % HALFBITMAPHEIGHT;
     
     stage_progress.mapsize = mapposy;
@@ -594,7 +601,7 @@ void Game_NewGame(UBYTE difficulty)
 
     mapposy = (mapheight * BLOCKHEIGHT) - SCREENHEIGHT - BLOCKHEIGHT;
     mapposy = (mapposy / EFFECTIVE_HEIGHT) * EFFECTIVE_HEIGHT;
-    mapposy -= 14;
+    mapposy -= -15;
     videoposy = mapposy % HALFBITMAPHEIGHT ;
 
     //videoposy = 0;
