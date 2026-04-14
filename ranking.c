@@ -277,7 +277,8 @@ void Ranking_Update(void)
             {
                 if (current_ranking.bonus_remaining > 0)
                 {
-                    UWORD amount = (current_ranking.bonus_remaining >= 100) ? 100 : current_ranking.bonus_remaining;
+                    UWORD increment = (current_ranking.player_points >= 10000) ? 500 : 100;
+                    UWORD amount = (current_ranking.bonus_remaining >= increment) ? increment : current_ranking.bonus_remaining;
                     current_ranking.bonus_remaining -= amount;
                     game_score += amount;
                     

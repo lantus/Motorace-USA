@@ -377,7 +377,7 @@ int main(void)
     {		 
 		WaitLine(0x13);
 
-		//KeyRead();
+		KeyRead();
 		//custom->color[0] = 0x0F0;  // G = game work done, waiting
 
 		Joy_ReadAll();
