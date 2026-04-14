@@ -355,6 +355,10 @@ int main(void)
 	OpenDisplay();
 	Cars_Initialize();
 		
+	volatile UBYTE *ciabprb = (volatile UBYTE *)0xBFD100;
+    *ciabprb = 0xF7;   /* 1111 0111 — motor off, select DF0 */
+    *ciabprb = 0xFF;   /* 1111 1111 — all deselected */
+
 	KillSystem();
 	InitCopperlist();
 

@@ -290,41 +290,68 @@ void Game_Reset(void)
 {
     Transition_ToBlack();
 
-    title_state = TITLE_ATTRACT_INIT;
-    Title_Reset();
- 
+    /* Reset buffer state */
+    current_buffer = 0;
+    draw_buffer = screen.bitplanes;
+    display_buffer = screen.offscreen_bitplanes;
+    videoposy = 0;
+    mapposy = 0;
+
     Game_ResetBitplanePointer();
 
-    draw_buffer = current_buffer == 0 ? screen.bitplanes : screen.offscreen_bitplanes;
-    display_buffer = current_buffer == 0 ? screen.offscreen_bitplanes : screen.bitplanes;
-
-    /* Clear all screens */
     BlitClearScreen(screen.bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.offscreen_bitplanes, SCREENWIDTH << 6 | 256);
     BlitClearScreen(screen.pristine, SCREENWIDTH << 6 | 256);
 
-    /* Turn off sprites */
+    Game_ApplyPalette(intro_colors, BLOCKSCOLORS);
+    
+    title_state = TITLE_ATTRACT_INIT;
+    Title_Reset();
+    title_state = TITLE_ATTRACT_START;
+
     Sprites_ClearLower();
     Sprites_ClearHigher();
 
-    title_state = TITLE_ATTRACT_START;
-    Game_ApplyPalette(black_palette, BLOCKSCOLORS);
-    Game_SetBackGroundColor(0x125);
+    /* Reset copper colors back to white */
+    Copper_SetScoreRestoreColors();
+    HUD_Show1UP();
 
+    /* Reset scroll speed table to default */
+    scroll_speed_table_active = g_is_pal ? scroll_speed_table_pal : scroll_speed_table;
+ 
+
+    /* Reset game state */
+    title_state = TITLE_ATTRACT_START;
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
+    game_difficulty = FIVEHUNDREDCC;
+    bike_speed = 0;
+    stage_state = STAGE_BEGIN;
+    fuel_alarm_active = FALSE;
 
     TilesheetPool_Load(TILEPOOL_CITY_ATTRACT);
-    
     City_ResetRoadState();
-
     Game_SetMap(game_map);
+    Skyline_Load(SKYLINE_ATTRACT);
+    city_horizon = &nyc_horizon;
+    
+    city_horizon->y = 0;
+    city_horizon->old_x = 0;
+    city_horizon->old_y = 0;
+    city_horizon->prev_old_x = 0;
+    city_horizon->prev_old_y = 0;
+    city_horizon->needs_restore = FALSE;
+    city_horizon->off_screen = FALSE;
+
     MotorBike_Reset();
     MotorBike_ResetApproachIndex();
-    Fuel_Reset();
+    MotorBike_SetDefaultPalette();
+    
+    Fuel_Initialize();
     StageProgress_Initialize();
 
-    Game_ApplyPalette(intro_colors, BLOCKSCOLORS);
+    Game_SetBackGroundColor(0x125);
+    
     game_frame_count = 0;
 
     Transition_FromBlack(intro_colors, BLOCKSCOLORS);
