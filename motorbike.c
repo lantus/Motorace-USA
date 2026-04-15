@@ -23,6 +23,11 @@
 static Sprite spr_rsrc_bike_moving1;
 static Sprite spr_rsrc_bike_moving2;
 static Sprite spr_rsrc_bike_moving3;
+
+ 
+static Sprite spr_rsrc_bike_moving2_or;
+static Sprite spr_rsrc_bike_moving3_or;
+
 static Sprite spr_rsrc_bike_turn_left1;
 static Sprite spr_rsrc_bike_turn_left2;
 static Sprite spr_rsrc_bike_turn_right1;
@@ -60,6 +65,8 @@ static Sprite spr_rsrc_bike_wheelie3;
 ULONG *spr_bike_moving1;
 ULONG *spr_bike_moving2;
 ULONG *spr_bike_moving3;
+ULONG *spr_bike_moving2_or;
+ULONG *spr_bike_moving3_or;
 ULONG *spr_bike_turn_left1;
 ULONG *spr_bike_turn_left2;
 ULONG *spr_bike_turn_right1;
@@ -95,7 +102,7 @@ ULONG *spr_bike_wheelie2;
 ULONG *spr_bike_wheelie3;
 
 ULONG *current_bike_sprite;
-
+ 
 UBYTE bike_state = BIKE_STATE_MOVING;
 
 UWORD bike_position_x;
@@ -103,6 +110,7 @@ UWORD bike_position_y;
 LONG  bike_world_y = 0;
 ULONG bike_anim_frames = 0;
 
+ 
 static ULONG bike_anim_lr_frames = 0;
 static UBYTE bike_frame = 0;
 static BikeFrame current_bike_frame = -1;
@@ -155,6 +163,10 @@ void MotorBike_Initialize()
     Sprites_LoadFromFile(BIKE_MOVING1,&spr_rsrc_bike_moving1);
     Sprites_LoadFromFile(BIKE_MOVING2,&spr_rsrc_bike_moving2);
     Sprites_LoadFromFile(BIKE_MOVING3,&spr_rsrc_bike_moving3);
+
+    Sprites_LoadFromFile(BIKE_MOVING2_OR, &spr_rsrc_bike_moving2_or);
+    Sprites_LoadFromFile(BIKE_MOVING3_OR, &spr_rsrc_bike_moving3_or);
+
     Sprites_LoadFromFile(BIKE_LEFT1,&spr_rsrc_bike_turn_left1);
     Sprites_LoadFromFile(BIKE_LEFT2,&spr_rsrc_bike_turn_left2);
     Sprites_LoadFromFile(BIKE_RIGHT1,&spr_rsrc_bike_turn_right1);
@@ -199,6 +211,8 @@ void MotorBike_Initialize()
     spr_bike_moving1 = Mem_AllocChip(32);
     spr_bike_moving2 = Mem_AllocChip(32);
     spr_bike_moving3 = Mem_AllocChip(32);
+    spr_bike_moving2_or = Mem_AllocChip(32);
+    spr_bike_moving3_or = Mem_AllocChip(32);
     spr_bike_turn_left1 = Mem_AllocChip(32);
     spr_bike_turn_left2 = Mem_AllocChip(32);
     spr_bike_turn_right1 = Mem_AllocChip(32);
@@ -241,6 +255,8 @@ void MotorBike_Initialize()
     Sprites_BuildComposite(spr_bike_moving1,2,&spr_rsrc_bike_moving1);
     Sprites_BuildComposite(spr_bike_moving2,2,&spr_rsrc_bike_moving2);
     Sprites_BuildComposite(spr_bike_moving3,2,&spr_rsrc_bike_moving3);
+    Sprites_BuildComposite(spr_bike_moving2_or,2,&spr_rsrc_bike_moving2_or);
+    Sprites_BuildComposite(spr_bike_moving3_or,2,&spr_rsrc_bike_moving3_or);
     Sprites_BuildComposite(spr_bike_turn_left1,2,&spr_rsrc_bike_turn_left1);
     Sprites_BuildComposite(spr_bike_turn_left2,2,&spr_rsrc_bike_turn_left2);
     Sprites_BuildComposite(spr_bike_turn_right1,2,&spr_rsrc_bike_turn_right1);
@@ -363,15 +379,30 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
 
         if (bike_anim_frames % (state == BIKE_STATE_ACCELERATING ? 5 : 10) == 0)
         {
-            bike_frame ^= 1;
-
-            if (bike_frame == 0)
+            if (game_stage == STAGE_HOUSTON || game_stage == STAGE_CHICAGO)
             {
-                current_bike_sprite = spr_bike_moving2;
+                /* Offroad: center, right, center, left */
+                bike_frame++;
+                if (bike_frame >= 4)
+                    bike_frame = 0;
+
+                switch (bike_frame)
+                {
+                    case 0: current_bike_sprite = spr_bike_moving1;    break;
+                    case 1: current_bike_sprite = spr_bike_moving3_or; break;
+                    case 2: current_bike_sprite = spr_bike_moving1;    break;
+                    case 3: current_bike_sprite = spr_bike_moving2_or; break;
+                }
             }
             else
             {
-                current_bike_sprite = spr_bike_moving3;
+                /* City: toggle between 2 frames */
+                bike_frame ^= 1;
+
+                if (bike_frame == 0)
+                    current_bike_sprite = spr_bike_moving2;
+                else
+                    current_bike_sprite = spr_bike_moving3;
             }
         }
     }

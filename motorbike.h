@@ -37,6 +37,10 @@ typedef enum {
 #define BIKE_RIGHT1             "sprites/bike/bikeright1.spr"
 #define BIKE_RIGHT2             "sprites/bike/bikeright2.spr"
 
+// offroad anims
+#define BIKE_MOVING2_OR         "sprites/bike/bike-or2.spr"
+#define BIKE_MOVING3_OR         "sprites/bike/bike-or3.spr"
+
 #define APPROACH_BIKE1          "sprites/bike/3dbike1.spr"
 #define APPROACH_BIKE_LEFT      "sprites/bike/3dbike1-left.spr"
 #define APPROACH_BIKE_RIGHT     "sprites/bike/3dbike1-right.spr"
