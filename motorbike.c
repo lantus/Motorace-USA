@@ -367,6 +367,7 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
         {
             // Hide sprites — move them off screen
             Sprites_ClearLower();
+            Sprites_ClearHigher();
             return;
         }
     }

@@ -1273,7 +1273,7 @@ void Stage_Draw()
     {
         if (gameover_text_visible)
         {
-            Font_DrawStringCentered(draw_buffer, "EMPTY", fuel_empty_y, 9);
+            Font_DrawStringCentered(draw_buffer, "   EMPTY", fuel_empty_y, 9);
         }
         else
         {
@@ -1281,6 +1281,8 @@ void Stage_Draw()
             Font_RestoreFromPristine(draw_buffer, 0, fuel_empty_y, SCREENWIDTH, 8);
         }
         
+        MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
+
         Game_SwapBuffers();
     }
     else if (stage_state == STAGE_COMPLETE)
