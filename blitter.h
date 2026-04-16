@@ -20,6 +20,10 @@ void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
                     APTR src, APTR dest);
 void BlitBobSimpleSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
                        APTR src, APTR dest);
+
+void BlitBob2Clip(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
+                 UWORD width_pixels, APTR *restore_ptrs, APTR src, APTR mask, APTR dest);
+                 
 typedef struct {
     UBYTE *background_ptr;  // Pointer to saved background
     UBYTE *screen_ptr;      // Pointer to screen location

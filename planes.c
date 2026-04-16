@@ -419,32 +419,84 @@ void Planes_Restore(UBYTE *buffer)
         for (int i = 0; i < NUM_PLANES; i++)
         {
             if (!plane_inst[i].prev_needs_restore) continue;
+            
+            if (plane_inst[i].prev_old_x < 0 || plane_inst[i].prev_old_x >= VIEWPORT_WIDTH)
+            {
+                plane_inst[i].prev_needs_restore = FALSE;
+                continue;
+            }
+
+            /* Clip restore width too */
+            WORD restore_words = PLANE_WIDTH_WORDS;
+            WORD dest_last = (plane_inst[i].prev_old_x >> 4) + restore_words;
+            WORD vp_words = VIEWPORT_WIDTH >> 4;
+            
+            if (dest_last > vp_words)
+                restore_words = vp_words - (plane_inst[i].prev_old_x >> 4);
+            
+            if (restore_words <= 0)
+            {
+                plane_inst[i].prev_needs_restore = FALSE;
+                continue;
+            }
+            
             RestoreBOB(buffer, plane_inst[i].prev_old_x, plane_inst[i].prev_old_y,
-                       PLANE_WIDTH_WORDS, PLANE_BLIT_LINES);
+                       restore_words, PLANE_BLIT_LINES);
             plane_inst[i].prev_needs_restore = FALSE;
         }
     }
     else
     {
-        /* Restore plane */
         if (nyc_needs_restore > 0)
         {
-            RestoreBOB(buffer, nyc_prev_old_x, nyc_prev_old_y,
-                       PLANE_WIDTH_WORDS, PLANE_BLIT_LINES);
-            nyc_needs_restore--;
+            if (nyc_prev_old_x < 0 || nyc_prev_old_x >= VIEWPORT_WIDTH)
+            {
+                nyc_needs_restore = 0;
+            }
+            else
+            {
+                WORD restore_words = PLANE_WIDTH_WORDS;
+                WORD dest_last = (nyc_prev_old_x >> 4) + restore_words;
+                WORD vp_words = VIEWPORT_WIDTH >> 4;
+                
+                if (dest_last > vp_words)
+                    restore_words = vp_words - (nyc_prev_old_x >> 4);
+                
+                if (restore_words > 0)
+                {
+                    RestoreBOB(buffer, nyc_prev_old_x, nyc_prev_old_y,
+                               restore_words, PLANE_BLIT_LINES);
+                }
+                nyc_needs_restore--;
+            }
         }
 
-        /* Restore smoke puffs */
         for (int i = 0; i < MAX_SMOKE_PUFFS; i++)
         {
             if (smoke[i].needs_restore == 0) continue;
-            RestoreBOB(buffer, smoke[i].prev_old_x, smoke[i].prev_old_y,
-                       PLANE_WIDTH_WORDS, PLANE_BLIT_LINES);
+            
+            if (smoke[i].prev_old_x < 0 || smoke[i].prev_old_x >= VIEWPORT_WIDTH)
+            {
+                smoke[i].needs_restore = 0;
+                continue;
+            }
+            
+            WORD restore_words = PLANE_WIDTH_WORDS;
+            WORD dest_last = (smoke[i].prev_old_x >> 4) + restore_words;
+            WORD vp_words = VIEWPORT_WIDTH >> 4;
+            
+            if (dest_last > vp_words)
+                restore_words = vp_words - (smoke[i].prev_old_x >> 4);
+            
+            if (restore_words > 0)
+            {
+                RestoreBOB(buffer, smoke[i].prev_old_x, smoke[i].prev_old_y,
+                           restore_words, PLANE_BLIT_LINES);
+            }
             smoke[i].needs_restore--;
         }
     }
 }
-
  
 
 void Planes_Draw(UBYTE *buffer)
@@ -473,7 +525,7 @@ void Planes_Draw(UBYTE *buffer)
             ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
             UWORD bltsize = (PLANE_BLIT_LINES << 6) | PLANE_WIDTH_WORDS;
 
-            BlitBob2(SCREENWIDTH_WORDS, plane_inst[i].x, plane_inst[i].y,
+            BlitBob2Clip(SCREENWIDTH_WORDS, plane_inst[i].x, plane_inst[i].y,
                      admod, bltsize, PLANE_BOB_WIDTH,
                      NULL, source, mask, buffer);
 
@@ -506,7 +558,7 @@ void Planes_Draw(UBYTE *buffer)
             ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
             UWORD bltsize = (PLANE_BLIT_LINES << 6) | PLANE_WIDTH_WORDS;
 
-            BlitBob2(SCREENWIDTH_WORDS, nyc_plane_x, nyc_plane_y,
+            BlitBob2Clip(SCREENWIDTH_WORDS, nyc_plane_x, nyc_plane_y,
                      admod, bltsize, PLANE_BOB_WIDTH,
                      NULL, source, mask, buffer);
 

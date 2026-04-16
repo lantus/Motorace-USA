@@ -316,6 +316,62 @@ void BlitBobSimple(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
     custom->bltsize = bltsize;
 }
 
+void BlitBob2Clip(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
+                 UWORD width_pixels, APTR *restore_ptrs, APTR src, APTR mask, APTR dest)
+{
+    ULONG y_offset = (ULONG)y * y_modulo;
+    WORD shift = x & 15;
+    ULONG bltcon = bl_bob_table[shift];
+    
+    WORD x_offset = (x >> 4) << 1;
+    ULONG offset = y_offset + x_offset;
+    APTR dest_ptr = (UBYTE *)dest + offset;
+
+    /* Calculate if last blit word extends past viewport */
+     WORD blit_words = bltsize & 0x3F;
+    WORD height = (bltsize >> 6) & 0x3FF;
+    WORD dest_first_word = x >> 4;
+    WORD viewport_words = 192 >> 4;
+
+    UWORD fwm = 0xFFFF;
+    UWORD lwm = 0xFFFF;
+    UWORD src_mod = (UWORD)(admod & 0xFFFF);
+    UWORD dst_mod = (UWORD)(admod >> 16);
+
+    /* Does the last blit word extend past viewport? */
+    if ((dest_first_word + blit_words) > viewport_words)
+    {
+        WORD clipped = (dest_first_word + blit_words) - viewport_words;
+        blit_words -= clipped;
+        
+        if (blit_words <= 0) return;
+        
+        /* Adjust modulos to skip clipped source words */
+        src_mod += (clipped << 1);
+        dst_mod += (clipped << 1);
+        
+        bltsize = (height << 6) | blit_words;
+    }
+
+    WaitBlit();
+    custom->bltcon0 = (UWORD)(bltcon >> 16);
+    custom->bltcon1 = (UWORD)bltcon;
+    
+    custom->bltamod = src_mod;
+    custom->bltbmod = src_mod;
+    custom->bltcmod = dst_mod;
+    custom->bltdmod = dst_mod;
+
+    custom->bltafwm = fwm;
+    custom->bltalwm = lwm;
+
+    custom->bltapt = mask;
+    custom->bltbpt = src;
+    custom->bltcpt = dest_ptr;
+    custom->bltdpt = dest_ptr;
+    custom->bltsize = bltsize;
+}
+
 void BlitBobSimpleSave(UWORD y_modulo, WORD x, WORD y, ULONG admod, UWORD bltsize,
                        APTR src, APTR dest)
 {
