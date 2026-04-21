@@ -168,7 +168,7 @@ extern UBYTE game_car_block_x_threshold;
 extern ULONG game_frame_count;
 extern UWORD frontview_bike_frames;
 extern CollisionState collision_state;
-extern int collision_car_index;  
+extern WORD collision_car_index;  
 
 extern ULONG speed_accumulator;
 extern ULONG speed_sample_count;

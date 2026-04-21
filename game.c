@@ -155,7 +155,7 @@ GameTimer hud_update_timer;
 GameTimer collision_recovery_timer;
 
 CollisionState collision_state = COLLISION_NONE;
-int collision_car_index = -1;
+WORD collision_car_index = -1;
 UBYTE countdown_value = 5;
 
 UBYTE game_stage = STAGE_LASVEGAS;
@@ -1237,6 +1237,14 @@ void Stage_Draw()
         Fuel_Draw(); 
         StageProgress_DrawOverhead();
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
+
+        UBYTE surf_top = Collision_GetSurface(bike_position_x + 8, bike_wy);
+        UBYTE surf_bot = Collision_GetSurface(bike_position_x + 8, bike_wy + 28);
+        
+        BOOL in_tunnel = (surf_top == SURFACE_TUNNEL || surf_bot == SURFACE_TUNNEL);
+        
+        custom->bplcon2 = in_tunnel ? 0x0000 : 0x0024;
+        
         Game_HandleCollisions();
     }
     else if (stage_state == STAGE_FRONTVIEW)
@@ -2189,7 +2197,7 @@ void Game_HandleCollisions(void)
 {
     if (collision_state == COLLISION_NONE)
     {
-        int hit_car = -1;
+        WORD hit_car = -1;
         collision_state = MotorBike_CheckCollision(&hit_car);
 
         if (collision_state == COLLISION_TRAFFIC)

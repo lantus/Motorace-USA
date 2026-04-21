@@ -773,7 +773,7 @@ void MotorBike_DecelerateToCruising(void)
     }
 }
 
-CollisionState MotorBike_CheckCollision(int *hit_car_index)
+CollisionState MotorBike_CheckCollision(UWORD *hit_car_index)
 {
     WORD bike_cx = bike_position_x + 8;
     WORD bike_top = bike_position_y - g_sprite_voffset;
