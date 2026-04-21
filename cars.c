@@ -376,6 +376,16 @@ void Cars_ResetPositions(void)
     cars_passed = 0;
 }
 
+void Cars_ClearAll(void)
+   {
+       for (int i = 0; i < MAX_CARS; i++)
+       {
+           car[i].visible = FALSE;
+           car[i].off_screen = TRUE;
+           car[i].crashed = FALSE;
+       }
+   }
+   
 void Cars_ResetPositionsEmpty(void)
 {
     for (int i = 0; i < MAX_CARS; i++)

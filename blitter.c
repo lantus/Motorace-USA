@@ -160,42 +160,28 @@ void BlitClearScreenWithColor(APTR buffer, UWORD bltsize, UBYTE color)
     }
 }
 
-/*
- * BlitRestoreBobs
- * Restores backgrounds for all bobs in restore array
- */
-void BlitRestoreBobs(ULONG admod, UWORD bltsize, WORD count, APTR *restore_array)
-{
-    WORD i;
-    volatile UWORD *dmaconr_ptr;
-    
-    if (restore_array[0] == NULL)
-        return;
-    
-    /* Setup optimized blitter wait */
-    dmaconr_ptr = &custom->dmaconr;
-    
-    custom->dmacon = 0x8400;
-    WaitBlit();
-    
-    /* One-time setup */
-    custom->bltalwm = 0xFFFF;
-    custom->bltcon0 = (UWORD)(bl_copy[0] >> 16);
-    custom->bltcon1 = (UWORD)(bl_copy[0]);
+ 
 
-    custom->bltamod =  (UWORD)(admod & 0xFFFF); 
-    custom->bltdmod = (UWORD)(admod >> 16);
-    
-    /* Restore loop */
-    for (i = 0; i < count; i++) {
-        WaitBlit();
-        custom->bltapt = restore_array[1];
-        custom->bltdpt = restore_array[0];
-        custom->bltsize = bltsize;
-    }
-    
-    custom->dmacon = 0x0400;
+
+void BlitRestoreBobs(UBYTE *buffer, WORD prev_x, WORD prev_y,
+                       UWORD width_words, UWORD blit_lines)
+{
+    WORD x_byte = (prev_x >> 3) & 0xFFFE;
+    WORD y4 = prev_y << 2;
+    LONG offset = ((LONG)y4 << 4) + ((LONG)y4 << 3) + x_byte;
+
+    WaitBlit();
+    custom->bltcon0 = 0x09F0;
+    custom->bltcon1 = 0;
+    custom->bltafwm = 0xFFFF;
+    custom->bltalwm = 0xFFFF;
+    custom->bltamod = BITMAPBYTESPERROW - (width_words << 1);
+    custom->bltdmod = BITMAPBYTESPERROW - (width_words << 1);
+    custom->bltapt  = screen.pristine + offset;
+    custom->bltdpt  = buffer + offset;
+    custom->bltsize = (blit_lines << 6) | width_words;
 }
+ 
 
 void BlitBob(WORD x, WORD y, ULONG admod, UWORD bltsize, 
              UBYTE **restore_ptrs, UBYTE *source, UBYTE *mask, UBYTE *dest,

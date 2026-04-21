@@ -36,6 +36,7 @@ void Cars_CopyPristineBackground(BlitterObject *car);
 void Cars_HandleSpinout(UBYTE car_index);
 void Cars_Tick(BlitterObject *car);
 void Cars_Update(void);
+void Cars_ClearAll(void);
  
 void Cars_ScatterAfterCrash(void);
 void Cars_RenderBOB(BlitterObject *c);

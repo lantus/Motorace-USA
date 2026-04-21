@@ -389,29 +389,7 @@ void Planes_Update(void)
     else
         Planes_UpdateNYC();
 }
-
  
-
-static void RestoreBOB(UBYTE *buffer, WORD prev_x, WORD prev_y,
-                       UWORD width_words, UWORD blit_lines)
-{
-    WORD x_byte = (prev_x >> 3) & 0xFFFE;
-    WORD y4 = prev_y << 2;
-    LONG offset = ((LONG)y4 << 4) + ((LONG)y4 << 3) + x_byte;
-
-    WaitBlit();
-    custom->bltcon0 = 0x09F0;
-    custom->bltcon1 = 0;
-    custom->bltafwm = 0xFFFF;
-    custom->bltalwm = 0xFFFF;
-    custom->bltamod = BITMAPBYTESPERROW - (width_words << 1);
-    custom->bltdmod = BITMAPBYTESPERROW - (width_words << 1);
-    custom->bltapt  = screen.pristine + offset;
-    custom->bltdpt  = buffer + offset;
-    custom->bltsize = (blit_lines << 6) | width_words;
-}
- 
-
 void Planes_Restore(UBYTE *buffer)
 {
     if (plane_mode == PLANE_MODE_HOUSTON)
@@ -440,7 +418,7 @@ void Planes_Restore(UBYTE *buffer)
                 continue;
             }
             
-            RestoreBOB(buffer, plane_inst[i].prev_old_x, plane_inst[i].prev_old_y,
+            BlitRestoreBobs(buffer, plane_inst[i].prev_old_x, plane_inst[i].prev_old_y,
                        restore_words, PLANE_BLIT_LINES);
             plane_inst[i].prev_needs_restore = FALSE;
         }
@@ -464,7 +442,7 @@ void Planes_Restore(UBYTE *buffer)
                 
                 if (restore_words > 0)
                 {
-                    RestoreBOB(buffer, nyc_prev_old_x, nyc_prev_old_y,
+                    BlitRestoreBobs(buffer, nyc_prev_old_x, nyc_prev_old_y,
                                restore_words, PLANE_BLIT_LINES);
                 }
                 nyc_needs_restore--;
@@ -490,7 +468,7 @@ void Planes_Restore(UBYTE *buffer)
             
             if (restore_words > 0)
             {
-                RestoreBOB(buffer, smoke[i].prev_old_x, smoke[i].prev_old_y,
+                BlitRestoreBobs(buffer, smoke[i].prev_old_x, smoke[i].prev_old_y,
                            restore_words, PLANE_BLIT_LINES);
             }
             smoke[i].needs_restore--;
