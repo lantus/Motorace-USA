@@ -5,7 +5,7 @@
 			
 		   Zippy Race : A500 Edition
 
-			Alpha Release		
+			V1.0 Release		
 
            ...code/design       	- MVG
            ...sound/music conversion    - Estrayk

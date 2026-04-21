@@ -1244,7 +1244,7 @@ void Stage_Draw()
         BOOL in_tunnel = (surf_top == SURFACE_TUNNEL || surf_bot == SURFACE_TUNNEL);
         
         custom->bplcon2 = in_tunnel ? 0x0000 : 0x0024;
-        
+
         Game_HandleCollisions();
     }
     else if (stage_state == STAGE_FRONTVIEW)

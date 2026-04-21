@@ -56,5 +56,6 @@ void AttractMode_ShowHiScores(void);
 void AttractMode_ShowCredits(void);
 void AttractMode_DrawText(void);
 void AttractMode_BlitAmiLogo();
+ 
 
 #endif
