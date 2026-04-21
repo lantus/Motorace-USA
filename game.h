@@ -141,7 +141,8 @@ enum StageState
 typedef enum {
     COLLISION_NONE = 0,
     COLLISION_TRAFFIC = 1,
-    COLLISION_OFFROAD = 2
+    COLLISION_OFFROAD = 2,
+    COLLISION_WATER = 3
 } CollisionState;
  
 extern UBYTE game_stage;

@@ -88,6 +88,7 @@ enum BikeState
     BIKE_STATE_WHEELIE = 8,
     BIKE_STATE_FRONTVIEW_LEFT = 15,
     BIKE_STATE_FRONTVIEW_RIGHT = 16,
+    BIKE_STATE_WATER_CRASH = 17,
 };
 
 
@@ -99,7 +100,6 @@ extern WORD scroll_accumulator;  // Fractional scroll position (fixed point)
 
 extern UBYTE crash_spin_frame;
  
-
 extern BOOL  wheelie_active;
 extern BOOL  wheelie_scored;
 extern WORD  wheelie_speed;

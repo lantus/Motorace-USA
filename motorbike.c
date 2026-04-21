@@ -20,6 +20,8 @@
 #include "copper.h"
 #include "motorbike.h"
 
+extern volatile struct Custom *custom;
+
 static Sprite spr_rsrc_bike_moving1;
 static Sprite spr_rsrc_bike_moving2;
 static Sprite spr_rsrc_bike_moving3;
@@ -114,6 +116,7 @@ ULONG bike_anim_frames = 0;
 static ULONG bike_anim_lr_frames = 0;
 static UBYTE bike_frame = 0;
 static BikeFrame current_bike_frame = -1;
+ 
 
 // Add these to your global variables
 WORD bike_speed = 42;        // Current speed in mph (starts at idle)
@@ -301,6 +304,7 @@ void MotorBike_Initialize()
  
 void MotorBike_Reset()
 {
+      
     if (game_map == MAP_ATTRACT_INTRO ||
         game_map == STAGE1_FRONTVIEW ||
         game_map == STAGE2_FRONTVIEW ||
@@ -406,6 +410,18 @@ void MotorBike_UpdatePosition(UWORD x, UWORD y, UBYTE state)
                     current_bike_sprite = spr_bike_moving3;
             }
         }
+    }
+    else if (state == BIKE_STATE_WATER_CRASH)
+    {
+        crash_anim_frames++;
+         
+        if (crash_anim_frames < 2)
+            current_bike_sprite = spr_overhead_bike_crash1;
+        else if (crash_anim_frames < 4)
+            current_bike_sprite = spr_overhead_bike_crash2;
+        else
+            current_bike_sprite = spr_approach_bike_frame3;  /* Nosedive */
+        current_sprite_count = 4;
     }
     else if ( state == BIKE_STATE_FRONTVIEW_LEFT)
     {
@@ -759,17 +775,21 @@ void MotorBike_DecelerateToCruising(void)
 
 CollisionState MotorBike_CheckCollision(int *hit_car_index)
 {
-    // Bike hitbox — tighter than visual for fairness
-    WORD bike_cx = bike_position_x + 8;   // Center of 16px wide sprite
+    WORD bike_cx = bike_position_x + 8;
     WORD bike_top = bike_position_y - g_sprite_voffset;
-    WORD bike_bottom = bike_top + 28;     // NES uses 28px tall hitbox
-    WORD bike_left = bike_position_x + 2; // Inset 2px each side
+    WORD bike_bottom = bike_top + 28;
+    WORD bike_left = bike_position_x + 2;
     WORD bike_right = bike_position_x + 14;
     
-    // Convert screen Y to world Y for collision map lookup
     WORD bike_world_top = mapposy + bike_top;
-    WORD bike_world_bottom = mapposy + bike_bottom;
+    WORD bike_world_mid = bike_world_top + 20;
     
+    if (wheelie_active && bike_state == BIKE_STATE_JUMP)
+    {
+        *hit_car_index = -1;
+        return COLLISION_NONE;
+    }
+
     if (bike_invulnerable)
     {
         *hit_car_index = -1;
@@ -783,7 +803,6 @@ CollisionState MotorBike_CheckCollision(int *hit_car_index)
         WORD car_screen_y = car[i].y - mapposy;
         WORD car_screen_x = car[i].x;
         
-        // NES hitbox: 8px wide × 28px tall for player-vs-car
         WORD x_dist = ABS(bike_cx - (car_screen_x + 16));
         WORD y_dist = ABS(bike_top + 14 - (car_screen_y + 16));
         
@@ -794,24 +813,38 @@ CollisionState MotorBike_CheckCollision(int *hit_car_index)
         }
     }
     
-    // === OFFROAD COLLISION — use collision map ===
-    // Check 3 points on the bike: center-left, center, center-right
-    // at two Y positions: top and bottom of bike
+    UBYTE col_center = Collision_Get(bike_cx, bike_world_top);
+    UBYTE lane_center = (col_center >> 4) & 0x0F;
+    UBYTE surface_center = col_center & 0x0F;
+
+    UBYTE lane_left  = Collision_GetLane(bike_left, bike_world_top);
+    UBYTE lane_right = Collision_GetLane(bike_right, bike_world_top);
+ 
     
-    UBYTE lane_center = Collision_GetLane(bike_cx, bike_world_top);
-    UBYTE lane_left   = Collision_GetLane(bike_left, bike_world_top);
-    UBYTE lane_right  = Collision_GetLane(bike_right, bike_world_top);
-    UBYTE lane_bottom = Collision_GetLane(bike_cx, bike_world_bottom);
-    
-    // Offroad if center AND either side are off the road
     if (lane_center == LANE_OFFROAD)
     {
+        if (game_stage == STAGE_HOUSTON || game_stage == STAGE_CHICAGO)
+        {
+            if (surface_center == SURFACE_WATER)
+            {
+                UBYTE col_mid = Collision_Get(bike_cx, bike_world_mid);
+                UBYTE surface_mid = col_mid & 0x0F;
+                   
+                if (surface_mid == SURFACE_WATER)
+                {
+                    *hit_car_index = -1;
+                    return COLLISION_WATER;
+                }
+  
+                *hit_car_index = -1;
+                return COLLISION_NONE;
+            }
+        }
+ 
         *hit_car_index = -1;
         return COLLISION_OFFROAD;
     }
     
-    // Shoulder warning — not a crash, but could slow bike
-    // Only crash if BOTH sides are offroad (bike fully off road)
     if (lane_left == LANE_OFFROAD && lane_right == LANE_OFFROAD)
     {
         *hit_car_index = -1;

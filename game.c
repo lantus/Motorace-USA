@@ -282,7 +282,6 @@ void Game_Initialize()
             scroll_speed_table_active = g_is_pal ? scroll_speed_1200cc_pal : scroll_speed_1200cc;
             break;
     }
- 
 }
 
  
@@ -353,7 +352,8 @@ void Game_Reset(void)
     Game_SetBackGroundColor(0x125);
     
     game_frame_count = 0;
-
+ 
+ 
     Transition_FromBlack(intro_colors, BLOCKSCOLORS);
 }
  
@@ -1407,13 +1407,13 @@ static void CheckBonusPickups(void)
         WORD buf_y = ROUND2BLOCKHEIGHT((map_y << 4) % EFFECTIVE_HEIGHT) << 2;
         WORD buf_x = map_x << 4;
         
-        DrawBlock(buf_x, buf_y, map_x, map_y, screen.bitplanes);
-        DrawBlock(buf_x, buf_y, map_x, map_y, screen.offscreen_bitplanes);
+        DrawBlock(buf_x, buf_y, map_x, map_y, draw_buffer);
+        DrawBlock(buf_x, buf_y, map_x, map_y, display_buffer);
         DrawBlock(buf_x, buf_y, map_x, map_y, screen.pristine);
         
         UWORD yoff = buf_y + (HALFBITMAPHEIGHT << 2);
-        DrawBlock(buf_x, yoff, map_x, map_y, screen.bitplanes);
-        DrawBlock(buf_x, yoff, map_x, map_y, screen.offscreen_bitplanes);
+        DrawBlock(buf_x, yoff, map_x, map_y, draw_buffer);
+        DrawBlock(buf_x, yoff, map_x, map_y, display_buffer);
         DrawBlock(buf_x, yoff, map_x, map_y, screen.pristine);
     }
 }
@@ -1550,7 +1550,7 @@ void Stage_Update()
           
             WORD bike_cx = bike_position_x + 8;
             
-            for (int i = 0; i < MAX_CARS; i++)
+            for (UBYTE i = 0; i < MAX_CARS; i++)
             {
                 if (!car[i].visible || car[i].off_screen || car[i].crashed) continue;
                 
@@ -1570,15 +1570,15 @@ void Stage_Update()
                         car[i].x += 3;
                 }
             }
+            
             if (Timer_HasElapsed(&wheelie_timer))
             {
                 wheelie_active = FALSE;
                 wheelie_scored = FALSE;
                 Timer_Stop(&wheelie_timer);
                 bike_state = BIKE_STATE_MOVING;
-                wheelie_anim_frames = 0;  // Reset animation counter
-                Sprites_ClearHigher();     // Turn off sprites 2+3
-                //SFX_Play(SFX_LAND);
+                wheelie_anim_frames = 0;
+                Sprites_ClearHigher();
             }
 
             speed_accumulator += bike_speed;
@@ -1588,26 +1588,37 @@ void Stage_Update()
 
             if (bike_state == BIKE_STATE_JUMP )
             {
+                bike_wy = mapposy + bike_position_y - g_sprite_voffset;
                 CheckBonusPickups();
             }
             return;
         }
  
         
-        if (collision_state == COLLISION_TRAFFIC || collision_state == COLLISION_OFFROAD)
+    if (collision_state == COLLISION_TRAFFIC || 
+        collision_state == COLLISION_OFFROAD ||
+        collision_state == COLLISION_WATER)
+    {
+        if (collision_state == COLLISION_WATER)
+        {
+            /* No sliding — immediate stop */
+            bike_speed = 0;
+            bike_state = BIKE_STATE_WATER_CRASH;
+        }
+        else
         {
             if (bike_speed > 0)
             {
                 bike_speed -= 4;
                 if (bike_speed < 0) bike_speed = 0;
             }
-            
             bike_state = BIKE_STATE_CRASHED;
-                
-            StageProgress_UpdateOverhead(mapposy);
-            Stage_CheckCompletion();
-            return;
         }
+            
+        StageProgress_UpdateOverhead(mapposy);
+        Stage_CheckCompletion();
+        return;
+    }
  
         bike_wy = mapposy + bike_position_y - g_sprite_voffset;
 
@@ -1619,9 +1630,9 @@ void Stage_Update()
             surface == SURFACE_JUMP ) && !wheelie_active)
         {
             wheelie_active = TRUE;
-            wheelie_speed = 150;
+            wheelie_speed = bike_speed;
 
-            Timer_Start(&wheelie_timer,  surface == SURFACE_JUMP ? 1 : 2);
+            Timer_Start(&wheelie_timer,  surface == SURFACE_JUMP ? 1 : 3);
             
             bike_state = surface == SURFACE_JUMP  ? BIKE_STATE_JUMP : BIKE_STATE_WHEELIE;
             wheelie_anim_frames = 0;  // Reset animation counter
@@ -2176,12 +2187,12 @@ void Stage_ShowInfo(void)
 
 void Game_HandleCollisions(void)
 {
-     if (collision_state == COLLISION_NONE)
+    if (collision_state == COLLISION_NONE)
     {
         int hit_car = -1;
         collision_state = MotorBike_CheckCollision(&hit_car);
-        
-       if (collision_state == COLLISION_TRAFFIC)
+
+        if (collision_state == COLLISION_TRAFFIC)
         {
             collision_car_index = hit_car;
             Timer_Start(&collision_recovery_timer, 3);
@@ -2190,8 +2201,16 @@ void Game_HandleCollisions(void)
             crash_anim_frames = 0;
             crash_spin_frame = 0;
             SFX_Play(SFX_CRASHSKID);
-           
- 
+        }
+        else if (collision_state == COLLISION_WATER)
+        {
+            collision_car_index = -1;
+            Timer_Start(&collision_recovery_timer, 3);
+            crash_anim_frames = 0;
+            crash_spin_frame = 0;
+            bike_speed = 0;
+            SFX_Play(SFX_CRASHSKID);
+            Music_Stop();
         }
         else if (collision_state == COLLISION_OFFROAD)
         {
@@ -2209,18 +2228,23 @@ void Game_HandleCollisions(void)
             collision_state == COLLISION_OFFROAD)
         {
             bike_state = BIKE_STATE_CRASHED;
-         
+        }
+        else if (collision_state == COLLISION_WATER)
+        {
+            bike_state = BIKE_STATE_WATER_CRASH;
         }
  
         if (Timer_HasElapsed(&collision_recovery_timer))
         {
             MotorBike_CrashAndReposition();
+        
+            if (collision_state != COLLISION_WATER)
+                Cars_ScatterAfterCrash();
             
             collision_state = COLLISION_NONE;
             collision_car_index = -1;
             Timer_Stop(&collision_recovery_timer);
          
-            /* Restart per-stage music */
             switch (game_stage)
             {
                 case STAGE_LASVEGAS:  Music_LoadModule(MUSIC_ONROAD); break;
@@ -2238,7 +2262,6 @@ void Game_HandleCollisions(void)
             bike_speed = MIN_CRUISING_SPEED;
         }
     }
- 
 }
 
 void Stage_CheckCompletion(void)
