@@ -37,7 +37,10 @@ void Cars_HandleSpinout(UBYTE car_index);
 void Cars_Tick(BlitterObject *car);
 void Cars_Update(void);
 void Cars_ClearAll(void);
- 
+BOOL Cars_AnyOnScreen(void);
+void Cars_DisableSpawning(void);
+void Cars_EnableSpawning(void);
+
 void Cars_ScatterAfterCrash(void);
 void Cars_RenderBOB(BlitterObject *c);
 void Cars_CheckForRespawn(void);

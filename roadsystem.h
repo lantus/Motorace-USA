@@ -35,20 +35,21 @@
 #define LANE_SHOULDER_R   6
 #define LANE_MERGE        7
 
-#define SURFACE_NORMAL    0
-#define SURFACE_PUDDLE    1
-#define SURFACE_WATER     2
-#define SURFACE_WHEELIE   3
-#define SURFACE_GASCAN    4
-#define SURFACE_GRAVEL    5
-#define SURFACE_BOOST     6
-#define SURFACE_JUMP      7
-#define SURFACE_PTS100   8
-#define SURFACE_PTS200   9
-#define SURFACE_PTS500   10
-#define SURFACE_PTS700   11
-#define SURFACE_PTS1000  12
-#define SURFACE_TUNNEL   13
+#define SURFACE_NORMAL      0
+#define SURFACE_PUDDLE      1
+#define SURFACE_WATER       2
+#define SURFACE_WHEELIE     3
+#define SURFACE_GASCAN      4
+#define SURFACE_GRAVEL      5
+#define SURFACE_BOOST       6
+#define SURFACE_JUMP        7
+#define SURFACE_PTS100      8
+#define SURFACE_PTS200      9
+#define SURFACE_PTS500      10
+#define SURFACE_PTS700      11
+#define SURFACE_PTS1000     12
+#define SURFACE_TUNNEL      13
+#define SURFACE_BARRELTRUCK 14
 
 
 #define GET_LANE(packed)    ((packed) >> 4)

@@ -32,6 +32,7 @@
 #include "ranking.h"
 #include "stageprogress.h"
 #include "fuel.h"
+#include "barreltruck.h"
 
 #include "cars.h"
 #include "audio.h"
@@ -1755,6 +1756,13 @@ void Stage_Update()
                     SFX_Play(SFX_SKID);
                 }
             }
+        }
+
+        if (surface == SURFACE_BARRELTRUCK && !BarrelTruck_IsActive())
+        {
+            WORD spawn_x = 80;
+            WORD spawn_y = mapposy - SCREENHEIGHT;
+            BarrelTruck_RequestSpawn(spawn_x, spawn_y);
         }
 
         /* Before the input handling section */

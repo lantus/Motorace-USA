@@ -3,9 +3,7 @@
 
 #include <exec/types.h>
 #include "blitter.h"
-
-#define BARRELTRUCK_ENABLED  TRUE
-
+ 
 /* ---- Truck BOB (32×64, 4 planes + mask, 2 wheel frames) ---- */
 #define TRUCK_BOB_FILE1     "objects/truck1.BPL"
 #define TRUCK_BOB_FILE2     "objects/truck2.BPL"
@@ -66,5 +64,5 @@ void BarrelTruck_Draw(void);
 void BarrelTruck_Reset(void);
 BOOL BarrelTruck_IsActive(void);
 BOOL BarrelTruck_CheckCollision(WORD bike_cx, WORD bike_top);
-
+void BarrelTruck_RequestSpawn(WORD x, WORD y);
 #endif

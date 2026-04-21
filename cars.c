@@ -211,6 +211,8 @@
 #define CAR_BG_SIZE 768
 extern volatile struct Custom *custom;
 
+static BOOL cars_spawn_disabled = FALSE;
+
 #define CAR_SPEED_OFFSET_EASY   5   // Before 15 cars passed
 #define CAR_SPEED_OFFSET_HARD   4   // After 15 cars passed
 #define CAR_STEER_AMOUNT        2   // Pixels per steer  
@@ -385,7 +387,7 @@ void Cars_ClearAll(void)
            car[i].crashed = FALSE;
        }
    }
-   
+
 void Cars_ResetPositionsEmpty(void)
 {
     for (int i = 0; i < MAX_CARS; i++)
@@ -794,6 +796,27 @@ void Cars_CopyPristineBackground(BlitterObject *car)
         custom->bltdpt = draw_buffer + offset;
         custom->bltsize = ((clip_height << 2) << 6) | 3;
     }
+}
+
+
+void Cars_DisableSpawning(void)
+{
+    cars_spawn_disabled = TRUE;
+}
+
+void Cars_EnableSpawning(void)
+{
+    cars_spawn_disabled = FALSE;
+}
+
+BOOL Cars_AnyOnScreen(void)
+{
+    for (int i = 0; i < MAX_CARS; i++)
+    {
+        if (car[i].visible && !car[i].off_screen)
+            return TRUE;
+    }
+    return FALSE;
 }
  
 

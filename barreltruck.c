@@ -11,9 +11,7 @@
 #include "cars.h"
 #include "motorbike.h"
 #include "barreltruck.h"
-
-#if BARRELTRUCK_ENABLED
-
+ 
 extern volatile struct Custom *custom;
 extern UBYTE *draw_buffer;
 extern WORD mapposy;
@@ -49,6 +47,9 @@ static UBYTE barrel_zigzag_frame = 0;
 static UBYTE barrel_zigzag_counter = 0;
 static WORD  truck_speed = 0;
 static WORD  truck_accumulator = 0;
+
+static BOOL truck_pending = FALSE;
+static WORD pending_x, pending_y;
 
 /* ---- Drop state ---- */
 static Barrel barrels[MAX_BARRELS];
@@ -139,10 +140,7 @@ void BarrelTruck_Initialize(void)
 void BarrelTruck_Spawn(WORD x, WORD y)
 {
     if (truck_active) return;
-    
-    /* Clear all cars — arcade behavior */
-    Cars_ClearAll();
-    
+   
     truck_x = x;
     truck_y = y;
     truck_old_x = x;
@@ -173,6 +171,7 @@ void BarrelTruck_Spawn(WORD x, WORD y)
 void BarrelTruck_Stop(void)
 {
     truck_active = FALSE;
+    truck_pending = FALSE;
     truck_needs_restore = 0;
     
     for (int i = 0; i < MAX_BARRELS; i++)
@@ -182,6 +181,8 @@ void BarrelTruck_Stop(void)
     }
     
     Timer_Stop(&barrel_drop_timer);
+    
+    Cars_EnableSpawning();   /* Cars start spawning again */
 }
 
 void BarrelTruck_Reset(void)
@@ -196,6 +197,17 @@ BOOL BarrelTruck_IsActive(void)
 
 void BarrelTruck_Update(void)
 {
+    /* Pending — wait for cars to clear screen */
+    if (truck_pending && !truck_active)
+    {
+        if (!Cars_AnyOnScreen())
+        {
+            truck_pending = FALSE;
+            BarrelTruck_Spawn(pending_x, pending_y);
+        }
+        return;
+    }
+
     if (!truck_active) return;
     
     /* Move truck forward — world Y decreases */
@@ -286,6 +298,17 @@ void BarrelTruck_Restore(void)
         }
         barrels[i].needs_restore--;
     }
+}
+
+void BarrelTruck_RequestSpawn(WORD x, WORD y)
+{
+    if (truck_active || truck_pending) return;
+    
+    truck_pending = TRUE;
+    pending_x = x;
+    pending_y = y;
+    
+    Cars_DisableSpawning();  /* Stop new cars — existing ones finish naturally */
 }
 
 void BarrelTruck_Draw(void)
@@ -404,21 +427,4 @@ BOOL BarrelTruck_CheckCollision(WORD bike_cx, WORD bike_top)
     
     return FALSE;
 }
-
-#else /* BARRELTRUCK_ENABLED == FALSE */
-
-void BarrelTruck_Initialize(void) {}
-void BarrelTruck_Spawn(WORD x, WORD y) { (void)x; (void)y; }
-void BarrelTruck_Stop(void) {}
-void BarrelTruck_Update(void) {}
-void BarrelTruck_Restore(void) {}
-void BarrelTruck_Draw(void) {}
-void BarrelTruck_Reset(void) {}
-BOOL BarrelTruck_IsActive(void) { return FALSE; }
-BOOL BarrelTruck_CheckCollision(WORD bike_cx, WORD bike_top) 
-{ 
-    (void)bike_cx; (void)bike_top; 
-    return FALSE; 
-}
-
-#endif
+ 
