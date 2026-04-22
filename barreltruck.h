@@ -4,27 +4,23 @@
 #include <exec/types.h>
 #include "blitter.h"
  
-/* ---- Truck BOB (32×64, 4 planes + mask, 2 wheel frames) ---- */
-#define TRUCK_BOB_FILE1     "objects/truck1.BPL"
-#define TRUCK_BOB_FILE2     "objects/truck2.BPL"
+/* ---- Truck BOB ---- */
+#define TRUCK_BOB_FILE     "objects/barreltruck.BPL"
 #define TRUCK_BOB_WIDTH     32
-#define TRUCK_BOB_HEIGHT    64
+#define TRUCK_BOB_HEIGHT    56
 #define TRUCK_BOB_DEPTH     4
 
-/* ---- Left barrel strip (14×20, overhangs truck — 2 anim frames) ---- */
+/* ---- barrel strip (14×20, overhangs truck — 2 anim frames) ---- */
 #define LEFT_STRIP_FILE1    "objects/leftbarrel1.BPL"
 #define LEFT_STRIP_FILE2    "objects/leftbarrel2.BPL"
 #define LEFT_STRIP_WIDTH    16       /* 14 padded to 16 for word alignment */
 #define LEFT_STRIP_HEIGHT   20
-
-/* ---- Right barrel strip (14×20, less aggressive — 2 anim frames) ---- */
-#define RIGHT_STRIP_FILE1   "objects/rightbarrel1.BPL"
-#define RIGHT_STRIP_FILE2   "objects/rightbarrel2.BPL"
 #define RIGHT_STRIP_WIDTH   16
 #define RIGHT_STRIP_HEIGHT  20
 
 /* ---- Dropped barrel (16×16) ---- */
-#define BARREL_BOB_FILE     "objects/barrel.BPL"
+#define BARREL_BOB_FILE1     "objects/barrel1.BPL"
+#define BARREL_BOB_FILE2     "objects/barrel2.BPL"
 #define BARREL_BOB_WIDTH    16
 #define BARREL_BOB_HEIGHT   16
 #define BARREL_BOB_DEPTH    4
@@ -53,6 +49,7 @@ typedef struct {
     UBYTE side;                     /* BARREL_SIDE_LEFT or BARREL_SIDE_RIGHT */
     UBYTE needs_restore;
     BOOL  active;
+    UBYTE anim_offset; 
 } Barrel;
 
 void BarrelTruck_Initialize(void);

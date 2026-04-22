@@ -811,9 +811,9 @@ void Cars_EnableSpawning(void)
 
 BOOL Cars_AnyOnScreen(void)
 {
-    for (int i = 0; i < MAX_CARS; i++)
+     for (int i = 0; i < MAX_CARS; i++)
     {
-        if (car[i].visible && !car[i].off_screen)
+        if (car[i].visible && (!car[i].off_screen || car[i].spawning))
             return TRUE;
     }
     return FALSE;
@@ -1171,6 +1171,7 @@ void Cars_Tick(BlitterObject *car)
  
 void Cars_CheckForRespawn(void)
 {
+    if (cars_spawn_disabled) return;
     if (collision_state != COLLISION_NONE) return;
     if (respawn_timer > 0) { respawn_timer--; return; }
     

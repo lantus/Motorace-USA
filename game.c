@@ -245,6 +245,7 @@ void Game_Initialize()
     MotorBike_Initialize();
     Planes_Initialize();
     NYCVictory_Initialize();
+    BarrelTruck_Initialize();
 
     HUD_InitSprites();
     HUD_SetSpritePositions();
@@ -283,6 +284,7 @@ void Game_Initialize()
             scroll_speed_table_active = g_is_pal ? scroll_speed_1200cc_pal : scroll_speed_1200cc;
             break;
     }
+    
 }
 
  
@@ -1237,6 +1239,10 @@ void Stage_Draw()
 
         Fuel_Draw(); 
         StageProgress_DrawOverhead();
+
+        BarrelTruck_Restore();  
+        BarrelTruck_Draw();     
+
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
 
         UBYTE surf_top = Collision_GetSurface(bike_position_x + 8, bike_wy);
@@ -1516,6 +1522,8 @@ void Stage_Update()
 
         // Update fuel gauge
         Fuel_Update();
+
+        BarrelTruck_Update(); 
         
         // Check if fuel is empty
         if (Fuel_IsEmpty())
@@ -1600,6 +1608,7 @@ void Stage_Update()
                 bike_wy = mapposy + bike_position_y - g_sprite_voffset;
                 CheckBonusPickups();
             }
+
             return;
         }
  
@@ -1758,11 +1767,27 @@ void Stage_Update()
             }
         }
 
-        if (surface == SURFACE_BARRELTRUCK && !BarrelTruck_IsActive())
+        /*if (surface == SURFACE_BARRELTRUCK && !BarrelTruck_IsActive())
         {
             WORD spawn_x = 80;
             WORD spawn_y = mapposy - SCREENHEIGHT;
             BarrelTruck_RequestSpawn(spawn_x, spawn_y);
+        }*/
+
+        /* DEBUG: hardcoded barrel truck trigger in Houston */
+        if (game_stage == STAGE_HOUSTON && !BarrelTruck_IsActive())
+        {
+            WORD trigger_world_y = 1249 << 4;  /* tile row 1249 */
+            WORD bike_world_y = mapposy + bike_position_y;
+            
+            /* Fire when bike reaches the trigger tile */
+            if (bike_world_y <= trigger_world_y && bike_world_y >= trigger_world_y - 8)
+            {
+                WORD spawn_x = 5 << 4;  /* tile col 5 = pixel 80 */
+                WORD spawn_y = mapposy;
+                BarrelTruck_RequestSpawn(spawn_x, spawn_y);
+                KPrintF("Barrel truck triggered at row %ld\n", (LONG)trigger_world_y);
+            }
         }
 
         /* Before the input handling section */
@@ -2240,6 +2265,7 @@ void Game_HandleCollisions(void)
     
     if (collision_state != COLLISION_NONE)
     {
+
         if (collision_state == COLLISION_TRAFFIC || 
             collision_state == COLLISION_OFFROAD)
         {
@@ -2256,6 +2282,8 @@ void Game_HandleCollisions(void)
         
             if (collision_state != COLLISION_WATER)
                 Cars_ScatterAfterCrash();
+
+            BarrelTruck_Stop();  
             
             collision_state = COLLISION_NONE;
             collision_car_index = -1;

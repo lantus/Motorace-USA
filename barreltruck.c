@@ -1,8 +1,14 @@
 #include "support/gcc8_c_support.h"
 #include <exec/types.h>
 #include <exec/exec.h>
+#include <graphics/gfx.h>
+#include <graphics/gfxbase.h>
 #include <hardware/custom.h>
+#include <hardware/intbits.h>
+#include <hardware/dmabits.h>
 #include <proto/exec.h>
+#include <proto/graphics.h>
+#include <proto/dos.h>
 #include "game.h"
 #include "hardware.h"
 #include "blitter.h"
@@ -15,13 +21,7 @@
 extern volatile struct Custom *custom;
 extern UBYTE *draw_buffer;
 extern WORD mapposy;
-
-/* ---- Blit params (same pattern as planes — mask stored after planes) ---- */
-#define TRUCK_WIDTH_WORDS       3    /* 2 words visible + 1 shift overflow */
-#define TRUCK_BLIT_LINES        (TRUCK_BOB_HEIGHT * 4)   /* interleaved */
-#define TRUCK_SRC_MOD           0
-#define TRUCK_MASK_OFFSET       ((TRUCK_WIDTH_WORDS << 1) * TRUCK_BOB_HEIGHT * 4)
-
+ 
 #define STRIP_WIDTH_WORDS       2
 #define STRIP_BLIT_LINES        (LEFT_STRIP_HEIGHT * 4)
 #define STRIP_SRC_MOD           0
@@ -57,13 +57,11 @@ static GameTimer barrel_drop_timer;
 static UBYTE next_drop_side = BARREL_SIDE_LEFT;
 
 /* ---- BOB assets ---- */
-static UBYTE *truck_data_f1 = NULL;
-static UBYTE *truck_data_f2 = NULL;
+static UBYTE *truck_data = NULL;
 static UBYTE *left_strip_f1 = NULL;
 static UBYTE *left_strip_f2 = NULL;
-static UBYTE *right_strip_f1 = NULL;
-static UBYTE *right_strip_f2 = NULL;
-static UBYTE *barrel_data = NULL;
+static UBYTE *barrel_data_f1 = NULL;
+static UBYTE *barrel_data_f2 = NULL;
 
 WORD barrel_truck_speed = 38;   /* slightly less than MIN_CRUISING_SPEED */
 
@@ -126,13 +124,11 @@ static void BarrelTruck_DropBarrel(void)
 
 void BarrelTruck_Initialize(void)
 {
-    truck_data_f1  = Disk_AllocAndLoadAsset(TRUCK_BOB_FILE1, MEMF_CHIP);
-    truck_data_f2  = Disk_AllocAndLoadAsset(TRUCK_BOB_FILE2, MEMF_CHIP);
+    truck_data  = Disk_AllocAndLoadAsset(TRUCK_BOB_FILE, MEMF_CHIP);
     left_strip_f1  = Disk_AllocAndLoadAsset(LEFT_STRIP_FILE1, MEMF_CHIP);
     left_strip_f2  = Disk_AllocAndLoadAsset(LEFT_STRIP_FILE2, MEMF_CHIP);
-    right_strip_f1 = Disk_AllocAndLoadAsset(RIGHT_STRIP_FILE1, MEMF_CHIP);
-    right_strip_f2 = Disk_AllocAndLoadAsset(RIGHT_STRIP_FILE2, MEMF_CHIP);
-    barrel_data    = Disk_AllocAndLoadAsset(BARREL_BOB_FILE, MEMF_CHIP);
+    barrel_data_f1 = Disk_AllocAndLoadAsset(BARREL_BOB_FILE1, MEMF_CHIP);
+    barrel_data_f2 = Disk_AllocAndLoadAsset(BARREL_BOB_FILE2, MEMF_CHIP);    
     
     BarrelTruck_Reset();
 }
@@ -170,19 +166,93 @@ void BarrelTruck_Spawn(WORD x, WORD y)
 
 void BarrelTruck_Stop(void)
 {
+   if (truck_active)
+    {
+        /* Restore both current AND prev position to clear both buffers */
+        WORD positions[2][2] = {
+            { truck_old_x, truck_old_y },
+            { truck_prev_old_x, truck_prev_old_y }
+        };
+        
+        for (int p = 0; p < 2; p++)
+        {
+            WORD old_screen_y = positions[p][1] - mapposy;
+            if (old_screen_y < -TRUCK_BOB_HEIGHT || old_screen_y >= SCREENHEIGHT)
+                continue;
+            
+            WORD clip_height = TRUCK_BOB_HEIGHT;
+            WORD dest_y = old_screen_y;
+            
+            if (old_screen_y < -TRUCK_BOB_HEIGHT)
+            {
+                clip_height += old_screen_y;
+                dest_y = 0;
+            }
+            if (old_screen_y + clip_height > SCREENHEIGHT)
+                clip_height = SCREENHEIGHT - old_screen_y;
+            if (clip_height <= 0) continue;
+            
+            WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
+            if (buffer_y < 0) buffer_y += BITMAPHEIGHT;
+            else if (buffer_y >= BITMAPHEIGHT) buffer_y -= BITMAPHEIGHT;
+            
+            WORD x_word_aligned = (positions[p][0] >> 3) & 0xFFFE;
+            
+            /* Restore to BOTH buffers — draw and display */
+            UBYTE *buffers[2] = { draw_buffer, display_buffer };
+            for (int b = 0; b < 2; b++)
+            {
+                if (buffer_y + clip_height > BITMAPHEIGHT)
+                {
+                    WORD lines_before = BITMAPHEIGHT - buffer_y;
+                    WORD lines_after  = clip_height - lines_before;
+                    ULONG offset1 = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+                    
+                    WaitBlit();
+                    custom->bltcon0 = 0x9F0;
+                    custom->bltcon1 = 0;
+                    custom->bltafwm = 0xFFFF;
+                    custom->bltalwm = 0xFFFF;
+                    custom->bltamod = 18;
+                    custom->bltdmod = 18;
+                    custom->bltapt = screen.pristine + offset1;
+                    custom->bltdpt = buffers[b] + offset1;
+                    custom->bltsize = ((lines_before << 2) << 6) | 3;
+                    
+                    ULONG offset2 = x_word_aligned;
+                    WaitBlit();
+                    custom->bltapt = screen.pristine + offset2;
+                    custom->bltdpt = buffers[b] + offset2;
+                    custom->bltsize = ((lines_after << 2) << 6) | 3;
+                }
+                else
+                {
+                    ULONG offset = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+                    WaitBlit();
+                    custom->bltcon0 = 0x9F0;
+                    custom->bltcon1 = 0;
+                    custom->bltafwm = 0xFFFF;
+                    custom->bltalwm = 0xFFFF;
+                    custom->bltamod = 18;
+                    custom->bltdmod = 18;
+                    custom->bltapt = screen.pristine + offset;
+                    custom->bltdpt = buffers[b] + offset;
+                    custom->bltsize = ((clip_height << 2) << 6) | 3;
+                }
+            }
+        }
+    }
+    
     truck_active = FALSE;
     truck_pending = FALSE;
-    truck_needs_restore = 0;
     
     for (int i = 0; i < MAX_BARRELS; i++)
     {
         barrels[i].active = FALSE;
-        barrels[i].needs_restore = 0;
     }
     
     Timer_Stop(&barrel_drop_timer);
-    
-    Cars_EnableSpawning();   /* Cars start spawning again */
+    Cars_EnableSpawning();
 }
 
 void BarrelTruck_Reset(void)
@@ -197,20 +267,22 @@ BOOL BarrelTruck_IsActive(void)
 
 void BarrelTruck_Update(void)
 {
-    /* Pending — wait for cars to clear screen */
     if (truck_pending && !truck_active)
     {
         if (!Cars_AnyOnScreen())
         {
             truck_pending = FALSE;
-            BarrelTruck_Spawn(pending_x, pending_y);
+            BarrelTruck_Spawn(pending_x, mapposy - TRUCK_BOB_HEIGHT - 32);
         }
         return;
     }
-
+    
     if (!truck_active) return;
     
-    /* Move truck forward — world Y decreases */
+    WORD effective_speed = 40;
+    
+    truck_speed = GetScrollAmount(effective_speed);
+    
     truck_accumulator += truck_speed;
     if (truck_accumulator >= 256)
     {
@@ -219,7 +291,6 @@ void BarrelTruck_Update(void)
         truck_accumulator &= 0xFF;
     }
     
-    /* Wheel animation */
     truck_wheel_counter++;
     if (truck_wheel_counter >= 6)
     {
@@ -227,15 +298,6 @@ void BarrelTruck_Update(void)
         truck_wheel_frame ^= 1;
     }
     
-    /* Barrel zigzag animation (slightly slower than wheels) */
-    barrel_zigzag_counter++;
-    if (barrel_zigzag_counter >= 10)
-    {
-        barrel_zigzag_counter = 0;
-        barrel_zigzag_frame ^= 1;
-    }
-    
-    /* Truck fell off bottom of screen? */
     WORD truck_screen_y = truck_y - mapposy;
     if (truck_screen_y > SCREENHEIGHT + TRUCK_BOB_HEIGHT)
     {
@@ -243,61 +305,19 @@ void BarrelTruck_Update(void)
         return;
     }
     
-    /* Move dropped barrels forward slowly */
-    WORD barrel_scroll = GetScrollAmount(BARREL_WORLD_SPEED);
-    for (int i = 0; i < MAX_BARRELS; i++)
-    {
-        if (!barrels[i].active) continue;
-        
-        barrels[i].accumulator += barrel_scroll;
-        if (barrels[i].accumulator >= 256)
-        {
-            WORD pixels = barrels[i].accumulator >> 8;
-            barrels[i].y -= pixels;
-            barrels[i].accumulator &= 0xFF;
-        }
-        
-        /* Barrel off bottom? */
-        WORD barrel_screen_y = barrels[i].y - mapposy;
-        if (barrel_screen_y > SCREENHEIGHT + BARREL_BOB_HEIGHT)
-            barrels[i].active = FALSE;
-    }
-    
-    /* Drop new barrel on interval */
+    /* Barrel dropping DISABLED for debug */
+    /*
     if (Timer_HasElapsed(&barrel_drop_timer))
     {
         BarrelTruck_DropBarrel();
         Timer_Reset(&barrel_drop_timer);
     }
+    */
 }
 
 void BarrelTruck_Restore(void)
 {
-    /* Restore truck (this also covers the barrel strips drawn on top) */
-    if (truck_needs_restore > 0)
-    {
-        WORD old_screen_y = truck_prev_old_y - mapposy;
-        if (old_screen_y >= -TRUCK_BOB_HEIGHT && old_screen_y < SCREENHEIGHT)
-        {
-            BlitRestoreBobs(draw_buffer, truck_prev_old_x, old_screen_y,
-                       TRUCK_WIDTH_WORDS, TRUCK_BLIT_LINES);
-        }
-        truck_needs_restore--;
-    }
-    
-    /* Restore dropped barrels */
-    for (int i = 0; i < MAX_BARRELS; i++)
-    {
-        if (barrels[i].needs_restore == 0) continue;
-        
-        WORD old_screen_y = barrels[i].prev_old_y - mapposy;
-        if (old_screen_y >= -BARREL_BOB_HEIGHT && old_screen_y < SCREENHEIGHT)
-        {
-            BlitRestoreBobs(draw_buffer, barrels[i].prev_old_x, old_screen_y,
-                       BARREL_WIDTH_WORDS, BARREL_BLIT_LINES);
-        }
-        barrels[i].needs_restore--;
-    }
+   
 }
 
 void BarrelTruck_RequestSpawn(WORD x, WORD y)
@@ -315,82 +335,154 @@ void BarrelTruck_Draw(void)
 {
     if (!truck_active) return;
     
-    /* Track positions for double-buffer restore */
+    /* ===== RESTORE from 2 frames ago ===== */
+    {
+        WORD old_screen_y = truck_prev_old_y - mapposy;
+        
+        /* Only restore if prev position was on screen */
+        if (old_screen_y >= -TRUCK_BOB_HEIGHT && old_screen_y < SCREENHEIGHT + TRUCK_BOB_HEIGHT)
+        {
+            WORD clip_height = TRUCK_BOB_HEIGHT;
+            WORD dest_y = old_screen_y;
+            
+            /* Clip TOP */
+            if (old_screen_y < -TRUCK_BOB_HEIGHT)
+            {
+                clip_height += old_screen_y;
+                dest_y = 0;
+            }
+            
+            /* Clip BOTTOM */
+            if (old_screen_y + clip_height > SCREENHEIGHT)
+            {
+                clip_height = SCREENHEIGHT - old_screen_y;
+            }
+            
+            if (clip_height > 0)
+            {
+                WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
+                if (buffer_y < 0) buffer_y += BITMAPHEIGHT;
+                else if (buffer_y >= BITMAPHEIGHT) buffer_y -= BITMAPHEIGHT;
+                
+                WORD x_word_aligned = (truck_prev_old_x >> 3) & 0xFFFE;
+                
+                if (buffer_y + clip_height > BITMAPHEIGHT)
+                {
+                    /* Split restore across bitmap wrap */
+                    WORD lines_before = BITMAPHEIGHT - buffer_y;
+                    WORD lines_after  = clip_height - lines_before;
+                    
+                    ULONG offset1 = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+                    
+                    WaitBlit();
+                    custom->bltcon0 = 0x9F0;
+                    custom->bltcon1 = 0;
+                    custom->bltafwm = 0xFFFF;
+                    custom->bltalwm = 0xFFFF;
+                    custom->bltamod = 18;
+                    custom->bltdmod = 18;
+                    custom->bltapt = screen.pristine + offset1;
+                    custom->bltdpt = draw_buffer + offset1;
+                    custom->bltsize = ((lines_before << 2) << 6) | 3;
+                    
+                    ULONG offset2 = x_word_aligned;
+                    WaitBlit();
+                    custom->bltapt = screen.pristine + offset2;
+                    custom->bltdpt = draw_buffer + offset2;
+                    custom->bltsize = ((lines_after << 2) << 6) | 3;
+                }
+                else
+                {
+                    /* Single restore */
+                    ULONG offset = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+                    
+                    WaitBlit();
+                    custom->bltcon0 = 0x9F0;
+                    custom->bltcon1 = 0;
+                    custom->bltafwm = 0xFFFF;
+                    custom->bltalwm = 0xFFFF;
+                    custom->bltamod = 18;
+                    custom->bltdmod = 18;
+                    custom->bltapt = screen.pristine + offset;
+                    custom->bltdpt = draw_buffer + offset;
+                    custom->bltsize = ((clip_height << 2) << 6) | 3;
+                }
+            }
+        }
+    }
+    
+    /* ===== ROLL position history forward ===== */
     truck_prev_old_x = truck_old_x;
     truck_prev_old_y = truck_old_y;
     truck_old_x = truck_x;
     truck_old_y = truck_y;
     
-    WORD truck_screen_y = truck_y - mapposy;
-    
-    /* Truck body */
-    if (truck_screen_y >= -TRUCK_BOB_HEIGHT && truck_screen_y < SCREENHEIGHT)
+    /* ===== DRAW at current position ===== */
     {
-        UBYTE *tsrc  = (truck_wheel_frame == 0) ? truck_data_f1 : truck_data_f2;
-        UBYTE *tmask = tsrc + TRUCK_MASK_OFFSET;
+        WORD screen_y = truck_y - mapposy;
+        WORD src_y_offset = 0;
+        WORD clip_height = TRUCK_BOB_HEIGHT;
+        WORD dest_y = screen_y;
         
-        UWORD tsrc_mod = TRUCK_SRC_MOD;
-        UWORD tdst_mod = BITMAPBYTESPERROW - (TRUCK_WIDTH_WORDS << 1);
-        ULONG tadmod = ((ULONG)tdst_mod << 16) | tsrc_mod;
-        UWORD tbltsize = (TRUCK_BLIT_LINES << 6) | TRUCK_WIDTH_WORDS;
-        
-        BlitBob2(SCREENWIDTH_WORDS, truck_x, truck_screen_y,
-                 tadmod, tbltsize, TRUCK_BOB_WIDTH,
-                 NULL, tsrc, tmask, draw_buffer);
-        
-        /* Left barrel strip */
-        UBYTE *lsrc  = (barrel_zigzag_frame == 0) ? left_strip_f1 : left_strip_f2;
-        UBYTE *lmask = lsrc + STRIP_MASK_OFFSET;
-        
-        UWORD ssrc_mod = STRIP_SRC_MOD;
-        UWORD sdst_mod = BITMAPBYTESPERROW - (STRIP_WIDTH_WORDS << 1);
-        ULONG sadmod = ((ULONG)sdst_mod << 16) | ssrc_mod;
-        UWORD sbltsize = (STRIP_BLIT_LINES << 6) | STRIP_WIDTH_WORDS;
-        
-        BlitBob2(SCREENWIDTH_WORDS,
-                 truck_x + LEFT_STRIP_OFFSET_X,
-                 truck_screen_y + LEFT_STRIP_OFFSET_Y,
-                 sadmod, sbltsize, LEFT_STRIP_WIDTH,
-                 NULL, lsrc, lmask, draw_buffer);
-        
-        /* Right barrel strip (uses the OPPOSITE zigzag frame for counter-sway) */
-        UBYTE *rsrc  = (barrel_zigzag_frame == 0) ? right_strip_f2 : right_strip_f1;
-        UBYTE *rmask = rsrc + STRIP_MASK_OFFSET;
-        
-        BlitBob2(SCREENWIDTH_WORDS,
-                 truck_x + RIGHT_STRIP_OFFSET_X,
-                 truck_screen_y + RIGHT_STRIP_OFFSET_Y,
-                 sadmod, sbltsize, RIGHT_STRIP_WIDTH,
-                 NULL, rsrc, rmask, draw_buffer);
-        
-        truck_needs_restore = 2;
-    }
-    
-    /* Dropped barrels */
-    UBYTE *bsrc  = barrel_data;
-    UBYTE *bmask = bsrc + BARREL_MASK_OFFSET;
-    
-    UWORD bsrc_mod = BARREL_SRC_MOD;
-    UWORD bdst_mod = BITMAPBYTESPERROW - (BARREL_WIDTH_WORDS << 1);
-    ULONG badmod = ((ULONG)bdst_mod << 16) | bsrc_mod;
-    UWORD bbltsize = (BARREL_BLIT_LINES << 6) | BARREL_WIDTH_WORDS;
-    
-    for (int i = 0; i < MAX_BARRELS; i++)
-    {
-        if (!barrels[i].active) continue;
-        
-        barrels[i].prev_old_x = barrels[i].old_x;
-        barrels[i].prev_old_y = barrels[i].old_y;
-        barrels[i].old_x = barrels[i].x;
-        barrels[i].old_y = barrels[i].y;
-        
-        WORD barrel_screen_y = barrels[i].y - mapposy;
-        if (barrel_screen_y >= -BARREL_BOB_HEIGHT && barrel_screen_y < SCREENHEIGHT)
+        /* Clip BOTTOM */
+        if (screen_y + clip_height > SCREENHEIGHT)
         {
-            BlitBob2(SCREENWIDTH_WORDS, barrels[i].x, barrel_screen_y,
-                     badmod, bbltsize, BARREL_BOB_WIDTH,
-                     NULL, bsrc, bmask, draw_buffer);
-            barrels[i].needs_restore = 2;
+            clip_height = SCREENHEIGHT - screen_y;
+            if (clip_height <= 0) return;
+        }
+        
+        /* Clip TOP */
+        if (screen_y < -TRUCK_BOB_HEIGHT)
+        {
+            src_y_offset = -screen_y;
+            clip_height -= src_y_offset;
+            dest_y = 0;
+            if (clip_height <= 0) return;
+        }
+        
+        /* X bounds */
+        if (truck_x < -16 || truck_x > SCREENWIDTH + 16) return;
+        
+        WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
+        if (buffer_y < 0) buffer_y += BITMAPHEIGHT;
+        else if (buffer_y >= BITMAPHEIGHT) buffer_y -= BITMAPHEIGHT;
+        
+        UBYTE *source = truck_data;
+        UBYTE *mask   = source + 6;
+        
+        ULONG src_offset = (src_y_offset << 4) + (src_y_offset << 3);  /* * 24 */
+        source += src_offset;
+        mask   += src_offset;
+        
+        UWORD source_mod = 6;
+        UWORD dest_mod   = 18;
+        ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+        
+        APTR tmp_restore[4];
+        
+        if (buffer_y + clip_height > BITMAPHEIGHT)
+        {
+            /* Split draw across bitmap wrap */
+            WORD lines_before = BITMAPHEIGHT - buffer_y;
+            WORD lines_after  = clip_height - lines_before;
+            
+            UWORD bltsize1 = ((lines_before << 2) << 6) | 3;
+            BlitBob2(SCREENWIDTH_WORDS, truck_x, buffer_y, admod, bltsize1,
+                     TRUCK_BOB_WIDTH, tmp_restore, source, mask, draw_buffer);
+            
+            ULONG advance = (lines_before << 4) + (lines_before << 3);
+            UBYTE *source2 = source + advance;
+            UBYTE *mask2   = mask + advance;
+            UWORD bltsize2 = ((lines_after << 2) << 6) | 3;
+            
+            BlitBob2(SCREENWIDTH_WORDS, truck_x, 0, admod, bltsize2,
+                     TRUCK_BOB_WIDTH, tmp_restore, source2, mask2, draw_buffer);
+        }
+        else
+        {
+            UWORD bltsize = ((clip_height << 2) << 6) | 3;
+            BlitBob2(SCREENWIDTH_WORDS, truck_x, buffer_y, admod, bltsize,
+                     TRUCK_BOB_WIDTH, tmp_restore, source, mask, draw_buffer);
         }
     }
 }

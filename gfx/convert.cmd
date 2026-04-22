@@ -34,6 +34,11 @@ kingcon Car3_1.iff ..\objects\car3_1 -Interleaved -format=4 -Mask -AW
 kingcon Car4_0.iff ..\objects\car4_0 -Interleaved -format=4 -Mask -AW
 kingcon Car4_1.iff ..\objects\car4_1 -Interleaved -format=4 -Mask -AW
 
+kingcon barrel1.iff ..\objects\barrel1 -Interleaved -format=4 -Mask -AW
+kingcon barrel2.iff ..\objects\barrel2 -Interleaved -format=4 -Mask -AW
+kingcon barreltruck.iff ..\objects\barreltruck -Interleaved -format=4 -Mask -AW
+kingcon leftbarrel1.iff ..\objects\leftbarrel1 -Interleaved -format=4 -Mask -AW
+kingcon leftbarrel2.iff ..\objects\leftbarrel2 -Interleaved -format=4 -Mask -AW
 
 kingcon frontview\fv1.iff ..\objects\frontview\fv1 -Interleaved -format=4 -Mask -AW
 kingcon frontview\fv2.iff ..\objects\frontview\fv2 -Interleaved -format=4 -Mask -AW
