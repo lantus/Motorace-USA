@@ -63,6 +63,11 @@ static UBYTE *left_strip_f2 = NULL;
 static UBYTE *barrel_data_f1 = NULL;
 static UBYTE *barrel_data_f2 = NULL;
 
+static UBYTE barrel_anim_frame = 0;
+static UBYTE barrel_anim_counter = 0;
+ 
+static const WORD sway_table[10] = { -2, 0, 2, 4, 6, 6, 4, 2, 0, -2 };
+
 WORD barrel_truck_speed = 38;   /* slightly less than MIN_CRUISING_SPEED */
 
 /* ---- Helpers ---- */
@@ -116,8 +121,7 @@ static void BarrelTruck_DropBarrel(void)
     b->active = TRUE;
     
     next_drop_side ^= 1;   /* alternate for next drop */
-    
-    /* TODO: SFX_Play(SFX_BARREL_DROP); */
+     
 }
 
 /* ---- Public API ---- */
@@ -151,6 +155,9 @@ void BarrelTruck_Spawn(WORD x, WORD y)
     truck_accumulator = 0;
     truck_speed = GetScrollAmount(barrel_truck_speed);
     
+    barrel_anim_frame = 0;
+    barrel_anim_counter = 0;
+  
     next_drop_side = BARREL_SIDE_LEFT;
     for (int i = 0; i < MAX_BARRELS; i++)
     {
@@ -245,7 +252,10 @@ void BarrelTruck_Stop(void)
     
     truck_active = FALSE;
     truck_pending = FALSE;
-    
+
+    barrel_anim_frame = 0;
+    barrel_anim_counter = 0;
+ 
     for (int i = 0; i < MAX_BARRELS; i++)
     {
         barrels[i].active = FALSE;
@@ -367,12 +377,21 @@ void BarrelTruck_Update(void)
         BarrelTruck_Stop();
         return;
     }
+ 
+    /* In BarrelTruck_Update */
+    barrel_anim_counter++;
+    if (barrel_anim_counter >= 2)
+    {
+        barrel_anim_counter = 0;
+        barrel_anim_frame ^= 1;
+    }
 
     barrel_zigzag_counter++;
-    if (barrel_zigzag_counter >= 10)
+    if (barrel_zigzag_counter >= 5)
     {
         barrel_zigzag_counter = 0;
-        barrel_zigzag_frame ^= 1;
+        barrel_zigzag_frame++;
+        if (barrel_zigzag_frame >= 10) barrel_zigzag_frame = 0;
     }
     
     /* Barrel dropping DISABLED for debug */
@@ -558,17 +577,23 @@ void BarrelTruck_Draw(void)
 
     /* ===== DRAW strips on top of truck bed ===== */
     {
-        /* Left strip — current frame */
-        UBYTE *lsrc = (barrel_zigzag_frame == 0) ? left_strip_f1 : left_strip_f2;
+
+        WORD left_sway  = sway_table[barrel_zigzag_frame];
+         
+        /* Animate barrel frame every phase step */
+        UBYTE anim = barrel_anim_frame;
+  
+        
+        UBYTE *lsrc = (anim == 0) ? left_strip_f1 : left_strip_f2;
         BarrelTruck_DrawStrip(lsrc,
                               truck_x + LEFT_STRIP_OFFSET_X,
-                              truck_y + LEFT_STRIP_OFFSET_Y);
+                              truck_y + LEFT_STRIP_OFFSET_Y  + left_sway);
         
         /* Right strip — opposite frame for counter-sway */
-        //UBYTE *rsrc = (barrel_zigzag_frame == 0) ? left_strip_f2 : left_strip_f1;
-        //BarrelTruck_DrawStrip(rsrc,
-        //                      truck_x + RIGHT_STRIP_OFFSET_X,
-        //                      truck_y + RIGHT_STRIP_OFFSET_Y);
+        UBYTE *rsrc = (anim == 1) ? left_strip_f2 : left_strip_f1;
+        BarrelTruck_DrawStrip(rsrc,
+                              truck_x + RIGHT_STRIP_OFFSET_X,
+                              truck_y + RIGHT_STRIP_OFFSET_Y - left_sway);
     }
 }
 
