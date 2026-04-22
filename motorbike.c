@@ -18,6 +18,7 @@
 #include "roadsystem.h"
 #include "hardware.h"
 #include "copper.h"
+#include "barreltruck.h"
 #include "motorbike.h"
 
 extern volatile struct Custom *custom;
@@ -811,6 +812,13 @@ CollisionState MotorBike_CheckCollision(UWORD *hit_car_index)
             *hit_car_index = i;
             return COLLISION_TRAFFIC;
         }
+    }
+
+    /* ---- Barrel truck + dropped barrels ---- */
+    if (BarrelTruck_CheckCollision(bike_cx, bike_top))
+    {
+        *hit_car_index = -1;
+        return COLLISION_TRAFFIC;
     }
     
     UBYTE col_center = Collision_Get(bike_cx, bike_world_top);

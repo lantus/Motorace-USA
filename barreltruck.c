@@ -35,6 +35,10 @@ extern WORD mapposy;
 #define BARREL_DROP_INTERVAL_MS 1500
 #define BARREL_WORLD_SPEED      12    /* slow forward — ~0.5 px/frame */
 
+#define BARREL_DROP_COOLDOWN_MS  1400  /* time between drops */
+
+static GameTimer barrel_drop_cooldown;
+
 /* ---- Truck state ---- */
 static BOOL  truck_active = FALSE;
 static WORD  truck_x, truck_y;
@@ -49,7 +53,7 @@ static WORD  truck_speed = 0;
 static WORD  truck_accumulator = 0;
 
 static BOOL truck_pending = FALSE;
-static WORD pending_x, pending_y;
+static WORD pending_x;
 
 /* ---- Drop state ---- */
 static Barrel barrels[MAX_BARRELS];
@@ -166,6 +170,7 @@ void BarrelTruck_Spawn(WORD x, WORD y)
     }
     
     Timer_StartMs(&barrel_drop_timer, BARREL_DROP_INTERVAL_MS);
+    Timer_StartMs(&barrel_drop_cooldown, BARREL_DROP_COOLDOWN_MS);
     truck_active = TRUE;
     
     KPrintF("BarrelTruck: spawned at (%ld, %ld)\n", (LONG)x, (LONG)y);
@@ -262,6 +267,8 @@ void BarrelTruck_Stop(void)
     }
     
     Timer_Stop(&barrel_drop_timer);
+    Timer_Stop(&barrel_drop_cooldown);
+
     Cars_EnableSpawning();
 }
 
@@ -273,6 +280,173 @@ void BarrelTruck_Reset(void)
 BOOL BarrelTruck_IsActive(void)
 {
     return truck_active;
+}
+
+static BOOL BarrelTruck_CanSpawnBarrel(void)
+{
+    UBYTE count = 0;
+    for (int i = 0; i < MAX_BARRELS; i++)
+    {
+        if (barrels[i].active)
+            count++;
+    }
+    return count < 2;   /* max 2 on screen total */
+}
+
+static void BarrelTruck_DropBarrelAt(UBYTE side)
+{
+    /* Find free slot */
+    int slot = -1;
+    for (int i = 0; i < MAX_BARRELS; i++)
+    {
+        if (!barrels[i].active) { slot = i; break; }
+    }
+    if (slot < 0) return;
+    
+    Barrel *b = &barrels[slot];
+    
+    /* Position behind truck, aligned with the strip it fell from */
+    if (side == BARREL_SIDE_LEFT)
+        b->x = truck_x + LEFT_STRIP_OFFSET_X - 1;   /* slight left of strip */
+    else
+        b->x = truck_x + RIGHT_STRIP_OFFSET_X - 1;  /* slight left of right strip */
+    
+    b->y = truck_y + TRUCK_BOB_HEIGHT - 4;   /* just behind truck */
+    b->old_x = b->x;
+    b->old_y = b->y;
+    b->prev_old_x = b->x;
+    b->prev_old_y = b->y;
+    b->accumulator = 0;
+    b->side = side;
+    b->needs_restore = 0;
+    b->active = TRUE;
+}
+
+static void BarrelTruck_DrawBarrel(Barrel *b)
+{
+    WORD screen_y = b->y - mapposy;
+    WORD src_y_offset = 0;
+    WORD clip_height = BARREL_BOB_HEIGHT;
+    WORD dest_y = screen_y;
+    
+    if (screen_y + clip_height > SCREENHEIGHT)
+    {
+        clip_height = SCREENHEIGHT - screen_y;
+        if (clip_height <= 0) return;
+    }
+    
+    if (screen_y < -BARREL_BOB_HEIGHT)
+    {
+        src_y_offset = -screen_y;
+        clip_height -= src_y_offset;
+        dest_y = 0;
+        if (clip_height <= 0) return;
+    }
+    
+    if (b->x < -16 || b->x > SCREENWIDTH + 16) return;
+    
+    WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
+    if (buffer_y < 0) buffer_y += BITMAPHEIGHT;
+    else if (buffer_y >= BITMAPHEIGHT) buffer_y -= BITMAPHEIGHT;
+    
+    /* Animate using the shared barrel_anim_frame */
+    UBYTE *source = (barrel_anim_frame == 0) ? barrel_data_f1 : barrel_data_f2;
+    UBYTE *mask = source + 4;
+    
+    ULONG src_offset = (ULONG)src_y_offset << 5;   /* * 32 */
+    source += src_offset;
+    mask   += src_offset;
+    
+    UWORD source_mod = 4;
+    UWORD dest_mod   = BITMAPBYTESPERROW - 4;
+    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+    
+    APTR tmp_restore[4];
+    
+    if (buffer_y + clip_height > BITMAPHEIGHT)
+    {
+        WORD lines_before = BITMAPHEIGHT - buffer_y;
+        WORD lines_after  = clip_height - lines_before;
+        
+        UWORD bltsize1 = ((lines_before << 2) << 6) | 2;
+        BlitBob2(SCREENWIDTH_WORDS, b->x, buffer_y, admod, bltsize1,
+                 BARREL_BOB_WIDTH, tmp_restore, source, mask, draw_buffer);
+        
+        ULONG advance = (ULONG)lines_before << 5;
+        UWORD bltsize2 = ((lines_after << 2) << 6) | 2;
+        
+        BlitBob2(SCREENWIDTH_WORDS, b->x, 0, admod, bltsize2,
+                 BARREL_BOB_WIDTH, tmp_restore, source + advance, mask + advance, draw_buffer);
+    }
+    else
+    {
+        UWORD bltsize = ((clip_height << 2) << 6) | 2;
+        BlitBob2(SCREENWIDTH_WORDS, b->x, buffer_y, admod, bltsize,
+                 BARREL_BOB_WIDTH, tmp_restore, source, mask, draw_buffer);
+    }
+}
+
+static void BarrelTruck_RestoreBarrel(Barrel *b)
+{
+    WORD old_screen_y = b->prev_old_y - mapposy;
+    if (old_screen_y < -BARREL_BOB_HEIGHT || old_screen_y >= SCREENHEIGHT + BARREL_BOB_HEIGHT)
+        return;
+    
+    WORD clip_height = BARREL_BOB_HEIGHT;
+    WORD dest_y = old_screen_y;
+    
+    if (old_screen_y < -BARREL_BOB_HEIGHT)
+    {
+        clip_height += old_screen_y;
+        dest_y = 0;
+    }
+    if (old_screen_y + clip_height > SCREENHEIGHT)
+        clip_height = SCREENHEIGHT - old_screen_y;
+    if (clip_height <= 0) return;
+    
+    WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
+    if (buffer_y < 0) buffer_y += BITMAPHEIGHT;
+    else if (buffer_y >= BITMAPHEIGHT) buffer_y -= BITMAPHEIGHT;
+    
+    WORD x_word_aligned = (b->prev_old_x >> 3) & 0xFFFE;
+    
+    if (buffer_y + clip_height > BITMAPHEIGHT)
+    {
+        WORD lines_before = BITMAPHEIGHT - buffer_y;
+        WORD lines_after  = clip_height - lines_before;
+        ULONG offset1 = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+        
+        WaitBlit();
+        custom->bltcon0 = 0x9F0;
+        custom->bltcon1 = 0;
+        custom->bltafwm = 0xFFFF;
+        custom->bltalwm = 0xFFFF;
+        custom->bltamod = 20;     /* 2-word wide: 24 - 4 = 20 */
+        custom->bltdmod = 20;
+        custom->bltapt = screen.pristine + offset1;
+        custom->bltdpt = draw_buffer + offset1;
+        custom->bltsize = ((lines_before << 2) << 6) | 2;
+        
+        ULONG offset2 = x_word_aligned;
+        WaitBlit();
+        custom->bltapt = screen.pristine + offset2;
+        custom->bltdpt = draw_buffer + offset2;
+        custom->bltsize = ((lines_after << 2) << 6) | 2;
+    }
+    else
+    {
+        ULONG offset = ((ULONG)buffer_y << 6) + ((ULONG)buffer_y << 5) + x_word_aligned;
+        WaitBlit();
+        custom->bltcon0 = 0x9F0;
+        custom->bltcon1 = 0;
+        custom->bltafwm = 0xFFFF;
+        custom->bltalwm = 0xFFFF;
+        custom->bltamod = 20;
+        custom->bltdmod = 20;
+        custom->bltapt = screen.pristine + offset;
+        custom->bltdpt = draw_buffer + offset;
+        custom->bltsize = ((clip_height << 2) << 6) | 2;
+    }
 }
 
 static void BarrelTruck_DrawStrip(UBYTE *source, WORD world_x, WORD world_y)
@@ -394,29 +568,63 @@ void BarrelTruck_Update(void)
         if (barrel_zigzag_frame >= 10) barrel_zigzag_frame = 0;
     }
     
-    /* Barrel dropping DISABLED for debug */
-    /*
-    if (Timer_HasElapsed(&barrel_drop_timer))
+    /* ---- Barrel dropping ---- */
+ 
+    if (Timer_HasElapsed(&barrel_drop_cooldown))
     {
-        BarrelTruck_DropBarrel();
-        Timer_Reset(&barrel_drop_timer);
+        static UBYTE last_drop_phase = 255;
+        
+        if (barrel_zigzag_counter == 0 && barrel_zigzag_frame != last_drop_phase)
+        {
+            if (barrel_zigzag_frame == 4)
+            {
+                if (BarrelTruck_CanSpawnBarrel())
+                {
+                    BarrelTruck_DropBarrelAt(BARREL_SIDE_LEFT);
+                    last_drop_phase = 4;
+                    Timer_StartMs(&barrel_drop_cooldown, BARREL_DROP_COOLDOWN_MS);
+                }
+            }
+            else if (barrel_zigzag_frame == 9)
+            {
+                if (BarrelTruck_CanSpawnBarrel())
+                {
+                    BarrelTruck_DropBarrelAt(BARREL_SIDE_RIGHT);
+                    last_drop_phase = 9;
+                    Timer_StartMs(&barrel_drop_cooldown, BARREL_DROP_COOLDOWN_MS);
+                }
+            }
+        }
     }
-    */
+    
+    /* ---- Update falling barrels ---- */
+    WORD barrel_scroll = GetScrollAmount(BARREL_WORLD_SPEED);
+    for (int i = 0; i < MAX_BARRELS; i++)
+    {
+        if (!barrels[i].active) continue;
+        
+        barrels[i].accumulator += barrel_scroll;
+        if (barrels[i].accumulator >= 256)
+        {
+            WORD pixels = barrels[i].accumulator >> 8;
+            barrels[i].y -= pixels;   /* moves forward (decreasing Y) slowly */
+            barrels[i].accumulator &= 0xFF;
+        }
+        
+        /* Deactivate when off bottom of screen */
+        WORD barrel_screen_y = barrels[i].y - mapposy;
+        if (barrel_screen_y > SCREENHEIGHT + BARREL_BOB_HEIGHT)
+            barrels[i].active = FALSE;
+    }
 }
-
-void BarrelTruck_Restore(void)
-{
-   
-}
-
-void BarrelTruck_RequestSpawn(WORD x, WORD y)
+ 
+void BarrelTruck_RequestSpawn(WORD x)
 {
     if (truck_active || truck_pending) return;
     
     truck_pending = TRUE;
     pending_x = x;
-    pending_y = y;
-    
+     
     Cars_DisableSpawning();  /* Stop new cars — existing ones finish naturally */
 }
 
@@ -595,10 +803,34 @@ void BarrelTruck_Draw(void)
                               truck_x + RIGHT_STRIP_OFFSET_X,
                               truck_y + RIGHT_STRIP_OFFSET_Y - left_sway);
     }
+
+    /* ===== DRAW dropped barrels (restore + roll + draw) ===== */
+    for (int i = 0; i < MAX_BARRELS; i++)
+    {
+        if (!barrels[i].active) continue;
+        
+        /* Restore from 2 frames ago */
+        WORD prev_screen_y = barrels[i].prev_old_y - mapposy;
+        if (prev_screen_y >= -BARREL_BOB_HEIGHT && prev_screen_y < SCREENHEIGHT + BARREL_BOB_HEIGHT)
+        {
+            BarrelTruck_RestoreBarrel(&barrels[i]);
+        }
+        
+        /* Roll position history */
+        barrels[i].prev_old_x = barrels[i].old_x;
+        barrels[i].prev_old_y = barrels[i].old_y;
+        barrels[i].old_x = barrels[i].x;
+        barrels[i].old_y = barrels[i].y;
+        
+        /* Draw */
+        BarrelTruck_DrawBarrel(&barrels[i]);
+    }
 }
 
 BOOL BarrelTruck_CheckCollision(WORD bike_cx, WORD bike_top)
 {
+    if (!truck_active) return FALSE;
+
     /* Truck body itself is solid */
     if (truck_active)
     {

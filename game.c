@@ -1239,8 +1239,7 @@ void Stage_Draw()
 
         Fuel_Draw(); 
         StageProgress_DrawOverhead();
-
-        BarrelTruck_Restore();  
+ 
         BarrelTruck_Draw();     
 
         MotorBike_UpdatePosition(bike_position_x,bike_position_y,bike_state);
@@ -1784,8 +1783,7 @@ void Stage_Update()
             if (bike_world_y <= trigger_world_y && bike_world_y >= trigger_world_y - 8)
             {
                 WORD spawn_x = 5 << 4;  /* tile col 5 = pixel 80 */
-                WORD spawn_y = mapposy;
-                BarrelTruck_RequestSpawn(spawn_x, spawn_y);
+                BarrelTruck_RequestSpawn(spawn_x);
                 KPrintF("Barrel truck triggered at row %ld\n", (LONG)trigger_world_y);
             }
         }

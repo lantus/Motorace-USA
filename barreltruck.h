@@ -22,7 +22,7 @@
 #define BARREL_BOB_FILE1     "objects/barrel1.BPL"
 #define BARREL_BOB_FILE2     "objects/barrel2.BPL"
 #define BARREL_BOB_WIDTH    16
-#define BARREL_BOB_HEIGHT   16
+#define BARREL_BOB_HEIGHT   12
 #define BARREL_BOB_DEPTH    4
 
 /* ---- Strip placement on truck bed (offsets from truck_x/truck_y) ---- */
@@ -56,10 +56,9 @@ void BarrelTruck_Initialize(void);
 void BarrelTruck_Spawn(WORD x, WORD y);
 void BarrelTruck_Stop(void);
 void BarrelTruck_Update(void);
-void BarrelTruck_Restore(void);
 void BarrelTruck_Draw(void);
 void BarrelTruck_Reset(void);
 BOOL BarrelTruck_IsActive(void);
 BOOL BarrelTruck_CheckCollision(WORD bike_cx, WORD bike_top);
-void BarrelTruck_RequestSpawn(WORD x, WORD y);
+void BarrelTruck_RequestSpawn(WORD x);
 #endif
