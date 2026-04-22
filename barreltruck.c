@@ -265,6 +265,69 @@ BOOL BarrelTruck_IsActive(void)
     return truck_active;
 }
 
+static void BarrelTruck_DrawStrip(UBYTE *source, WORD world_x, WORD world_y)
+{
+    WORD screen_y = world_y - mapposy;
+    WORD src_y_offset = 0;
+    WORD clip_height = LEFT_STRIP_HEIGHT;
+    WORD dest_y = screen_y;
+    
+    if (screen_y + clip_height > SCREENHEIGHT)
+    {
+        clip_height = SCREENHEIGHT - screen_y;
+        if (clip_height <= 0) return;
+    }
+    
+    if (screen_y < -LEFT_STRIP_HEIGHT)
+    {
+        src_y_offset = -screen_y;
+        clip_height -= src_y_offset;
+        dest_y = 0;
+        if (clip_height <= 0) return;
+    }
+    
+    if (world_x < -16 || world_x > SCREENWIDTH + 16) return;
+    
+    WORD buffer_y = (videoposy + BLOCKHEIGHT + dest_y);
+    if (buffer_y < 0) buffer_y += BITMAPHEIGHT;
+    else if (buffer_y >= BITMAPHEIGHT) buffer_y -= BITMAPHEIGHT;
+    
+    /* Strip: 2-word wide BOB, 32 bytes per line */
+    UBYTE *mask = source + 4;
+    
+    ULONG src_offset = (ULONG)src_y_offset << 5;   /* * 32 */
+    source += src_offset;
+    mask   += src_offset;
+    
+    UWORD source_mod = 4;
+    UWORD dest_mod   = BITMAPBYTESPERROW - 4;   /* 20 */
+    ULONG admod = ((ULONG)dest_mod << 16) | source_mod;
+    
+    APTR tmp_restore[4];
+    
+    if (buffer_y + clip_height > BITMAPHEIGHT)
+    {
+        WORD lines_before = BITMAPHEIGHT - buffer_y;
+        WORD lines_after  = clip_height - lines_before;
+        
+        UWORD bltsize1 = ((lines_before << 2) << 6) | 2;
+        BlitBob2(SCREENWIDTH_WORDS, world_x, buffer_y, admod, bltsize1,
+                 LEFT_STRIP_WIDTH, tmp_restore, source, mask, draw_buffer);
+        
+        ULONG advance = (ULONG)lines_before << 5;
+        UWORD bltsize2 = ((lines_after << 2) << 6) | 2;
+        
+        BlitBob2(SCREENWIDTH_WORDS, world_x, 0, admod, bltsize2,
+                 LEFT_STRIP_WIDTH, tmp_restore, source + advance, mask + advance, draw_buffer);
+    }
+    else
+    {
+        UWORD bltsize = ((clip_height << 2) << 6) | 2;
+        BlitBob2(SCREENWIDTH_WORDS, world_x, buffer_y, admod, bltsize,
+                 LEFT_STRIP_WIDTH, tmp_restore, source, mask, draw_buffer);
+    }
+}
+
 void BarrelTruck_Update(void)
 {
     if (truck_pending && !truck_active)
@@ -303,6 +366,13 @@ void BarrelTruck_Update(void)
     {
         BarrelTruck_Stop();
         return;
+    }
+
+    barrel_zigzag_counter++;
+    if (barrel_zigzag_counter >= 10)
+    {
+        barrel_zigzag_counter = 0;
+        barrel_zigzag_frame ^= 1;
     }
     
     /* Barrel dropping DISABLED for debug */
@@ -484,6 +554,21 @@ void BarrelTruck_Draw(void)
             BlitBob2(SCREENWIDTH_WORDS, truck_x, buffer_y, admod, bltsize,
                      TRUCK_BOB_WIDTH, tmp_restore, source, mask, draw_buffer);
         }
+    }
+
+    /* ===== DRAW strips on top of truck bed ===== */
+    {
+        /* Left strip — current frame */
+        UBYTE *lsrc = (barrel_zigzag_frame == 0) ? left_strip_f1 : left_strip_f2;
+        BarrelTruck_DrawStrip(lsrc,
+                              truck_x + LEFT_STRIP_OFFSET_X,
+                              truck_y + LEFT_STRIP_OFFSET_Y);
+        
+        /* Right strip — opposite frame for counter-sway */
+        //UBYTE *rsrc = (barrel_zigzag_frame == 0) ? left_strip_f2 : left_strip_f1;
+        //BarrelTruck_DrawStrip(rsrc,
+        //                      truck_x + RIGHT_STRIP_OFFSET_X,
+        //                      truck_y + RIGHT_STRIP_OFFSET_Y);
     }
 }
 

@@ -806,14 +806,18 @@ void Cars_DisableSpawning(void)
 
 void Cars_EnableSpawning(void)
 {
+     KPrintF("Cars_EnableSpawning called\n");
     cars_spawn_disabled = FALSE;
 }
 
 BOOL Cars_AnyOnScreen(void)
 {
-     for (int i = 0; i < MAX_CARS; i++)
+    for (int i = 0; i < MAX_CARS; i++)
     {
-        if (car[i].visible && (!car[i].off_screen || car[i].spawning))
+        if (!car[i].visible) continue;
+        
+        WORD screen_y = car[i].y - mapposy;
+        if (screen_y > -BOB_HEIGHT && screen_y < SCREENHEIGHT)
             return TRUE;
     }
     return FALSE;
@@ -1171,7 +1175,13 @@ void Cars_Tick(BlitterObject *car)
  
 void Cars_CheckForRespawn(void)
 {
-    if (cars_spawn_disabled) return;
+     if (cars_spawn_disabled)
+    {
+        static int dc = 0;
+        if ((dc++ & 127) == 0)
+            KPrintF("Respawn blocked (disabled)\n");
+        return;
+    }
     if (collision_state != COLLISION_NONE) return;
     if (respawn_timer > 0) { respawn_timer--; return; }
     
