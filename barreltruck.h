@@ -49,7 +49,9 @@ typedef struct {
     UBYTE side;                     /* BARREL_SIDE_LEFT or BARREL_SIDE_RIGHT */
     UBYTE needs_restore;
     BOOL  active;
-    UBYTE anim_offset; 
+    WORD  base_x;           
+    UBYTE wobble_phase;     
+    UBYTE wobble_counter;
 } Barrel;
 
 void BarrelTruck_Initialize(void);

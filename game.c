@@ -1766,26 +1766,11 @@ void Stage_Update()
             }
         }
 
-        /*if (surface == SURFACE_BARRELTRUCK && !BarrelTruck_IsActive())
+        if (surface == SURFACE_BARRELTRUCK && !BarrelTruck_IsActive())
         {
             WORD spawn_x = 80;
             WORD spawn_y = mapposy - SCREENHEIGHT;
-            BarrelTruck_RequestSpawn(spawn_x, spawn_y);
-        }*/
-
-        /* DEBUG: hardcoded barrel truck trigger in Houston */
-        if (game_stage == STAGE_HOUSTON && !BarrelTruck_IsActive())
-        {
-            WORD trigger_world_y = 1249 << 4;  /* tile row 1249 */
-            WORD bike_world_y = mapposy + bike_position_y;
-            
-            /* Fire when bike reaches the trigger tile */
-            if (bike_world_y <= trigger_world_y && bike_world_y >= trigger_world_y - 8)
-            {
-                WORD spawn_x = 5 << 4;  /* tile col 5 = pixel 80 */
-                BarrelTruck_RequestSpawn(spawn_x);
-                KPrintF("Barrel truck triggered at row %ld\n", (LONG)trigger_world_y);
-            }
+            BarrelTruck_RequestSpawn(spawn_x);
         }
 
         /* Before the input handling section */

@@ -311,6 +311,9 @@ static void BarrelTruck_DropBarrelAt(UBYTE side)
     else
         b->x = truck_x + RIGHT_STRIP_OFFSET_X - 1;  /* slight left of right strip */
     
+    b->base_x = b->x;
+    b->wobble_phase = 0;
+     b->wobble_counter = (side == BARREL_SIDE_LEFT) ? 0 : 4;
     b->y = truck_y + TRUCK_BOB_HEIGHT - 4;   /* just behind truck */
     b->old_x = b->x;
     b->old_y = b->y;
@@ -611,7 +614,16 @@ void BarrelTruck_Update(void)
             barrels[i].accumulator &= 0xFF;
         }
         
-        /* Deactivate when off bottom of screen */
+        /* X wobble  */
+        barrels[i].wobble_counter++;
+        if (barrels[i].wobble_counter >= 8)
+        {
+            barrels[i].wobble_counter = 0;
+            barrels[i].wobble_phase ^= 1;
+            barrels[i].x = barrels[i].base_x + (barrels[i].wobble_phase ? 2 : 0);
+        }
+        
+        /* Off bottom check*/
         WORD barrel_screen_y = barrels[i].y - mapposy;
         if (barrel_screen_y > SCREENHEIGHT + BARREL_BOB_HEIGHT)
             barrels[i].active = FALSE;
