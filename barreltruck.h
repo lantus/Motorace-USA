@@ -62,5 +62,5 @@ void BarrelTruck_Draw(void);
 void BarrelTruck_Reset(void);
 BOOL BarrelTruck_IsActive(void);
 BOOL BarrelTruck_CheckCollision(WORD bike_cx, WORD bike_top);
-void BarrelTruck_RequestSpawn(WORD x);
+void BarrelTruck_RequestSpawn();
 #endif

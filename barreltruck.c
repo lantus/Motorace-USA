@@ -35,7 +35,7 @@ extern WORD mapposy;
 #define BARREL_DROP_INTERVAL_MS 1500
 #define BARREL_WORLD_SPEED      12    /* slow forward — ~0.5 px/frame */
 
-#define BARREL_DROP_COOLDOWN_MS  1400  /* time between drops */
+#define BARREL_DROP_COOLDOWN_MS  1000  /* time between drops */
 
 static GameTimer barrel_drop_cooldown;
 
@@ -522,7 +522,14 @@ void BarrelTruck_Update(void)
         if (!Cars_AnyOnScreen())
         {
             truck_pending = FALSE;
-            BarrelTruck_Spawn(pending_x, mapposy - TRUCK_BOB_HEIGHT - 32);
+        
+            /* Compute spawn X based on CURRENT bike position */
+            WORD spawn_x = bike_position_x - (TRUCK_BOB_WIDTH / 2) + 8;
+            if (spawn_x < 16) spawn_x = 16;
+            if (spawn_x > SCREENWIDTH - TRUCK_BOB_WIDTH - 16) 
+                spawn_x = SCREENWIDTH - TRUCK_BOB_WIDTH - 16;
+            
+            BarrelTruck_Spawn(spawn_x, mapposy - TRUCK_BOB_HEIGHT - 32);
         }
         return;
     }
@@ -630,14 +637,12 @@ void BarrelTruck_Update(void)
     }
 }
  
-void BarrelTruck_RequestSpawn(WORD x)
+void BarrelTruck_RequestSpawn()
 {
     if (truck_active || truck_pending) return;
     
     truck_pending = TRUE;
-    pending_x = x;
-     
-    Cars_DisableSpawning();  /* Stop new cars — existing ones finish naturally */
+    Cars_DisableSpawning();
 }
 
 void BarrelTruck_Draw(void)

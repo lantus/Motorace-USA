@@ -1017,20 +1017,15 @@ void Cars_ScatterAfterCrash(void)
     
     for (int i = 0; i < MAX_CARS; i++)
     {
-        if (!car[i].visible) continue;
-        
-        // Push far ahead
-        car[i].y = bike_y - SCREENHEIGHT - 64 - (i * 80);
-        
-        WORD lanes[] = { FAR_LEFT_LANE, CENTER_LANE, FAR_RIGHT_LANE, 
-                        FAR_LEFT_LANE + 16, FAR_RIGHT_LANE - 16 };
-        car[i].x = lanes[i];
-        
+        /* Park all cars far off screen, inactive */
+        car[i].y = bike_y - SCREENHEIGHT - 200;
+        car[i].x = FAR_LEFT_LANE;
+        car[i].off_screen = TRUE;
+        car[i].speed = 0;  
         car[i].crashed = FALSE;
         car[i].has_blocked_bike = FALSE;
         car[i].block_timer = 0;
         car[i].accumulator = 0;
-        car[i].off_screen = TRUE;
         car[i].needs_restore = FALSE;
         
         car[i].old_x = car[i].x;
@@ -1043,11 +1038,14 @@ void Cars_ScatterAfterCrash(void)
         car[i].swerving = FALSE;
         car[i].swerve_timer = 0;
         car[i].honking = FALSE;
-        car[i].honk_timer = 0;    
-
+        car[i].honk_timer = 0;
+        
         car_was_ahead[i] = TRUE;
-        car[i].spawning = TRUE;
+        car[i].spawning = FALSE;
     }
+    
+    /* Short pause, then normal spawn cadence resumes — 1 car at a time */
+    respawn_timer = 60;   /* 1 second */
 }
 
 void Cars_RemoveAllFromScreen(void)
@@ -1175,7 +1173,7 @@ void Cars_Tick(BlitterObject *car)
  
 void Cars_CheckForRespawn(void)
 {
-     if (cars_spawn_disabled)
+    if (cars_spawn_disabled)
     {
         static int dc = 0;
         if ((dc++ & 127) == 0)
@@ -1283,6 +1281,7 @@ void Cars_CheckForRespawn(void)
             respawn_timer = 180;    // 3 seconds — plenty of breathing room
         else  
             respawn_timer = 120;    // 2 seconds
+ 
         return;
     }
 }

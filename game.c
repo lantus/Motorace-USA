@@ -185,7 +185,8 @@ UWORD *mapdata;
  
 struct BitMapEx *BlocksBitmap,*ScreenBitmap;
  
- 
+static BikeFrame prev_bike_state = -1;
+
 // Palettes
 UWORD	intro_colors[BLOCKSCOLORS];
 UWORD	lv_colors[BLOCKSCOLORS];
@@ -284,6 +285,8 @@ void Game_Initialize()
             scroll_speed_table_active = g_is_pal ? scroll_speed_1200cc_pal : scroll_speed_1200cc;
             break;
     }
+
+    prev_bike_state = -1;
     
 }
 
@@ -355,6 +358,9 @@ void Game_Reset(void)
     Game_SetBackGroundColor(0x125);
     
     game_frame_count = 0;
+
+    bike_state = BIKE_STATE_STOPPED;
+    prev_bike_state = -1;
  
  
     Transition_FromBlack(intro_colors, BLOCKSCOLORS);
@@ -509,7 +515,8 @@ void Game_StartNextOverhead(void)
     wheelie_scored = FALSE;
     
     crash_anim_frames = 0;
-
+    prev_bike_state = -1;
+    
     Game_ApplyPalette(black_palette,BLOCKSCOLORS);
     
     /* Stage 1 spawns 5 cars around bike; other stages use respawn system */
@@ -615,7 +622,7 @@ void Game_NewGame(UBYTE difficulty)
     wheelie_active = FALSE;
     wheelie_scored = FALSE;
     crash_anim_frames = 0;
- 
+    prev_bike_state = -1;
     switch (game_difficulty)
     {
         case FIVEHUNDREDCC:
@@ -1768,9 +1775,7 @@ void Stage_Update()
 
         if (surface == SURFACE_BARRELTRUCK && !BarrelTruck_IsActive())
         {
-            WORD spawn_x = 80;
-            WORD spawn_y = mapposy - SCREENHEIGHT;
-            BarrelTruck_RequestSpawn(spawn_x);
+            BarrelTruck_RequestSpawn();
         }
 
         /* Before the input handling section */
@@ -1966,7 +1971,7 @@ void Stage_Update()
         }
 
         CityApproachState approach_state = City_GetApproachState();
-        static BikeFrame prev_bike_state = -1;
+ 
           
         if (frontview_bike_crashed == FALSE && approach_state < CITY_STATE_INTO_HORIZON )
         {
@@ -2263,8 +2268,8 @@ void Game_HandleCollisions(void)
         {
             MotorBike_CrashAndReposition();
         
-            if (collision_state != COLLISION_WATER)
-                Cars_ScatterAfterCrash();
+            //if (collision_state != COLLISION_WATER)
+            //    Cars_ScatterAfterCrash();
 
             BarrelTruck_Stop();  
             
