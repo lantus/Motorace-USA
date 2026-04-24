@@ -571,15 +571,7 @@ void City_DrawOncomingCars(void)
     {
         if (current_car->visible)
         {
-            WORD speed_modifier = 0;
-            
-            if (bike_speed < 100)
-            {
-                speed_modifier = 1;  
-            }
-        
-
-            current_car->y += current_car->speed + speed_modifier;
+            current_car->y += current_car->speed;
             current_car->x = City_CalculatePerspectiveX(current_car->y, current_car->anim_counter);
       
             if (!frontview_bike_crashed && City_CheckCarCollision(current_car))
@@ -891,12 +883,12 @@ void City_UpdateBikeCrashAnimation(void)
     
     crash_anim_counter++;
     
-    // Change frame every 4 game frames
-    if (crash_anim_counter % 4 == 0)
+  
+    if (crash_anim_counter % 8 == 0)
     {
         crash_anim_frame++;
  
-        if (crash_anim_frame > 4)
+        if (crash_anim_frame > 8)
             crash_anim_frame = 0;   
  
         switch(crash_anim_frame)

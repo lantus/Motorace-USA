@@ -1191,14 +1191,22 @@ void Cars_CheckForRespawn(void)
     }
     
     WORD max_active;
+    WORD base_max;
+    
+    switch (game_difficulty)
+    {
+        case FIVEHUNDREDCC:     base_max = 2; break;
+        case SEVENFIFTYCC:      base_max = 3; break;
+        case TWELVEHUNDREDCC:   base_max = 4; break;
+        default:                base_max = 2; break;
+    }
+    
     if (cars_passed < 3)
         max_active = 1;
     else if (cars_passed < 8)
-        max_active = 2;
-    else if (cars_passed < 15)
-        max_active = 2;
+        max_active = base_max - 1;
     else
-        max_active = 2;
+        max_active = base_max;
     
     if (active_count >= max_active) return;
     

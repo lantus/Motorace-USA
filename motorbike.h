@@ -22,7 +22,9 @@ typedef enum {
     BIKE_FRAME_APPROACH7,  
     BIKE_FRAME_APPROACH8,    
     BIKE_FRAME_APPROACH1_LEFT,
+    BIKE_FRAME_APPROACH2_LEFT,
     BIKE_FRAME_APPROACH1_RIGHT,
+    BIKE_FRAME_APPROACH2_RIGHT,
     BIKE_FRAME_CRASH1,       
     BIKE_FRAME_CRASH2,
     BIKE_FRAME_CRASH3,
@@ -32,6 +34,7 @@ typedef enum {
 #define BIKE_MOVING1            "sprites/bike/bike1.spr"
 #define BIKE_MOVING2            "sprites/bike/bike2.spr"
 #define BIKE_MOVING3            "sprites/bike/bike3.spr"
+
 #define BIKE_LEFT1              "sprites/bike/bikeleft1.spr"
 #define BIKE_LEFT2              "sprites/bike/bikeleft2.spr"
 #define BIKE_RIGHT1             "sprites/bike/bikeright1.spr"
@@ -42,8 +45,12 @@ typedef enum {
 #define BIKE_MOVING3_OR         "sprites/bike/bike-or3.spr"
 
 #define APPROACH_BIKE1          "sprites/bike/3dbike1.spr"
-#define APPROACH_BIKE_LEFT      "sprites/bike/3dbike1-left.spr"
-#define APPROACH_BIKE_RIGHT     "sprites/bike/3dbike1-right.spr"
+
+#define APPROACH_BIKE_LEFT1      "sprites/bike/3dbike-left1.spr"
+#define APPROACH_BIKE_LEFT2      "sprites/bike/3dbike-left2.spr"
+#define APPROACH_BIKE_RIGHT1     "sprites/bike/3dbike-right1.spr"
+#define APPROACH_BIKE_RIGHT2     "sprites/bike/3dbike-right2.spr"
+
 #define APPROACH_BIKE2          "sprites/bike/3dbike2.spr"
 #define APPROACH_BIKE3          "sprites/bike/3dbike3.spr"
 #define APPROACH_BIKE4          "sprites/bike/3dbike4.spr"

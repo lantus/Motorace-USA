@@ -1513,19 +1513,6 @@ void Stage_Update()
         speed_accumulator += bike_speed;
         speed_sample_count++;
 
-        //#ifdef DEBUG
-        /* Debug: press fire+up+down to skip to next stage */
-        if (KeyPressed(KEY_F1))
-        {
-            stage_state = STAGE_FRONTVIEW;
-
-            Stage_InitializeFrontView();
-            HUD_UpdateBikeSpeed(bike_speed);
-            HUD_UpdateScore(game_score);
-            return;
-        }
-        //#endif
-
         // Update fuel gauge
         Fuel_Update();
 
@@ -1739,6 +1726,9 @@ void Stage_Update()
             
             Fuel_Add(1);
             Fuel_DrawAll();
+            
+            game_score += 500;
+            HUD_UpdateScore(game_score);
             
             mapdata[map_y * mapwidth + map_x] = road_tile_plain;
             
@@ -2062,11 +2052,26 @@ void Stage_Update()
         }
         else
         {
-            // Normal gameplay - use the bike_state set above
-            if (bike_state != prev_bike_state)
+           
+            if (bike_state == BIKE_STATE_FRONTVIEW_LEFT)
+            {
+                BikeFrame f = ((bike_anim_frames >> 3) & 1) ? 
+                            BIKE_FRAME_APPROACH2_LEFT : BIKE_FRAME_APPROACH1_LEFT;
+                MotorBike_SetFrame(f);
+                prev_bike_state = bike_state;
+                bike_anim_frames++;
+            }
+            else if (bike_state == BIKE_STATE_FRONTVIEW_RIGHT)
+            {
+                BikeFrame f = ((bike_anim_frames >> 3) & 1) ? 
+                            BIKE_FRAME_APPROACH2_RIGHT : BIKE_FRAME_APPROACH1_RIGHT;
+                MotorBike_SetFrame(f);
+                prev_bike_state = bike_state;
+                bike_anim_frames++;
+            }
+            else if (bike_state != prev_bike_state)
             {
                 MotorBike_SetFrame(bike_state);
-                    
                 prev_bike_state = bike_state;
             }
         }
@@ -2404,7 +2409,8 @@ void Stage_InitializeFrontView(void)
         default:              City_ShowCityName("LAS VEGAS");  break;
     }
 
-    
+    prev_bike_state = -1;
+    bike_state = BIKE_STATE_MOVING;
     Game_ApplyPalette(current_palette, BLOCKSCOLORS);
      
     MotorBike_Reset();
