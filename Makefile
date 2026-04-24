@@ -56,6 +56,7 @@ ifdef WINDOWS
 	@XCOPY "sfx\*" "out\sfx\" /K /D /H /Y /S /E
 	@XCOPY "mus\*" "out\mus\" /K /D /H /Y /S /E
 	@XCOPY "stages\*" "out\stages\" /K /D /H /Y /S /E	
+	@XCOPY "assets\*" "out\" /K /D /H /Y /S /E 
 endif
 
 $(OUT).exe: $(OUT).elf

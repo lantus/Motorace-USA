@@ -11,6 +11,7 @@
 #include <proto/dos.h>
 #include "game.h"
 #include "map.h"
+#include "pak.h"
 #include "timers.h"
 #include "hardware.h"
 #include "bitmap.h"

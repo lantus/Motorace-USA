@@ -6,6 +6,7 @@
 
 #include "audio.h"
 #include "memory.h"
+#include "pak.h"
 #include "disk.h"
 
 extern volatile struct Custom *custom;
