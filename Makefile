@@ -52,10 +52,10 @@ ifdef WINDOWS
 	@XCOPY "sprites\*" "out\sprites\" /K /D /H /Y /S /E
 	@XCOPY "tiles\*" "out\tiles\" /K /D /H /Y /S /E
 	@XCOPY "font\*" "out\font\" /K /D /H /Y /S /E
-	@XCOPY "objects\*" "out\objects\" /K /D /H /Y /S /E
+# XCOPY "objects\*" "out\objects\" /K /D /H /Y /S /E
 	@XCOPY "sfx\*" "out\sfx\" /K /D /H /Y /S /E
-	@XCOPY "mus\*" "out\mus\" /K /D /H /Y /S /E
-	@XCOPY "stages\*" "out\stages\" /K /D /H /Y /S /E	
+# XCOPY "mus\*" "out\mus\" /K /D /H /Y /S /E
+# XCOPY "stages\*" "out\stages\" /K /D /H /Y /S /E	
 	@XCOPY "assets\*" "out\" /K /D /H /Y /S /E 
 endif
 

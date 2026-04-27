@@ -240,14 +240,27 @@ WORD bike_wy = 0;
 void Game_Initialize()
 {
     Timer_Init();
+    Preloader_Init();
+
     Sprites_Initialize();
     HiScore_Initialize();
     
+    Pak_Open("objects.dat");
+    Pak_Open("stages.dat");
+    Pak_Open("mus.dat");
+    
+	/* Load ALL assets while OS is alive */
+
+    Preloader_LoadAll();
+	MapPool_Initialize();        
+    CollisionMap_Initialize();  
+
     Audio_Initialize();
     MotorBike_Initialize();
     Planes_Initialize();
     NYCVictory_Initialize();
     BarrelTruck_Initialize();
+	Cars_Initialize();
 
     HUD_InitSprites();
     HUD_SetSpritePositions();
@@ -257,6 +270,8 @@ void Game_Initialize()
     
     Title_Initialize();
     City_Initialize();
+    
+    Pak_CloseAll();
     
     Game_SetBackGroundColor(0x125);
     

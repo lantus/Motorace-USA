@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "tilesheet.h"
 #include "disk.h"
+#include "pak.h"
 #include "nrv2s.h"
 #include "memory.h"
 
@@ -59,37 +60,26 @@ static const char *collision_files[STAGE_COUNT] = {
     "stages/chicago/col_lv4.nrv",
     "stages/newyork/col_lv5.nrv",
 };
-
-/* ---- Music (uncompressed .mod) ---- */
-static const char *music_files[MUSIC_ID_COUNT] = {
-    "mus/start.mod",
-    "mus/offroad.mod",
-    "mus/onroadstage.mod",
-    "mus/frontview.mod",
-    "mus/checkpoint.mod",
-    "mus/ranking.mod",
-    "mus/gameover.mod",
-    "mus/viva ny.mod",
-};
-
-
+ 
 
 ULONG findSize(char* filename) 
 {
+     /* Check PAK first */
+    ULONG pak_size = Pak_GetSize(filename);
+    if (pak_size > 0) return pak_size;
+    
+    /* Fall back to disk */
     BPTR handle = Open(filename, MODE_OLDFILE);
 
     if (handle == NULL) 
     {
-        KPrintF("File %s not found\n",filename);
+        KPrintF("File %s not found\n", filename);
         return -1;
     }
 
-    Seek(handle,0,OFFSET_END);
-    ULONG size = Seek(handle,0,OFFSET_BEGINNING);
-  
+    Seek(handle, 0, OFFSET_END);
+    ULONG size = Seek(handle, 0, OFFSET_BEGINNING);
     Close(handle);
-
-    handle = 0;
 
     return size;
 } 
@@ -150,9 +140,35 @@ static PreloadEntry maps[STAGE_COUNT];
 static PreloadEntry collisions[STAGE_COUNT];
 static PreloadEntry music[MUSIC_ID_COUNT];
 
-/* ---- File loader (runs before KillSystem — OS is alive) ---- */
+
 static UBYTE *LoadFileToFast(const char *filename, ULONG *out_size)
 {
+    /* Try PAK first */
+    ULONG pak_size = Pak_GetSize(filename);
+    if (pak_size > 0)
+    {
+        UBYTE *buf = (UBYTE *)AllocMem(pak_size, MEMF_ANY);
+        if (!buf)
+        {
+            KPrintF("Preloader: FAILED to alloc %ld bytes for '%s'\n", 
+                    (LONG)pak_size, filename);
+            if (out_size) *out_size = 0;
+            return NULL;
+        }
+        
+        if (!Pak_ReadInto(filename, buf, pak_size))
+        {
+            KPrintF("Preloader: PAK read failed for '%s'\n", filename);
+            FreeMem(buf, pak_size);
+            if (out_size) *out_size = 0;
+            return NULL;
+        }
+        
+        if (out_size) *out_size = pak_size;
+        return buf;
+    }
+    
+    /* Fall back to disk */
     BPTR fh = Open((CONST_STRPTR)filename, MODE_OLDFILE);
     if (!fh)
     {
@@ -161,7 +177,6 @@ static UBYTE *LoadFileToFast(const char *filename, ULONG *out_size)
         return NULL;
     }
 
-    /* Seek to end to get size */
     Seek(fh, 0, OFFSET_END);
     LONG size = Seek(fh, 0, OFFSET_BEGINNING);
 
@@ -228,29 +243,7 @@ void Preloader_LoadAll(void)
         if (collision_files[i])
             collisions[i].data = LoadFileToFast(collision_files[i], &collisions[i].size);
     }
-
  
-    for (int i = 0; i < MUSIC_ID_COUNT; i++)
-    {
-        BPTR fh = Open((CONST_STRPTR)music_files[i], MODE_OLDFILE);
-        if (!fh)
-        {
-            KPrintF("Preloader: FAILED to open '%s'\n", music_files[i]);
-            continue;
-        }
-        Seek(fh, 0, OFFSET_END);
-        LONG size = Seek(fh, 0, OFFSET_BEGINNING);
-
-        /* Music modules need chip RAM for DMA playback */
-        music[i].data = LoadFileToFast(music_files[i], &music[i].size);
-        if (music[i].data)
-        {
-            Read(fh, music[i].data, size);
-            music[i].size = (ULONG)size;
-            KPrintF("Preloader: loaded '%s' (%ld bytes)\n", music_files[i], size);
-        }
-        Close(fh);
-    }
 
     KPrintF("Preloader: All assets loaded.\n");
 
@@ -288,15 +281,4 @@ void Preloader_UnpackCollision(UBYTE stage_id, UBYTE *fast_dest)
     if (stage_id >= STAGE_COUNT || !collisions[stage_id].data) return;
     NRV2S_Unpack(collisions[stage_id].data, fast_dest);
 }
-
-UBYTE *Preloader_GetMusic(UBYTE music_id)
-{
-    if (music_id >= MUSIC_ID_COUNT) return NULL;
-    return music[music_id].data;
-}
-
-ULONG Preloader_GetMusicSize(UBYTE music_id)
-{
-    if (music_id >= MUSIC_ID_COUNT) return 0;
-    return music[music_id].size;
-}
+ 

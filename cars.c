@@ -21,6 +21,7 @@
 #include "blitter.h"
 #include "roadsystem.h"
 #include "motorbike.h"
+#include "pak.h"
 #include "cars.h"
 #include "audio.h"
 
@@ -237,20 +238,20 @@ APTR *restore_ptr;
 
 void Cars_LoadSprites()
 {
-    car[0].data = Disk_AllocAndLoadAsset(CAR0_FRAME0, MEMF_CHIP);
-    car[0].data_frame2 = Disk_AllocAndLoadAsset(CAR0_FRAME1, MEMF_CHIP);
+    car[0].data = Pak_LoadAsset(CAR0_FRAME0, MEMF_CHIP);
+    car[0].data_frame2 = Pak_LoadAsset(CAR0_FRAME1, MEMF_CHIP);
 
-    car[1].data = Disk_AllocAndLoadAsset(CAR1_FRAME0, MEMF_CHIP);
-    car[1].data_frame2 = Disk_AllocAndLoadAsset(CAR1_FRAME1, MEMF_CHIP);
+    car[1].data = Pak_LoadAsset(CAR1_FRAME0, MEMF_CHIP);
+    car[1].data_frame2 = Pak_LoadAsset(CAR1_FRAME1, MEMF_CHIP);
 
-    car[2].data = Disk_AllocAndLoadAsset(CAR2_FRAME0, MEMF_CHIP);
-    car[2].data_frame2 = Disk_AllocAndLoadAsset(CAR2_FRAME1, MEMF_CHIP);
+    car[2].data = Pak_LoadAsset(CAR2_FRAME0, MEMF_CHIP);
+    car[2].data_frame2 = Pak_LoadAsset(CAR2_FRAME1, MEMF_CHIP);
 
-    car[3].data = Disk_AllocAndLoadAsset(CAR3_FRAME0, MEMF_CHIP);
-    car[3].data_frame2 = Disk_AllocAndLoadAsset(CAR3_FRAME1, MEMF_CHIP);
+    car[3].data = Pak_LoadAsset(CAR3_FRAME0, MEMF_CHIP);
+    car[3].data_frame2 = Pak_LoadAsset(CAR3_FRAME1, MEMF_CHIP);
 
-    car[4].data = Disk_AllocAndLoadAsset(CAR4_FRAME0, MEMF_CHIP);
-    car[4].data_frame2 = Disk_AllocAndLoadAsset(CAR4_FRAME1, MEMF_CHIP);   
+    car[4].data = Pak_LoadAsset(CAR4_FRAME0, MEMF_CHIP);
+    car[4].data_frame2 = Pak_LoadAsset(CAR4_FRAME1, MEMF_CHIP);   
 
 }
 

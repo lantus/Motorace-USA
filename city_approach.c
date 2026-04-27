@@ -25,6 +25,7 @@
 #include "motorbike.h"
 #include "planes.h"
 #include "disk.h"
+#include "pak.h"
 #include "font.h"
 #include "audio.h"
 #include "fuel.h"
@@ -118,14 +119,14 @@ void City_Initialize()
 {
  
     // Scaled Oncoming Car Bobs
-    oncoming_car[0].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_1, MEMF_CHIP);  // Smallest
-    oncoming_car[1].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_2, MEMF_CHIP);
-    oncoming_car[2].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_3, MEMF_CHIP);
-    oncoming_car[3].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_4, MEMF_CHIP);
-    oncoming_car[4].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_5, MEMF_CHIP);
-    oncoming_car[5].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_6, MEMF_CHIP);
-    oncoming_car[6].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_7, MEMF_CHIP);
-    oncoming_car[7].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_8, MEMF_CHIP);
+    oncoming_car[0].data = Pak_LoadAsset(ONCOMING_CAR_1, MEMF_CHIP);  // Smallest
+    oncoming_car[1].data = Pak_LoadAsset(ONCOMING_CAR_2, MEMF_CHIP);
+    oncoming_car[2].data = Pak_LoadAsset(ONCOMING_CAR_3, MEMF_CHIP);
+    oncoming_car[3].data = Pak_LoadAsset(ONCOMING_CAR_4, MEMF_CHIP);
+    oncoming_car[4].data = Pak_LoadAsset(ONCOMING_CAR_5, MEMF_CHIP);
+    oncoming_car[5].data = Pak_LoadAsset(ONCOMING_CAR_6, MEMF_CHIP);
+    oncoming_car[6].data = Pak_LoadAsset(ONCOMING_CAR_7, MEMF_CHIP);
+    oncoming_car[7].data = Pak_LoadAsset(ONCOMING_CAR_8, MEMF_CHIP);
  
     oncoming_car[0].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
     oncoming_car[1].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
@@ -138,10 +139,10 @@ void City_Initialize()
 
     // flipped cars
 
-    flipped_car[0].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_5_RIGHT, MEMF_CHIP);
-    flipped_car[1].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_6_RIGHT, MEMF_CHIP);
-    flipped_car[2].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_7_RIGHT, MEMF_CHIP);
-    flipped_car[3].data = Disk_AllocAndLoadAsset(ONCOMING_CAR_8_RIGHT, MEMF_CHIP);
+    flipped_car[0].data = Pak_LoadAsset(ONCOMING_CAR_5_RIGHT, MEMF_CHIP);
+    flipped_car[1].data = Pak_LoadAsset(ONCOMING_CAR_6_RIGHT, MEMF_CHIP);
+    flipped_car[2].data = Pak_LoadAsset(ONCOMING_CAR_7_RIGHT, MEMF_CHIP);
+    flipped_car[3].data = Pak_LoadAsset(ONCOMING_CAR_8_RIGHT, MEMF_CHIP);
 
     flipped_car[0].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);
     flipped_car[1].background = Mem_AllocChip((ONCOMING_CAR_WIDTH_WORDS * 2) * ONCOMING_CAR_HEIGHT * 4);

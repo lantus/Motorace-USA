@@ -14,6 +14,7 @@
 #include "blitter.h"
 #include "memory.h"
 #include "timers.h"
+#include "pak.h"
 #include "cars.h"
 #include "motorbike.h"
 #include "barreltruck.h"
@@ -132,11 +133,11 @@ static void BarrelTruck_DropBarrel(void)
 
 void BarrelTruck_Initialize(void)
 {
-    truck_data  = Disk_AllocAndLoadAsset(TRUCK_BOB_FILE, MEMF_CHIP);
-    left_strip_f1  = Disk_AllocAndLoadAsset(LEFT_STRIP_FILE1, MEMF_CHIP);
-    left_strip_f2  = Disk_AllocAndLoadAsset(LEFT_STRIP_FILE2, MEMF_CHIP);
-    barrel_data_f1 = Disk_AllocAndLoadAsset(BARREL_BOB_FILE1, MEMF_CHIP);
-    barrel_data_f2 = Disk_AllocAndLoadAsset(BARREL_BOB_FILE2, MEMF_CHIP);    
+    truck_data  = Pak_LoadAsset(TRUCK_BOB_FILE, MEMF_CHIP);
+    left_strip_f1  = Pak_LoadAsset(LEFT_STRIP_FILE1, MEMF_CHIP);
+    left_strip_f2  = Pak_LoadAsset(LEFT_STRIP_FILE2, MEMF_CHIP);
+    barrel_data_f1 = Pak_LoadAsset(BARREL_BOB_FILE1, MEMF_CHIP);
+    barrel_data_f2 = Pak_LoadAsset(BARREL_BOB_FILE2, MEMF_CHIP);    
     
     BarrelTruck_Reset();
 }

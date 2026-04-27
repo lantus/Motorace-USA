@@ -25,6 +25,7 @@
 #include "timers.h"
 #include "hiscore.h"
 #include "font.h"
+#include "pak.h"
 #include "city_approach.h"
 #include "stageprogress.h"
  
@@ -55,7 +56,7 @@ UBYTE title_state = TITLE_ATTRACT_INIT;
 
 void Title_LoadSprites()
 {
-    zippy_logo.data = Disk_AllocAndLoadAsset(ZIPPY_LOGO, MEMF_CHIP);
+    zippy_logo.data = Pak_LoadAsset(ZIPPY_LOGO, MEMF_CHIP);
     ami_logo.data = Disk_AllocAndLoadAsset(AMIGA_LOGO, MEMF_CHIP);
 }
 
@@ -84,7 +85,7 @@ void Title_LoadAllPalettes()
     Game_LoadPalette("palettes/fv_houston.pal", houston_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/fv_stl.pal", palette_fv_stl, BLOCKSCOLORS);
     Game_LoadPalette("palettes/offroad.pal", offroad_colors, BLOCKSCOLORS);
-    Game_LoadPalette("stages/stlouis/lv3.pal", stlouis_colors, BLOCKSCOLORS);
+    Game_LoadPalette("palettes/lv3.pal", stlouis_colors, BLOCKSCOLORS);
     
 }
 

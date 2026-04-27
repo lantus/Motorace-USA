@@ -13,6 +13,7 @@
 #include "sprites.h"
 #include "font.h"
 #include "roadsystem.h"
+#include "pak.h"
 #include "city_approach.h"
 #include "blitter.h"
 #include "planes.h"
@@ -151,11 +152,11 @@ static GameTimer smoke_timer;
 
 void Planes_Initialize(void)
 {
-    plane_data_f1 = Disk_AllocAndLoadAsset(PLANE_BPL1, MEMF_CHIP);
-    plane_data_f2 = Disk_AllocAndLoadAsset(PLANE_BPL2, MEMF_CHIP);
-    plane_rev_f1  = Disk_AllocAndLoadAsset(PLANE_REV_BPL1, MEMF_CHIP);
-    plane_rev_f2  = Disk_AllocAndLoadAsset(PLANE_REV_BPL2, MEMF_CHIP);
-    smoke_data    = Disk_AllocAndLoadAsset(SMOKE_BPL, MEMF_CHIP);
+    plane_data_f1 = Pak_LoadAsset(PLANE_BPL1, MEMF_CHIP);
+    plane_data_f2 = Pak_LoadAsset(PLANE_BPL2, MEMF_CHIP);
+    plane_rev_f1  = Pak_LoadAsset(PLANE_REV_BPL1, MEMF_CHIP);
+    plane_rev_f2  = Pak_LoadAsset(PLANE_REV_BPL2, MEMF_CHIP);
+    smoke_data    = Pak_LoadAsset(SMOKE_BPL, MEMF_CHIP);
 }
 
 /* ============================================================ */

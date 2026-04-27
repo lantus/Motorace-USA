@@ -181,8 +181,8 @@ static void Music_LoadAllToFast(void)
 
     for (int i = 0; i < MUSIC_COUNT; i++)
     {
-        module_sizes[i] = findSize((char *)music_files[i]);
-        modules_fast[i] = Disk_AllocAndLoadAsset((char *)music_files[i], MEMF_ANY);
+        module_sizes[i] = Pak_GetSize((char *)music_files[i]);
+        modules_fast[i] = Pak_LoadAsset((char *)music_files[i], MEMF_ANY);
 
         if (module_sizes[i] > max_size)
             max_size = module_sizes[i];

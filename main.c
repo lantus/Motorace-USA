@@ -343,17 +343,10 @@ int main(void)
         Write(Output(), (APTR)"\n", 2);
         Write(Output(), (APTR)"Starting up...\n", 16);
     }
-
-	/* Load ALL assets while OS is alive */
-    Preloader_Init();
-    Preloader_LoadAll();
-
-	MapPool_Initialize();        
-    CollisionMap_Initialize();  
-
+ 
 	Game_Initialize();
 	OpenDisplay();
-	Cars_Initialize();
+
 		
 	volatile UBYTE *ciabprb = (volatile UBYTE *)0xBFD100;
     *ciabprb = 0xF7;   /* 1111 0111 — motor off, select DF0 */

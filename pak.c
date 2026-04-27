@@ -1,9 +1,10 @@
 #include "support/gcc8_c_support.h"
 #include <exec/types.h>
 #include <exec/exec.h>
+#include <dos/dos.h>
+#include <proto/dos.h>
 #include <proto/exec.h>
 #include "pak.h"
-#include "disk.h"
 #include "memory.h"
 
 #define NAME_LEN 32
@@ -15,10 +16,9 @@ typedef struct {
 } PakEntry;
 
 typedef struct {
-    char      filename[32];       /* "objects.dat" etc. */
-    UBYTE    *data;                /* whole file in fast RAM */
-    ULONG     size;
-    PakEntry *directory;
+    char      filename[32];
+    BPTR      fh;                 /* AmigaDOS file handle */
+    PakEntry *directory;          /* in fast RAM */
     UWORD     count;
     BOOL      in_use;
 } PakFile;
@@ -26,13 +26,19 @@ typedef struct {
 static PakFile paks[MAX_PAKS];
 static BOOL pak_system_initialized = FALSE;
 
+/* Forward */
+static const char *StripPrefix(const char *name);
+static PakEntry *Pak_FindInFile(PakFile *p, const char *name);
+static PakEntry *Pak_Find(const char *name, PakFile **out_pak);
+
 static void Pak_InitSystem(void)
 {
     if (pak_system_initialized) return;
     for (int i = 0; i < MAX_PAKS; i++)
     {
         paks[i].in_use = FALSE;
-        paks[i].data = NULL;
+        paks[i].fh = 0;
+        paks[i].directory = NULL;
     }
     pak_system_initialized = TRUE;
 }
@@ -41,13 +47,11 @@ BOOL Pak_Open(const char *filename)
 {
     Pak_InitSystem();
     
-    /* Find free slot */
     int slot = -1;
     for (int i = 0; i < MAX_PAKS; i++)
     {
         if (!paks[i].in_use) { slot = i; break; }
     }
-    
     if (slot < 0)
     {
         KPrintF("PAK: no free slots\n");
@@ -56,24 +60,56 @@ BOOL Pak_Open(const char *filename)
     
     PakFile *p = &paks[slot];
     
-    p->size = findSize((char *)filename);
-    if (p->size == 0) return FALSE;
-    
-    p->data = Disk_AllocAndLoadAsset((char *)filename, MEMF_ANY);
-    if (!p->data) return FALSE;
-    
-    if (p->data[0] != 'P' || p->data[1] != 'A' || 
-        p->data[2] != 'K' || p->data[3] != '1')
+    /* Open and keep open */
+    p->fh = Open((STRPTR)filename, MODE_OLDFILE);
+    if (!p->fh)
     {
-        FreeMem(p->data, p->size);
-        p->data = NULL;
+        KPrintF("PAK: can't open %s\n", (LONG)filename);
         return FALSE;
     }
     
-    p->count = (p->data[4] << 8) | p->data[5];
-    p->directory = (PakEntry *)(p->data + 8);
+    /* 8-byte header */
+    UBYTE header[8];
+    if (Read(p->fh, header, 8) != 8)
+    {
+        Close(p->fh);
+        p->fh = 0;
+        return FALSE;
+    }
     
-    /* Store filename for later lookup/close */
+    if (header[0] != 'P' || header[1] != 'A' || header[2] != 'K' || header[3] != '1')
+    {
+        KPrintF("PAK: bad magic in %s\n", (LONG)filename);
+        Close(p->fh);
+        p->fh = 0;
+        return FALSE;
+    }
+    
+    p->count = (header[4] << 8) | header[5];
+    
+    /* Read directory into fast RAM */
+    ULONG dir_size = (ULONG)p->count * sizeof(PakEntry);
+    p->directory = (PakEntry *)AllocMem(dir_size, MEMF_FAST);
+    if (!p->directory)
+        p->directory = (PakEntry *)AllocMem(dir_size, MEMF_ANY);
+    if (!p->directory)
+    {
+        KPrintF("PAK: can't alloc directory for %s (%ld bytes)\n",
+                (LONG)filename, (LONG)dir_size);
+        Close(p->fh);
+        p->fh = 0;
+        return FALSE;
+    }
+    
+    if (Read(p->fh, p->directory, dir_size) != (LONG)dir_size)
+    {
+        FreeMem(p->directory, dir_size);
+        Close(p->fh);
+        p->fh = 0;
+        return FALSE;
+    }
+    
+    /* Store filename for close */
     int j;
     for (j = 0; j < 31 && filename[j]; j++)
         p->filename[j] = filename[j];
@@ -81,8 +117,8 @@ BOOL Pak_Open(const char *filename)
     
     p->in_use = TRUE;
     
-    KPrintF("PAK: opened %s (%ld files, %ld bytes)\n", 
-            (LONG)filename, (LONG)p->count, (LONG)p->size);
+    KPrintF("PAK: %s opened (%ld files, %ld byte index)\n",
+            (LONG)filename, (LONG)p->count, (LONG)dir_size);
     return TRUE;
 }
 
@@ -92,7 +128,6 @@ void Pak_Close(const char *filename)
     {
         if (!paks[i].in_use) continue;
         
-        /* Simple string compare */
         int match = 1;
         for (int j = 0; j < 32; j++)
         {
@@ -102,10 +137,11 @@ void Pak_Close(const char *filename)
         
         if (match)
         {
-            FreeMem(paks[i].data, paks[i].size);
-            paks[i].data = NULL;
+            if (paks[i].fh) Close(paks[i].fh);
+            if (paks[i].directory)
+                FreeMem(paks[i].directory, (ULONG)paks[i].count * sizeof(PakEntry));
+            paks[i].fh = 0;
             paks[i].directory = NULL;
-            paks[i].count = 0;
             paks[i].in_use = FALSE;
             return;
         }
@@ -116,22 +152,21 @@ void Pak_CloseAll(void)
 {
     for (int i = 0; i < MAX_PAKS; i++)
     {
-        if (paks[i].in_use)
-        {
-            FreeMem(paks[i].data, paks[i].size);
-            paks[i].data = NULL;
-            paks[i].in_use = FALSE;
-        }
+        if (!paks[i].in_use) continue;
+        if (paks[i].fh) Close(paks[i].fh);
+        if (paks[i].directory)
+            FreeMem(paks[i].directory, (ULONG)paks[i].count * sizeof(PakEntry));
+        paks[i].fh = 0;
+        paks[i].directory = NULL;
+        paks[i].in_use = FALSE;
     }
 }
 
-/* Strip common path prefixes before lookup */
 static const char *StripPrefix(const char *name)
 {
-    /* Strip "objects/", "sprites/", "tiles/", "music/", "sfx/", "maps/" etc. */
     static const char *prefixes[] = {
         "objects/", "sprites/", "tiles/", "music/", 
-        "sfx/", "maps/", "fonts/", NULL
+        "sfx/", "maps/", "fonts/", "stages/", "mus/", NULL
     };
     
     for (int i = 0; prefixes[i]; i++)
@@ -147,7 +182,6 @@ static const char *StripPrefix(const char *name)
         }
         if (match) return name + j;
     }
-    
     return name;
 }
 
@@ -175,19 +209,12 @@ static PakEntry *Pak_FindInFile(PakFile *p, const char *name)
 
 static PakEntry *Pak_Find(const char *name, PakFile **out_pak)
 {
-    /* Search ALL open PAK files for the asset */
     for (int i = 0; i < MAX_PAKS; i++)
     {
         if (!paks[i].in_use) continue;
-        
         PakEntry *e = Pak_FindInFile(&paks[i], name);
-        if (e)
-        {
-            *out_pak = &paks[i];
-            return e;
-        }
+        if (e) { *out_pak = &paks[i]; return e; }
     }
-    
     *out_pak = NULL;
     return NULL;
 }
@@ -199,24 +226,28 @@ UBYTE *Pak_LoadAsset(const char *name, ULONG memflags)
     
     if (!e)
     {
-        KPrintF("PAK: file not found: %s\n", name);
+        KPrintF("PAK: not found: %s\n", name);
         return NULL;
     }
     
+    /* Allocate destination */
     UBYTE *dest = Mem_Alloc(e->size, memflags);
-    if (!dest) return NULL;
+    if (!dest)
+    {
+        KPrintF("PAK: alloc %ld failed for %s\n", (LONG)e->size, name);
+        return NULL;
+    }
     
-    UBYTE *src = p->data + e->offset;
+    /* Seek + read directly into destination — no intermediate buffer */
+    Seek(p->fh, e->offset, OFFSET_BEGINNING);
+    LONG bytes_read = Read(p->fh, dest, e->size);
     
-    ULONG longs = e->size >> 2;
-    ULONG *s = (ULONG *)src;
-    ULONG *d = (ULONG *)dest;
-    while (longs--) *d++ = *s++;
-    
-    ULONG remainder = e->size & 3;
-    UBYTE *sb = (UBYTE *)s;
-    UBYTE *db = (UBYTE *)d;
-    while (remainder--) *db++ = *sb++;
+    if (bytes_read != (LONG)e->size)
+    {
+        KPrintF("PAK: short read %s (%ld/%ld)\n", name, bytes_read, (LONG)e->size);
+        Mem_Free(dest, e->size);
+        return NULL;
+    }
     
     return dest;
 }
@@ -226,4 +257,37 @@ ULONG Pak_GetSize(const char *name)
     PakFile *p;
     PakEntry *e = Pak_Find(name, &p);
     return e ? e->size : 0;
+}
+
+BOOL Pak_ReadInto(const char *name, UBYTE *dest, ULONG max_size)
+{
+    PakFile *p;
+    PakEntry *e = Pak_Find(name, &p);
+    
+    if (!e || e->size > max_size) return FALSE;
+    
+    Seek(p->fh, e->offset, OFFSET_BEGINNING);
+    return (Read(p->fh, dest, e->size) == (LONG)e->size);
+}
+
+/* For sequential reads — seek to asset, then call Pak_ReadBytes repeatedly */
+static PakFile *current_seek_pak = NULL;
+
+BOOL Pak_SeekToAsset(const char *name)
+{
+    PakFile *p;
+    PakEntry *e = Pak_Find(name, &p);
+    if (!e) return FALSE;
+    
+    Seek(p->fh, e->offset, OFFSET_BEGINNING);
+    current_seek_pak = p;
+    return TRUE;
+}
+
+LONG Pak_ReadBytes(const char *name, void *buffer, ULONG size)
+{
+    /* name is unused in current implementation but kept for clarity / future use */
+    (void)name;
+    if (!current_seek_pak) return -1;
+    return Read(current_seek_pak->fh, buffer, size);
 }
