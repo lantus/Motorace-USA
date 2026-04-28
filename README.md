@@ -15,9 +15,10 @@ The entire game was written in C with some assembly
 
 Controls: Plug in a Joystick
 
-Fire - Accelerate
-Fire Button 2/Joystick Down - Brake
-Credits and Thanks as follows
+Fire - Accelerate<br>
+Fire Button 2/Joystick Down - Brake<br>
+<br>
+Credits and Thanks as follows<br><br>
 
 Main Programming - MVG<br>
 Amiga Music/SFX Conversion - Estrayk<br>
