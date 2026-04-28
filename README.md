@@ -24,6 +24,7 @@ Amiga Music/SFX Conversion - Estrayk
 NRV Compression Routines - Ross
 PTPlayer routines - Frank Wille
 Sprite Loading - Wei Ju Wu
+
 Inspiration and Guidance - McGeezer, h0ffman, Jotd, Rob Smith, Photon, Galahad, EAB Forum etc etc
 
 Developed with VSCode-Amiga-Debug plugin by BartmanAbyss
