@@ -19,15 +19,15 @@ Fire - Accelerate
 Fire Button 2/Joystick Down - Brake
 Credits and Thanks as follows
 
-Main Programming - MVG
-Amiga Music/SFX Conversion - Estrayk
-NRV Compression Routines - Ross
-PTPlayer routines - Frank Wille
-Sprite Loading - Wei Ju Wu
+Main Programming - MVG<br>
+Amiga Music/SFX Conversion - Estrayk<br>
+NRV Compression Routines - Ross<br>
+PTPlayer routines - Frank Wille<br>
+Sprite Loading - Wei Ju Wu<br>
 
 Inspiration and Guidance - McGeezer, h0ffman, Jotd, Rob Smith, Photon, Galahad, EAB Forum etc etc
 
-Developed with VSCode-Amiga-Debug plugin by BartmanAbyss
+Developed with VSCode-Amiga-Debug plugin by [BartmanAbyss](https://github.com/BartmanAbyss/vscode-amiga-debug)
 
 If you like my work and want to see more Amiga conversions like this, feel free to support me.
 
