@@ -57,7 +57,7 @@ UBYTE title_state = TITLE_ATTRACT_INIT;
 void Title_LoadSprites()
 {
     zippy_logo.data = Pak_LoadAsset(ZIPPY_LOGO, MEMF_CHIP);
-    ami_logo.data = Disk_AllocAndLoadAsset(AMIGA_LOGO, MEMF_CHIP);
+    ami_logo.data = Pak_LoadAsset(AMIGA_LOGO, MEMF_CHIP);
 }
 
 void Title_Initialize(void)
@@ -84,7 +84,7 @@ void Title_LoadAllPalettes()
     Game_LoadPalette("palettes/fv_lasvegas.pal", lv_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/fv_houston.pal", houston_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/fv_stl.pal", palette_fv_stl, BLOCKSCOLORS);
-    Game_LoadPalette("palettes/offroad.pal", offroad_colors, BLOCKSCOLORS);
+    Game_LoadPalette("palettes/offroad.PAL", offroad_colors, BLOCKSCOLORS);
     Game_LoadPalette("palettes/lv3.pal", stlouis_colors, BLOCKSCOLORS);
     
 }

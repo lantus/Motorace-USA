@@ -46,14 +46,14 @@ VASMFLAGS = -m68000 -Felf -opt-fconst -nowarn=62 -dwarf=3 -quiet -x -I. -I$(SDKD
 all: $(OUT).exe
 
 ifdef WINDOWS
-	@XCOPY "maps\*" "out\maps\" /K /D /H /Y /S /E 
-	@XCOPY "images\*" "out\images\" /K /D /H /Y /S /E
-	@XCOPY "palettes\*" "out\palettes\" /K /D /H /Y /S /E
-	@XCOPY "sprites\*" "out\sprites\" /K /D /H /Y /S /E
-	@XCOPY "tiles\*" "out\tiles\" /K /D /H /Y /S /E
+# XCOPY "maps\*" "out\maps\" /K /D /H /Y /S /E 
+# XCOPY "images\*" "out\images\" /K /D /H /Y /S /E
+# XCOPY "palettes\*" "out\palettes\" /K /D /H /Y /S /E
+# XCOPY "sprites\*" "out\sprites\" /K /D /H /Y /S /E
+# XCOPY "tiles\*" "out\tiles\" /K /D /H /Y /S /E
 	@XCOPY "font\*" "out\font\" /K /D /H /Y /S /E
 # XCOPY "objects\*" "out\objects\" /K /D /H /Y /S /E
-	@XCOPY "sfx\*" "out\sfx\" /K /D /H /Y /S /E
+# XCOPY "sfx\*" "out\sfx\" /K /D /H /Y /S /E
 # XCOPY "mus\*" "out\mus\" /K /D /H /Y /S /E
 # XCOPY "stages\*" "out\stages\" /K /D /H /Y /S /E	
 	@XCOPY "assets\*" "out\" /K /D /H /Y /S /E 

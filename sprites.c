@@ -11,6 +11,7 @@
 #include <proto/dos.h>
 #include "hardware.h"
 #include "sprites.h"
+#include "pak.h"
 #include "copper.h"
  
 #define SCREEN_DEPTH 4  // 16 colors = 4 bitplanes
@@ -29,6 +30,12 @@ BOOL Sprites_LoadFromFile(char *filename,Sprite *sheet)
 {   
     // Allocate memory for sprite sheet (4 bitplanes for 16 colors)
 
+     /* Try PAK first */
+    if (Pak_GetSize(filename) > 0)
+    {
+        return Sprites_LoadFromPak(filename, sheet);
+    }
+    
     int elems_read;
 
     BPTR sprite_handle = 0;
@@ -167,4 +174,36 @@ __attribute__((always_inline)) inline void Sprites_SetPosition(UWORD *sprite_dat
 void Sprites_Free(void) 
 {
     // TODO: Cleanup!
+}
+
+BOOL Sprites_LoadFromPak(char *filename, Sprite *sheet)
+{
+    if (!Pak_SeekToAsset(filename))
+    {
+        KPrintF("ERROR: Sprite not in PAK: %s\n", filename);
+        return FALSE;
+    }
+    
+    /* Header */
+    Pak_ReadBytes(filename, &sheet->header, 20);
+    
+    /* Sprite offsets */
+    Pak_ReadBytes(filename, &sheet->sprite_offsets, 
+                  sizeof(UWORD) * sheet->header.num_sprites);
+    
+    /* Palette */
+    Pak_ReadBytes(filename, &sheet->palette, 
+                  sizeof(UWORD) * sheet->header.palette_size);
+    
+    /* Image data — read directly into chip allocation */
+    sheet->imgdata = AllocMem(sheet->header.imgdata_size, MEMF_CHIP | MEMF_CLEAR);
+    if (!sheet->imgdata)
+    {
+        KPrintF("ERROR: Chip alloc %ld failed for %s\n",
+                (LONG)sheet->header.imgdata_size, filename);
+        return FALSE;
+    }
+    
+    Pak_ReadBytes(filename, sheet->imgdata, sheet->header.imgdata_size);
+    return TRUE;
 }

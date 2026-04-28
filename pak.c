@@ -166,7 +166,7 @@ static const char *StripPrefix(const char *name)
 {
     static const char *prefixes[] = {
         "objects/", "sprites/", "tiles/", "music/", 
-        "sfx/", "maps/", "fonts/", "stages/", "mus/", NULL
+        "sfx/", "maps/", "fonts/", "stages/", "mus/", "images/", "palettes/", NULL
     };
     
     for (int i = 0; prefixes[i]; i++)

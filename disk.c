@@ -86,6 +86,10 @@ ULONG findSize(char* filename)
 
 static void load_asset_with_size(UBYTE* dest, ULONG size, char* filename) 
 {
+    /* Try PAK first */
+    if (Pak_ReadInto(filename, dest, size))
+        return;
+        
     BPTR handle = Open(filename, MODE_OLDFILE);
 
     if (handle) 
@@ -241,9 +245,17 @@ void Preloader_LoadAll(void)
     for (int i = 0; i < STAGE_COUNT; i++)
     {
         if (collision_files[i])
-            collisions[i].data = LoadFileToFast(collision_files[i], &collisions[i].size);
+        {
+            if (i == 0)
+            {
+                continue;
+            }
+            else
+            {
+                collisions[i].data = LoadFileToFast(collision_files[i], &collisions[i].size);
+            }
+        }   
     }
- 
 
     KPrintF("Preloader: All assets loaded.\n");
 

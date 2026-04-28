@@ -107,8 +107,8 @@ void mt_playfx(void *sfx)
 
 static void SFX_Load8SVX(const char *filename, UBYTE sfx_id, UWORD sample_rate, UBYTE priority)
 {
-    ULONG file_size = findSize((char *)filename);
-    UBYTE *file_data = Disk_AllocAndLoadAsset((char *)filename, MEMF_CHIP);
+    ULONG file_size = Pak_GetSize((char *)filename);
+    UBYTE *file_data = Pak_LoadAsset((char *)filename, MEMF_CHIP);
     if (!file_data) { KPrintF("SFX: Failed to load %s\n", filename); return; }
     
     UBYTE *ptr = file_data + 12;  /* Skip FORM header */
@@ -151,12 +151,12 @@ static void SFX_Load8SVX(const char *filename, UBYTE sfx_id, UWORD sample_rate, 
 
 void SFX_LoadAll(void)
 {
-    SFX_Load8SVX("sfx/crashskid.8svx", SFX_CRASHSKID, 22050, 2);
-    SFX_Load8SVX("sfx/horn.8svx", SFX_HORN, 22050, 3);
-    SFX_Load8SVX("sfx/skid.8svx", SFX_SKID, 22050, 3);
-    SFX_Load8SVX("sfx/overtake.8svx", SFX_OVERHEADOVERTAKE, 22050, 2);
-    SFX_Load8SVX("sfx/fvovertake.8svx", SFX_FRONTVIEWOVERTAKE, 22050, 2);
-    SFX_Load8SVX("sfx/empty.8svx", SFX_EMPTY, 22050, 1);
+    SFX_Load8SVX("sfx/crashskid.8SVX", SFX_CRASHSKID, 22050, 2);
+    SFX_Load8SVX("sfx/horn.8SVX", SFX_HORN, 22050, 3);
+    SFX_Load8SVX("sfx/skid.8SVX", SFX_SKID, 22050, 3);
+    SFX_Load8SVX("sfx/overtake.8SVX", SFX_OVERHEADOVERTAKE, 22050, 2);
+    SFX_Load8SVX("sfx/fvovertake.8SVX", SFX_FRONTVIEWOVERTAKE, 22050, 2);
+    SFX_Load8SVX("sfx/empty.8SVX", SFX_EMPTY, 22050, 1);
 
     sfx_table[SFX_BRAKE] = sfx_table[SFX_SKID];
     sfx_table[SFX_BRAKE].sfx_per = 250;

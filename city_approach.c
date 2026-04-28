@@ -155,22 +155,22 @@ void City_Initialize()
 void City_InitializeSkylines(void)
 {
     // Get sizes
-    attract_skyline_size = findSize(ATTRACT_SKYLINE);
-    lv_skyline_size = findSize(VEGAS_SKYLINE);
-    lv_skyline2_size = findSize(VEGAS_SKYLINE2);
-    houston_skyline_size = findSize(HOUSTON_SKYLINE);
-    stl_skyline_size = findSize(STL_SKYLINE);
-    chi_skyline_size = findSize(CHI_SKYLINE);
-    nyc_skyline_size = findSize(NYC_SKYLINE);
+    attract_skyline_size = Pak_GetSize(ATTRACT_SKYLINE);
+    lv_skyline_size = Pak_GetSize(VEGAS_SKYLINE);
+    lv_skyline2_size = Pak_GetSize(VEGAS_SKYLINE2);
+    houston_skyline_size = Pak_GetSize(HOUSTON_SKYLINE);
+    stl_skyline_size = Pak_GetSize(STL_SKYLINE);
+    chi_skyline_size = Pak_GetSize(CHI_SKYLINE);
+    nyc_skyline_size = Pak_GetSize(NYC_SKYLINE);
     
     // Load all to fast RAM
-    attract_skyline_fast = Disk_AllocAndLoadAsset(ATTRACT_SKYLINE, MEMF_ANY);
-    lv_skyline_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE, MEMF_ANY);
-    lv_skyline2_fast = Disk_AllocAndLoadAsset(VEGAS_SKYLINE2, MEMF_ANY);
-    houston_skyline_fast = Disk_AllocAndLoadAsset(HOUSTON_SKYLINE, MEMF_ANY);
-    stl_skyline_fast = Disk_AllocAndLoadAsset(STL_SKYLINE, MEMF_ANY);
-    chi_skyline_fast = Disk_AllocAndLoadAsset(CHI_SKYLINE, MEMF_ANY);
-    nyc_skyline_fast = Disk_AllocAndLoadAsset(NYC_SKYLINE, MEMF_ANY);
+    attract_skyline_fast = Pak_LoadAsset(ATTRACT_SKYLINE, MEMF_ANY);
+    lv_skyline_fast = Pak_LoadAsset(VEGAS_SKYLINE, MEMF_ANY);
+    lv_skyline2_fast = Pak_LoadAsset(VEGAS_SKYLINE2, MEMF_ANY);
+    houston_skyline_fast = Pak_LoadAsset(HOUSTON_SKYLINE, MEMF_ANY);
+    stl_skyline_fast = Pak_LoadAsset(STL_SKYLINE, MEMF_ANY);
+    chi_skyline_fast = Pak_LoadAsset(CHI_SKYLINE, MEMF_ANY);
+    nyc_skyline_fast = Pak_LoadAsset(NYC_SKYLINE, MEMF_ANY);
     
     // Find largest for each buffer
     skyline_chip_size = attract_skyline_size;
@@ -932,9 +932,9 @@ WORD City_GetBikeHorizonStartX(void)
 
 void NYCVictory_Initialize(void)
 {
-    vivany_data    = Disk_AllocAndLoadAsset(VIVA_NY, MEMF_CHIP);
-    liberty_data_f1 = Disk_AllocAndLoadAsset(LIBERTY_ANIM1, MEMF_CHIP);
-    liberty_data_f2 = Disk_AllocAndLoadAsset(LIBERTY_ANIM2, MEMF_CHIP);
+    vivany_data    = Pak_LoadAsset(VIVA_NY, MEMF_CHIP);
+    liberty_data_f1 = Pak_LoadAsset(LIBERTY_ANIM1, MEMF_CHIP);
+    liberty_data_f2 = Pak_LoadAsset(LIBERTY_ANIM2, MEMF_CHIP);
 }
 
 void NYCVictory_Start(void)

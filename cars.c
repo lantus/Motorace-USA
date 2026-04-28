@@ -807,7 +807,6 @@ void Cars_DisableSpawning(void)
 
 void Cars_EnableSpawning(void)
 {
-     KPrintF("Cars_EnableSpawning called\n");
     cars_spawn_disabled = FALSE;
 }
 

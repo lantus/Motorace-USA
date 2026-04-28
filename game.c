@@ -248,7 +248,11 @@ void Game_Initialize()
     Pak_Open("objects.dat");
     Pak_Open("stages.dat");
     Pak_Open("mus.dat");
-    
+    Pak_Open("images.dat");
+    Pak_Open("sprites.dat");
+    Pak_Open("sfx.dat");
+    Pak_Open("palettes.dat");
+ 
 	/* Load ALL assets while OS is alive */
 
     Preloader_LoadAll();
@@ -270,13 +274,13 @@ void Game_Initialize()
     
     Title_Initialize();
     City_Initialize();
-    
+      
+    Stage_Initialize();
+
     Pak_CloseAll();
     
     Game_SetBackGroundColor(0x125);
-    
-    Stage_Initialize();
- 
+  
     game_state = TITLE_SCREEN;
     game_map = MAP_ATTRACT_INTRO;
     
@@ -1019,8 +1023,8 @@ void Game_LoadPalette(const char *filename, UWORD *palette, int num_colors)
 {
     // Assuming Dpaint
 
-    ULONG file_size = findSize((char *)filename);
-    UBYTE *file_data = Disk_AllocAndLoadAsset((char *)filename, MEMF_ANY);
+    ULONG file_size = Pak_GetSize((char *)filename);
+    UBYTE *file_data = Pak_LoadAsset((char *)filename, MEMF_ANY);
     if (!file_data) return;
     
     UBYTE *ptr = file_data;
@@ -1183,8 +1187,7 @@ void GameReady_Update(void)
 
 void Stage_Initialize(void)
 {
-
-    Disk_LoadAsset((UBYTE *)city_colors,"tiles/lv1_tiles.PAL");
+    Disk_LoadAsset((UBYTE *)city_colors,"palettes/lv1_tiles.PAL");
 
      // Used for the Countdown
     Sprites_LoadFromFile(COUNTDOWN_ZERO,&spr_countdown_timer[0]);
